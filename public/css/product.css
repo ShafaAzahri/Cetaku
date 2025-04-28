@@ -1,0 +1,60 @@
+/* CSS untuk halaman Product Manager */
+.nav-tabs .nav-link {
+    color: #495057;
+    font-weight: 500;
+}
+.nav-tabs .nav-link.active {
+    font-weight: 600;
+    color: #4361ee;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom: 3px solid #4361ee;
+}
+
+.tab-pane {
+    padding: 20px 0;
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+}
+
+.item-actions,
+.bahan-actions,
+.ukuran-actions,
+.jenis-actions,
+.desain-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.add-button {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+select[multiple] {
+    min-height: 120px;
+}
+
+.tab-content {
+    padding-top: 20px;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+}
+
+.edit-btn,
+.delete-btn {
+    cursor: pointer;
+}
