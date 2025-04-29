@@ -21,7 +21,6 @@ class Item extends Model
     protected $fillable = [
         'nama_item',
         'deskripsi',
-        'jenis_id',
         'harga_dasar'
     ];
     
@@ -33,14 +32,6 @@ class Item extends Model
     protected $casts = [
         'harga_dasar' => 'decimal:2',
     ];
-    
-    /**
-     * Get the jenis that owns the item.
-     */
-    public function jenis()
-    {
-        return $this->belongsTo(Jenis::class);
-    }
     
     /**
      * Get the bahans for the item.
@@ -56,5 +47,13 @@ class Item extends Model
     public function ukurans()
     {
         return $this->belongsToMany(Ukuran::class, 'item_ukurans');
+    }
+    
+    /**
+     * Get the jenis for the item.
+     */
+    public function jenis()
+    {
+        return $this->belongsToMany(Jenis::class, 'item_jenis');
     }
 }

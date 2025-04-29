@@ -1,175 +1,156 @@
-// JavaScript untuk halaman Product Manager
-$(document).ready(function () {
-    // Initialize select2 for better multi-select experience (if available)
-    if ($.fn.select2) {
-        $("#bahan_ids, #ukuran_ids, #edit_bahan_ids, #edit_ukuran_ids").select2(
-            {
-                placeholder: "Pilih opsi",
-                dropdownParent: $(".modal"),
+// Script untuk form edit pada product-manager
+
+document.addEventListener("DOMContentLoaded", function () {
+    // Handle Item Edit Form
+    const editItemBtns = document.querySelectorAll(".edit-item-btn");
+    editItemBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const itemId = this.getAttribute("data-id");
+            const namaItem = this.getAttribute("data-nama");
+            const deskripsi = this.getAttribute("data-deskripsi");
+            const hargaDasar = this.getAttribute("data-harga");
+
+            // Set form action URL
+            document.getElementById(
+                "editItemForm"
+            ).action = `${baseUrl}/admin/products/items/${itemId}`;
+
+            // Set form values
+            document.getElementById("edit_nama_item").value = namaItem;
+            document.getElementById("edit_harga_dasar").value = hargaDasar;
+            document.getElementById("edit_deskripsi").value = deskripsi || "";
+
+            // Show modal
+            const editItemModal = new bootstrap.Modal(
+                document.getElementById("editItemModal")
+            );
+            editItemModal.show();
+        });
+    });
+
+    // Handle Bahan Edit Form
+    const editBahanBtns = document.querySelectorAll(".edit-bahan-btn");
+    editBahanBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const bahanId = this.getAttribute("data-id");
+            const namaBahan = this.getAttribute("data-nama");
+            const biaya = this.getAttribute("data-biaya");
+            const itemId = this.getAttribute("data-item");
+
+            // Set form action URL
+            document.getElementById(
+                "editBahanForm"
+            ).action = `${baseUrl}/admin/products/bahans/${bahanId}`;
+
+            // Set form values
+            document.getElementById("edit_nama_bahan").value = namaBahan;
+            document.getElementById("edit_biaya_tambahan").value = biaya;
+
+            if (itemId) {
+                document.getElementById("edit_item_id").value = itemId;
+            } else {
+                document.getElementById("edit_item_id").value = "";
             }
-        );
-    }
 
-    // Auto close alerts after 5 seconds
-    setTimeout(function () {
-        $(".alert").alert("close");
-    }, 5000);
-
-    // Tab persistence using sessionStorage
-    $('button[data-bs-toggle="tab"]').on("shown.bs.tab", function (e) {
-        sessionStorage.setItem(
-            "activeProductManagerTab",
-            $(e.target).attr("id")
-        );
+            // Show modal
+            const editBahanModal = new bootstrap.Modal(
+                document.getElementById("editBahanModal")
+            );
+            editBahanModal.show();
+        });
     });
 
-    // Check if there is a saved tab and show it
-    var activeTab = sessionStorage.getItem("activeProductManagerTab");
-    if (activeTab) {
-        $("#" + activeTab).tab("show");
-    }
+    // Handle Ukuran Edit Form
+    const editUkuranBtns = document.querySelectorAll(".edit-ukuran-btn");
+    editUkuranBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const ukuranId = this.getAttribute("data-id");
+            const size = this.getAttribute("data-size");
+            const faktor = this.getAttribute("data-faktor");
+            const itemId = this.getAttribute("data-item");
 
-    // ================= Item ====================
-    // Edit Item Modal Setup
-    $(".edit-item-btn").click(function () {
-        var itemId = $(this).data("id");
-        var nama = $(this).data("nama");
-        var deskripsi = $(this).data("deskripsi");
-        var jenisId = $(this).data("jenis");
-        var harga = $(this).data("harga");
-        var bahans = $(this).data("bahans");
-        var ukurans = $(this).data("ukurans");
+            // Set form action URL
+            document.getElementById(
+                "editUkuranForm"
+            ).action = `${baseUrl}/admin/products/ukurans/${ukuranId}`;
 
-        // Set the form action
-        $("#editItemForm").attr(
-            "action",
-            baseUrl + "/admin/products/items/" + itemId
-        );
+            // Set form values
+            document.getElementById("edit_size").value = size;
+            document.getElementById("edit_faktor_harga").value = faktor;
 
-        // Fill the form fields
-        $("#edit_nama_item").val(nama);
-        $("#edit_deskripsi").val(deskripsi || "");
-        $("#edit_jenis_id").val(jenisId);
-        $("#edit_harga_dasar").val(harga);
-
-        // Handle multi-select for bahans and ukurans
-        if ($.fn.select2) {
-            // Convert to array if it's a string
-            if (typeof bahans === "string") {
-                bahans = bahans.split(",");
+            if (itemId) {
+                document.getElementById("edit_item_id_ukuran").value = itemId;
+            } else {
+                document.getElementById("edit_item_id_ukuran").value = "";
             }
-            $("#edit_bahan_ids").val(bahans).trigger("change");
 
-            if (typeof ukurans === "string") {
-                ukurans = ukurans.split(",");
+            // Show modal
+            const editUkuranModal = new bootstrap.Modal(
+                document.getElementById("editUkuranModal")
+            );
+            editUkuranModal.show();
+        });
+    });
+
+    // Handle Jenis Edit Form
+    const editJenisBtns = document.querySelectorAll(".edit-jenis-btn");
+    editJenisBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const jenisId = this.getAttribute("data-id");
+            const kategori = this.getAttribute("data-kategori");
+            const biaya = this.getAttribute("data-biaya");
+            const itemId = this.getAttribute("data-item");
+
+            // Set form action URL
+            document.getElementById(
+                "editJenisForm"
+            ).action = `${baseUrl}/admin/products/jenis/${jenisId}`;
+
+            // Set form values
+            document.getElementById("edit_kategori").value = kategori;
+            document.getElementById("edit_biaya_tambahan_jenis").value = biaya;
+
+            if (itemId) {
+                document.getElementById("edit_item_id_jenis").value = itemId;
+            } else {
+                document.getElementById("edit_item_id_jenis").value = "";
             }
-            $("#edit_ukuran_ids").val(ukurans).trigger("change");
-        } else {
-            // Standard select handling
-            $("#edit_bahan_ids option").prop("selected", false);
-            bahans.forEach(function (id) {
-                $('#edit_bahan_ids option[value="' + id + '"]').prop(
-                    "selected",
-                    true
-                );
-            });
 
-            $("#edit_ukuran_ids option").prop("selected", false);
-            ukurans.forEach(function (id) {
-                $('#edit_ukuran_ids option[value="' + id + '"]').prop(
-                    "selected",
-                    true
-                );
-            });
-        }
-
-        // Show the modal
-        $("#editItemModal").modal("show");
+            // Show modal
+            const editJenisModal = new bootstrap.Modal(
+                document.getElementById("editJenisModal")
+            );
+            editJenisModal.show();
+        });
     });
 
-    // ================= Bahan ====================
-    // Edit Bahan Modal Setup
-    $(".edit-bahan-btn").click(function () {
-        var bahanId = $(this).data("id");
-        var nama = $(this).data("nama");
-        var biaya = $(this).data("biaya");
+    // Handle BiayaDesain Edit Form
+    const editBiayaDesainBtns = document.querySelectorAll(
+        ".edit-biaya-desain-btn"
+    );
+    editBiayaDesainBtns.forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const biayaDesainId = this.getAttribute("data-id");
+            const namaTingkat = this.getAttribute("data-nama");
+            const deskripsi = this.getAttribute("data-deskripsi");
+            const biaya = this.getAttribute("data-biaya");
 
-        // Set the form action
-        $("#editBahanForm").attr(
-            "action",
-            baseUrl + "/admin/products/bahans/" + bahanId
-        );
+            // Set form action URL
+            document.getElementById(
+                "editBiayaDesainForm"
+            ).action = `${baseUrl}/admin/products/biaya-desain/${biayaDesainId}`;
 
-        // Fill the form fields
-        $("#edit_nama_bahan").val(nama);
-        $("#edit_biaya_tambahan").val(biaya);
+            // Set form values
+            document.getElementById("edit_nama_tingkat").value = namaTingkat;
+            document.getElementById("edit_biaya").value = biaya;
+            document.getElementById("edit_deskripsi_biaya").value =
+                deskripsi || "";
 
-        // Show the modal
-        $("#editBahanModal").modal("show");
-    });
-
-    // ================= Ukuran ====================
-    // Edit Ukuran Modal Setup
-    $(".edit-ukuran-btn").click(function () {
-        var ukuranId = $(this).data("id");
-        var size = $(this).data("size");
-        var faktor = $(this).data("faktor");
-
-        // Set the form action
-        $("#editUkuranForm").attr(
-            "action",
-            baseUrl + "/admin/products/ukurans/" + ukuranId
-        );
-
-        // Fill the form fields
-        $("#edit_size").val(size);
-        $("#edit_faktor_harga").val(faktor);
-
-        // Show the modal
-        $("#editUkuranModal").modal("show");
-    });
-
-    // ================= Jenis ====================
-    // Edit Jenis Modal Setup
-    $(".edit-jenis-btn").click(function () {
-        var jenisId = $(this).data("id");
-        var kategori = $(this).data("kategori");
-        var biaya = $(this).data("biaya");
-
-        // Set the form action
-        $("#editJenisForm").attr(
-            "action",
-            baseUrl + "/admin/products/jenis/" + jenisId
-        );
-
-        // Fill the form fields
-        $("#edit_kategori").val(kategori);
-        $("#edit_biaya_tambahan_jenis").val(biaya);
-
-        // Show the modal
-        $("#editJenisModal").modal("show");
-    });
-
-    // ================= Biaya Desain ====================
-    // Edit Biaya Desain Modal Setup
-    $(".edit-biaya-desain-btn").click(function () {
-        var biayaDesainId = $(this).data("id");
-        var nama = $(this).data("nama");
-        var deskripsi = $(this).data("deskripsi");
-        var biaya = $(this).data("biaya");
-
-        // Set the form action
-        $("#editBiayaDesainForm").attr(
-            "action",
-            baseUrl + "/admin/products/biaya-desain/" + biayaDesainId
-        );
-
-        // Fill the form fields
-        $("#edit_nama_tingkat").val(nama);
-        $("#edit_biaya").val(biaya);
-        $("#edit_deskripsi_biaya").val(deskripsi || "");
-
-        // Show the modal
-        $("#editBiayaDesainModal").modal("show");
+            // Show modal
+            const editBiayaDesainModal = new bootstrap.Modal(
+                document.getElementById("editBiayaDesainModal")
+            );
+            editBiayaDesainModal.show();
+        });
     });
 });

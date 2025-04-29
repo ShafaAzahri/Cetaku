@@ -10,6 +10,9 @@ use App\Models\Bahan;
 use App\Models\Ukuran;
 use App\Models\Jenis;
 use App\Models\BiayaDesain;
+use App\Models\ItemBahan; // Tambahkan import ini
+use App\Models\ItemUkuran; // Tambahkan import ini juga untuk nanti
+use App\Models\ItemJenis; // Tambahkan import ini juga untuk nanti
 
 class ProductManagerController extends Controller
 {
@@ -27,8 +30,6 @@ class ProductManagerController extends Controller
     
     /**
      * Display the product management dashboard.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function index()
     {
@@ -37,10 +38,10 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         // Get all data needed for the product management page
-        $items = Item::with(['jenis', 'bahans', 'ukurans'])->get();
-        $bahans = Bahan::all();
-        $ukurans = Ukuran::all();
-        $jenis = Jenis::all();
+        $items = Item::with(['bahans', 'ukurans', 'jenis'])->get();
+        $bahans = Bahan::with('items')->get();
+        $ukurans = Ukuran::with('items')->get();
+        $jenis = Jenis::with('items')->get();
         $biayaDesains = BiayaDesain::all();
         
         return view('admin.product-manager', compact(
@@ -60,30 +61,14 @@ class ProductManagerController extends Controller
         $request->validate([
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'jenis_id' => 'required|exists:jenis,id',
             'harga_dasar' => 'required|numeric|min:0',
-            'bahan_ids' => 'array',
-            'bahan_ids.*' => 'exists:bahans,id',
-            'ukuran_ids' => 'array',
-            'ukuran_ids.*' => 'exists:ukurans,id',
         ]);
         
         $item = Item::create([
             'nama_item' => $request->nama_item,
             'deskripsi' => $request->deskripsi,
-            'jenis_id' => $request->jenis_id,
             'harga_dasar' => $request->harga_dasar
         ]);
-        
-        // Attach bahans if provided
-        if ($request->has('bahan_ids')) {
-            $item->bahans()->attach($request->bahan_ids);
-        }
-        
-        // Attach ukurans if provided
-        if ($request->has('ukuran_ids')) {
-            $item->ukurans()->attach($request->ukuran_ids);
-        }
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Produk berhasil ditambahkan');
@@ -101,12 +86,7 @@ class ProductManagerController extends Controller
         $request->validate([
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
-            'jenis_id' => 'required|exists:jenis,id',
             'harga_dasar' => 'required|numeric|min:0',
-            'bahan_ids' => 'array',
-            'bahan_ids.*' => 'exists:bahans,id',
-            'ukuran_ids' => 'array',
-            'ukuran_ids.*' => 'exists:ukurans,id',
         ]);
         
         $item = Item::findOrFail($id);
@@ -114,23 +94,8 @@ class ProductManagerController extends Controller
         $item->update([
             'nama_item' => $request->nama_item,
             'deskripsi' => $request->deskripsi,
-            'jenis_id' => $request->jenis_id,
             'harga_dasar' => $request->harga_dasar
         ]);
-        
-        // Sync bahans
-        if ($request->has('bahan_ids')) {
-            $item->bahans()->sync($request->bahan_ids);
-        } else {
-            $item->bahans()->detach();
-        }
-        
-        // Sync ukurans
-        if ($request->has('ukuran_ids')) {
-            $item->ukurans()->sync($request->ukuran_ids);
-        } else {
-            $item->ukurans()->detach();
-        }
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Produk berhasil diperbarui');
@@ -150,6 +115,7 @@ class ProductManagerController extends Controller
         // Detach relations
         $item->bahans()->detach();
         $item->ukurans()->detach();
+        $item->jenis()->detach();
         
         $item->delete();
         
@@ -167,14 +133,19 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
+            'item_id' => 'required|exists:items,id',
             'nama_bahan' => 'required|string|max:255',
             'biaya_tambahan' => 'required|numeric|min:0'
         ]);
         
-        Bahan::create([
+        $bahan = Bahan::create([
             'nama_bahan' => $request->nama_bahan,
             'biaya_tambahan' => $request->biaya_tambahan
         ]);
+        
+        // Attach bahan to the selected item
+        $item = Item::find($request->item_id);
+        $item->bahans()->attach($bahan->id);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Bahan berhasil ditambahkan');
@@ -190,6 +161,7 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
+            'item_id' => 'required|exists:items,id',
             'nama_bahan' => 'required|string|max:255',
             'biaya_tambahan' => 'required|numeric|min:0'
         ]);
@@ -200,6 +172,13 @@ class ProductManagerController extends Controller
             'nama_bahan' => $request->nama_bahan,
             'biaya_tambahan' => $request->biaya_tambahan
         ]);
+        
+        // Update the item relation - first detach from all items
+        ItemBahan::where('bahan_id', $id)->delete();
+        
+        // Then attach to the selected item
+        $item = Item::find($request->item_id);
+        $item->bahans()->attach($bahan->id);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Bahan berhasil diperbarui');
@@ -216,11 +195,8 @@ class ProductManagerController extends Controller
         
         $bahan = Bahan::findOrFail($id);
         
-        // Check if the bahan is used in any products
-        if ($bahan->items()->count() > 0) {
-            return redirect()->route('admin.product-manager')
-                ->with('error', 'Bahan tidak dapat dihapus karena masih digunakan dalam produk');
-        }
+        // Remove all association with items
+        ItemBahan::where('bahan_id', $id)->delete();
         
         $bahan->delete();
         
@@ -238,14 +214,19 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
+            'item_id' => 'required|exists:items,id',
             'size' => 'required|string|max:100',
             'faktor_harga' => 'required|numeric|min:0'
         ]);
         
-        Ukuran::create([
+        $ukuran = Ukuran::create([
             'size' => $request->size,
             'faktor_harga' => $request->faktor_harga
         ]);
+        
+        // Attach ukuran to the selected item
+        $item = Item::find($request->item_id);
+        $item->ukurans()->attach($ukuran->id);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Ukuran berhasil ditambahkan');
@@ -261,6 +242,7 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
+            'item_id' => 'required|exists:items,id',
             'size' => 'required|string|max:100',
             'faktor_harga' => 'required|numeric|min:0'
         ]);
@@ -271,6 +253,13 @@ class ProductManagerController extends Controller
             'size' => $request->size,
             'faktor_harga' => $request->faktor_harga
         ]);
+        
+        // Update the item relation - first detach from all items
+        ItemUkuran::where('ukuran_id', $id)->delete();
+        
+        // Then attach to the selected item
+        $item = Item::find($request->item_id);
+        $item->ukurans()->attach($ukuran->id);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Ukuran berhasil diperbarui');
@@ -287,11 +276,8 @@ class ProductManagerController extends Controller
         
         $ukuran = Ukuran::findOrFail($id);
         
-        // Check if the ukuran is used in any products
-        if ($ukuran->items()->count() > 0) {
-            return redirect()->route('admin.product-manager')
-                ->with('error', 'Ukuran tidak dapat dihapus karena masih digunakan dalam produk');
-        }
+        // Remove all association with items
+        ItemUkuran::where('ukuran_id', $id)->delete();
         
         $ukuran->delete();
         
@@ -309,14 +295,19 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
+            'item_id' => 'required|exists:items,id',
             'kategori' => 'required|string|max:255',
             'biaya_tambahan' => 'required|numeric|min:0'
         ]);
         
-        Jenis::create([
+        $jenis = Jenis::create([
             'kategori' => $request->kategori,
             'biaya_tambahan' => $request->biaya_tambahan
         ]);
+        
+        // Attach jenis to the selected item
+        $item = Item::find($request->item_id);
+        $item->jenis()->attach($jenis->id);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Jenis berhasil ditambahkan');
@@ -332,6 +323,7 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
+            'item_id' => 'required|exists:items,id',
             'kategori' => 'required|string|max:255',
             'biaya_tambahan' => 'required|numeric|min:0'
         ]);
@@ -342,6 +334,13 @@ class ProductManagerController extends Controller
             'kategori' => $request->kategori,
             'biaya_tambahan' => $request->biaya_tambahan
         ]);
+        
+        // Update the item relation - first detach from all items
+        ItemJenis::where('jenis_id', $id)->delete();
+        
+        // Then attach to the selected item
+        $item = Item::find($request->item_id);
+        $item->jenis()->attach($jenis->id);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Jenis berhasil diperbarui');
@@ -358,11 +357,8 @@ class ProductManagerController extends Controller
         
         $jenis = Jenis::findOrFail($id);
         
-        // Check if the jenis is used in any products
-        if ($jenis->items()->count() > 0) {
-            return redirect()->route('admin.product-manager')
-                ->with('error', 'Jenis tidak dapat dihapus karena masih digunakan dalam produk');
-        }
+        // Remove all association with items
+        ItemJenis::where('jenis_id', $id)->delete();
         
         $jenis->delete();
         

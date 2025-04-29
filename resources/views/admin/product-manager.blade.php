@@ -72,10 +72,8 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Nama Produk</th>
-                                    <th>Jenis</th>
+                                    <th>Deskripsi</th>
                                     <th>Harga Dasar</th>
-                                    <th>Bahan</th>
-                                    <th>Ukuran</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -84,28 +82,15 @@
                                     <tr>
                                         <td>{{ $item->id }}</td>
                                         <td>{{ $item->nama_item }}</td>
-                                        <td>{{ $item->jenis->kategori ?? 'Tidak ada' }}</td>
+                                        <td>{{ Str::limit($item->deskripsi, 50) }}</td>
                                         <td>Rp {{ number_format($item->harga_dasar, 0, ',', '.') }}</td>
-                                        <td>
-                                            <small>
-                                                {{ $item->bahans->count() ? $item->bahans->pluck('nama_bahan')->join(', ') : 'Tidak ada' }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <small>
-                                                {{ $item->ukurans->count() ? $item->ukurans->pluck('size')->join(', ') : 'Tidak ada' }}
-                                            </small>
-                                        </td>
                                         <td>
                                             <div class="item-actions">
                                                 <button type="button" class="btn btn-sm btn-info edit-item-btn" 
                                                         data-id="{{ $item->id }}" 
                                                         data-nama="{{ $item->nama_item }}"
                                                         data-deskripsi="{{ $item->deskripsi }}"
-                                                        data-jenis="{{ $item->jenis_id }}"
-                                                        data-harga="{{ $item->harga_dasar }}"
-                                                        data-bahans="{{ $item->bahans->pluck('id') }}"
-                                                        data-ukurans="{{ $item->ukurans->pluck('id') }}">
+                                                        data-harga="{{ $item->harga_dasar }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <form action="{{ route('admin.items.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
@@ -120,7 +105,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center">Tidak ada produk</td>
+                                        <td colspan="5" class="text-center">Tidak ada produk</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -139,6 +124,7 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Item Produk</th>
                                     <th>Nama Bahan</th>
                                     <th>Biaya Tambahan</th>
                                     <th>Aksi</th>
@@ -148,6 +134,13 @@
                                 @forelse($bahans as $bahan)
                                     <tr>
                                         <td>{{ $bahan->id }}</td>
+                                        <td>
+                                            @if($bahan->items->count() > 0)
+                                                {{ $bahan->items->first()->nama_item }}
+                                            @else
+                                                <span class="text-muted">Tidak terkait</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $bahan->nama_bahan }}</td>
                                         <td>Rp {{ number_format($bahan->biaya_tambahan, 0, ',', '.') }}</td>
                                         <td>
@@ -155,7 +148,8 @@
                                                 <button type="button" class="btn btn-sm btn-info edit-bahan-btn" 
                                                         data-id="{{ $bahan->id }}" 
                                                         data-nama="{{ $bahan->nama_bahan }}"
-                                                        data-biaya="{{ $bahan->biaya_tambahan }}">
+                                                        data-biaya="{{ $bahan->biaya_tambahan }}"
+                                                        data-item="{{ $bahan->items->count() > 0 ? $bahan->items->first()->id : '' }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <form action="{{ route('admin.bahans.destroy', $bahan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus bahan ini?');">
@@ -170,7 +164,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center">Tidak ada bahan</td>
+                                        <td colspan="5" class="text-center">Tidak ada bahan</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -189,6 +183,7 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Item Produk</th>
                                     <th>Ukuran</th>
                                     <th>Faktor Harga</th>
                                     <th>Aksi</th>
@@ -198,6 +193,13 @@
                                 @forelse($ukurans as $ukuran)
                                     <tr>
                                         <td>{{ $ukuran->id }}</td>
+                                        <td>
+                                            @if($ukuran->items->count() > 0)
+                                                {{ $ukuran->items->first()->nama_item }}
+                                            @else
+                                                <span class="text-muted">Tidak terkait</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $ukuran->size }}</td>
                                         <td>x{{ number_format($ukuran->faktor_harga, 2) }}</td>
                                         <td>
@@ -205,7 +207,8 @@
                                                 <button type="button" class="btn btn-sm btn-info edit-ukuran-btn" 
                                                         data-id="{{ $ukuran->id }}" 
                                                         data-size="{{ $ukuran->size }}"
-                                                        data-faktor="{{ $ukuran->faktor_harga }}">
+                                                        data-faktor="{{ $ukuran->faktor_harga }}"
+                                                        data-item="{{ $ukuran->items->count() > 0 ? $ukuran->items->first()->id : '' }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <form action="{{ route('admin.ukurans.destroy', $ukuran->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus ukuran ini?');">
@@ -220,7 +223,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center">Tidak ada ukuran</td>
+                                        <td colspan="5" class="text-center">Tidak ada ukuran</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -239,6 +242,7 @@
                             <thead>
                                 <tr>
                                     <th>ID</th>
+                                    <th>Item Produk</th>
                                     <th>Kategori</th>
                                     <th>Biaya Tambahan</th>
                                     <th>Aksi</th>
@@ -248,6 +252,13 @@
                                 @forelse($jenis as $j)
                                     <tr>
                                         <td>{{ $j->id }}</td>
+                                        <td>
+                                            @if($j->items->count() > 0)
+                                                {{ $j->items->first()->nama_item }}
+                                            @else
+                                                <span class="text-muted">Tidak terkait</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $j->kategori }}</td>
                                         <td>Rp {{ number_format($j->biaya_tambahan, 0, ',', '.') }}</td>
                                         <td>
@@ -255,7 +266,8 @@
                                                 <button type="button" class="btn btn-sm btn-info edit-jenis-btn" 
                                                         data-id="{{ $j->id }}" 
                                                         data-kategori="{{ $j->kategori }}"
-                                                        data-biaya="{{ $j->biaya_tambahan }}">
+                                                        data-biaya="{{ $j->biaya_tambahan }}"
+                                                        data-item="{{ $j->items->count() > 0 ? $j->items->first()->id : '' }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <form action="{{ route('admin.jenis.destroy', $j->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jenis ini?');">
@@ -270,7 +282,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="text-center">Tidak ada jenis</td>
+                                        <td colspan="5" class="text-center">Tidak ada jenis</td>
                                     </tr>
                                 @endforelse
                             </tbody>
