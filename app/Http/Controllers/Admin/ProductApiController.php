@@ -764,7 +764,6 @@ class ProductApiController extends Controller
     public function storeBiayaDesain(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nama_tingkat' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'biaya' => 'required|numeric|min:0'
         ]);
@@ -778,7 +777,6 @@ class ProductApiController extends Controller
         }
         
         $biayaDesain = BiayaDesain::create([
-            'nama_tingkat' => $request->nama_tingkat,
             'deskripsi' => $request->deskripsi,
             'biaya' => $request->biaya
         ]);
@@ -789,7 +787,7 @@ class ProductApiController extends Controller
             'data' => $biayaDesain
         ], 201);
     }
-    
+
     /**
      * Display the specified biaya desain.
      *
@@ -832,7 +830,6 @@ class ProductApiController extends Controller
         }
         
         $validator = Validator::make($request->all(), [
-            'nama_tingkat' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'biaya' => 'required|numeric|min:0'
         ]);
@@ -846,7 +843,6 @@ class ProductApiController extends Controller
         }
         
         $biayaDesain->update([
-            'nama_tingkat' => $request->nama_tingkat,
             'deskripsi' => $request->deskripsi,
             'biaya' => $request->biaya
         ]);
@@ -948,12 +944,10 @@ class ProductApiController extends Controller
         
         // Get design cost details
         $biayaDesain = 0;
-        $namaTingkatDesain = null;
         if ($request->has('tipe_desain') && $request->tipe_desain === 'dibuatkan' && $request->has('biaya_desain_id')) {
             $desain = BiayaDesain::find($request->biaya_desain_id);
             if ($desain) {
                 $biayaDesain = $desain->biaya;
-                $namaTingkatDesain = $desain->nama_tingkat;
             }
         }
         
@@ -986,7 +980,6 @@ class ProductApiController extends Controller
                 ] : null,
                 'desain' => ($request->tipe_desain === 'dibuatkan' && $request->biaya_desain_id) ? [
                     'id' => $request->biaya_desain_id,
-                    'nama' => $namaTingkatDesain,
                     'biaya' => $biayaDesain
                 ] : null,
                 'subtotal' => $totalHarga,

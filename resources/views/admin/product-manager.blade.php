@@ -301,9 +301,8 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Tingkat</th>
-                                    <th>Deskripsi</th>
                                     <th>Biaya</th>
+                                    <th>Deskripsi</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -311,14 +310,12 @@
                                 @forelse($biayaDesains as $index => $biayaDesain)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $biayaDesain->nama_tingkat }}</td>
-                                        <td>{{ Str::limit($biayaDesain->deskripsi, 50) }}</td>
                                         <td>Rp {{ number_format($biayaDesain->biaya, 0, ',', '.') }}</td>
+                                        <td>{{ Str::limit($biayaDesain->deskripsi, 50) }}</td>
                                         <td>
                                             <div class="desain-actions">
                                                 <button type="button" class="btn btn-sm btn-info edit-biaya-desain-btn" 
                                                         data-id="{{ $biayaDesain->id }}" 
-                                                        data-nama="{{ $biayaDesain->nama_tingkat }}"
                                                         data-deskripsi="{{ $biayaDesain->deskripsi }}"
                                                         data-biaya="{{ $biayaDesain->biaya }}">
                                                     <i class="fas fa-edit"></i> Edit
@@ -335,7 +332,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">Tidak ada biaya desain</td>
+                                        <td colspan="4" class="text-center">Tidak ada biaya desain</td>
                                     </tr>
                                 @endforelse
                             </tbody>

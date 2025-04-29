@@ -18,56 +18,7 @@
 </head>
 <body>
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="brand-logo">
-            <i class="fas fa-print"></i>
-            <span class="brand-text">CETAKU</span>
-        </div>
-        <ul class="nav-list">
-            <li class="nav-item">
-                <a href="{{ route('dashboard') }}" class="nav-link active">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span class="nav-text">Beranda</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('admin.product-manager') }}" class="nav-link {{ request()->routeIs('admin.product-manager') ? 'active' : '' }}">
-                    <i class="fas fa-boxes"></i>
-                    <span class="nav-text">Kelola Produk</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="nav-text">Pesanan</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-users"></i>
-                    <span class="nav-text">Pelanggan</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-tie"></i>
-                    <span class="nav-text">Operator</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-truck"></i>
-                    <span class="nav-text">Ekspedisi</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-history"></i>
-                    <span class="nav-text">Riwayat</span>
-                </a>
-            </li>
-        </ul>
-    </aside>
+    @include('admin.components.sidebar')
     
     <!-- Overlay for mobile sidebar -->
     <div class="overlay" id="sidebar-overlay"></div>
@@ -75,40 +26,7 @@
     <!-- Main Content -->
     <div class="main-content" id="main-content">
         <!-- Top Navbar -->
-        <nav class="navbar">
-            <div class="d-flex align-items-center">
-                <div class="toggle-sidebar me-3" id="toggle-sidebar">
-                    <i class="fas fa-bars"></i>
-                </div>
-            </div>
-            
-            <form class="search-form d-none d-md-block">
-                <input type="text" class="search-input" placeholder="Masukkan ID Pemesanan dan ID Customer untuk mencari detail info">
-            </form>
-            
-            <div class="user-profile">
-                <div class="avatar">
-                    <img src="https://ui-avatars.com/api/?name={{ Auth::user()->nama }}&background=4361ee&color=fff" alt="User Avatar">
-                </div>
-                <div class="dropdown">
-                    <a class="dropdown-toggle text-decoration-none text-dark" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="d-none d-sm-inline-block me-1">{{ Auth::user()->nama }}</span>
-                        <i class="fas fa-chevron-down fa-xs"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Profil</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                            </form>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+        @include('admin.components.navbar')
         
         <!-- Page Content -->
         <div class="content">

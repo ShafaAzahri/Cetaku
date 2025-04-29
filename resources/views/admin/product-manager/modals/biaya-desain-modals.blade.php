@@ -10,11 +10,6 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="nama_tingkat" class="form-label">Nama Tingkat <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_tingkat" id="nama_tingkat" class="form-control" required>
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="biaya" class="form-label">Biaya <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
@@ -48,11 +43,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="form-group">
-                        <label for="edit_nama_tingkat" class="form-label">Nama Tingkat <span class="text-danger">*</span></label>
-                        <input type="text" name="nama_tingkat" id="edit_nama_tingkat" class="form-control" required>
-                    </div>
-                    
                     <div class="form-group">
                         <label for="edit_biaya" class="form-label">Biaya <span class="text-danger">*</span></label>
                         <div class="input-group">

@@ -369,6 +369,9 @@ class ProductManagerController extends Controller
     /**
      * Store a new biaya desain.
      */
+    /**
+     * Store a new biaya desain.
+     */
     public function storeBiayaDesain(Request $request)
     {
         // Check admin access
@@ -376,13 +379,11 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
-            'nama_tingkat' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'biaya' => 'required|numeric|min:0'
         ]);
         
         BiayaDesain::create([
-            'nama_tingkat' => $request->nama_tingkat,
             'deskripsi' => $request->deskripsi,
             'biaya' => $request->biaya
         ]);
@@ -390,7 +391,7 @@ class ProductManagerController extends Controller
         return redirect()->route('admin.product-manager')
             ->with('success', 'Biaya Desain berhasil ditambahkan');
     }
-    
+
     /**
      * Update an existing biaya desain.
      */
@@ -401,7 +402,6 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $request->validate([
-            'nama_tingkat' => 'required|string|max:100',
             'deskripsi' => 'nullable|string',
             'biaya' => 'required|numeric|min:0'
         ]);
@@ -409,7 +409,6 @@ class ProductManagerController extends Controller
         $biayaDesain = BiayaDesain::findOrFail($id);
         
         $biayaDesain->update([
-            'nama_tingkat' => $request->nama_tingkat,
             'deskripsi' => $request->deskripsi,
             'biaya' => $request->biaya
         ]);

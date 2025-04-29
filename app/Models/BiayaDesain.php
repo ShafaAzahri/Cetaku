@@ -19,7 +19,6 @@ class BiayaDesain extends Model
      * @var array
      */
     protected $fillable = [
-        'nama_tingkat',
         'deskripsi',
         'biaya'
     ];

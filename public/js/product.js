@@ -131,7 +131,6 @@ document.addEventListener("DOMContentLoaded", function () {
     editBiayaDesainBtns.forEach((btn) => {
         btn.addEventListener("click", function () {
             const biayaDesainId = this.getAttribute("data-id");
-            const namaTingkat = this.getAttribute("data-nama");
             const deskripsi = this.getAttribute("data-deskripsi");
             const biaya = this.getAttribute("data-biaya");
 
@@ -141,7 +140,6 @@ document.addEventListener("DOMContentLoaded", function () {
             ).action = `${baseUrl}/admin/products/biaya-desain/${biayaDesainId}`;
 
             // Set form values
-            document.getElementById("edit_nama_tingkat").value = namaTingkat;
             document.getElementById("edit_biaya").value = biaya;
             document.getElementById("edit_deskripsi_biaya").value =
                 deskripsi || "";
