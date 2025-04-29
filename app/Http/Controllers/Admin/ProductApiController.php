@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -22,21 +22,21 @@ class ProductApiController extends Controller
      */
     public function getAllItems()
     {
-    try {
-        $items = Item::all(); // Simplified query without relationships
-        
-        return response()->json([
-            'success' => true,
-            'data' => $items
-        ]);
-    } catch (\Exception $e) {
-        // Add debugging
-        return response()->json([
-            'success' => false,
-            'message' => 'Error: ' . $e->getMessage()
-        ], 500);
+        try {
+            // Ambil item dengan relasi (bahans, ukurans, jenis)
+            $items = Item::with(['bahans', 'ukurans', 'jenis'])->get();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $items
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
     
     /**
      * Store a newly created item.
@@ -240,12 +240,32 @@ class ProductApiController extends Controller
      */
     public function getAllBahans()
     {
-        $bahans = Bahan::all();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $bahans
-        ]);
+        try {
+            // Ambil bahan dengan relasi items
+            $bahans = Bahan::with('items')->get();
+            
+            // Tambahkan informasi item terkait
+            $bahansWithItems = $bahans->map(function($bahan) {
+                $itemNames = $bahan->items->pluck('nama_item')->join(', ');
+                return [
+                    'id' => $bahan->id,
+                    'nama_bahan' => $bahan->nama_bahan,
+                    'biaya_tambahan' => $bahan->biaya_tambahan,
+                    'items' => $bahan->items,
+                    'item_names' => $itemNames
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $bahansWithItems
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     /**
@@ -389,12 +409,32 @@ class ProductApiController extends Controller
      */
     public function getAllUkurans()
     {
-        $ukurans = Ukuran::all();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $ukurans
-        ]);
+        try {
+            // Ambil ukuran dengan relasi items
+            $ukurans = Ukuran::with('items')->get();
+            
+            // Tambahkan informasi item terkait
+            $ukuransWithItems = $ukurans->map(function($ukuran) {
+                $itemNames = $ukuran->items->pluck('nama_item')->join(', ');
+                return [
+                    'id' => $ukuran->id,
+                    'size' => $ukuran->size,
+                    'faktor_harga' => $ukuran->faktor_harga,
+                    'items' => $ukuran->items,
+                    'item_names' => $itemNames
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $ukuransWithItems
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     /**
@@ -538,12 +578,32 @@ class ProductApiController extends Controller
      */
     public function getAllJenis()
     {
-        $jenis = Jenis::all();
-        
-        return response()->json([
-            'success' => true,
-            'data' => $jenis
-        ]);
+        try {
+            // Ambil jenis dengan relasi items
+            $jenis = Jenis::with('items')->get();
+            
+            // Tambahkan informasi item terkait
+            $jenisWithItems = $jenis->map(function($j) {
+                $itemNames = $j->items->pluck('nama_item')->join(', ');
+                return [
+                    'id' => $j->id,
+                    'kategori' => $j->kategori,
+                    'biaya_tambahan' => $j->biaya_tambahan,
+                    'items' => $j->items,
+                    'item_names' => $itemNames
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $jenisWithItems
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     /**
@@ -848,51 +908,87 @@ class ProductApiController extends Controller
             ], 422);
         }
         
-        // Get the base item
+        // Get item details
         $item = Item::find($request->item_id);
         $hargaDasar = $item->harga_dasar;
+        $namaItem = $item->nama_item;
         
-        // Get additional cost for bahan
+        // Get bahan details
         $biayaBahan = 0;
+        $namaBahan = null;
         if ($request->has('bahan_id') && $request->bahan_id) {
             $bahan = Bahan::find($request->bahan_id);
-            $biayaBahan = $bahan ? $bahan->biaya_tambahan : 0;
+            if ($bahan) {
+                $biayaBahan = $bahan->biaya_tambahan;
+                $namaBahan = $bahan->nama_bahan;
+            }
         }
         
-        // Get price factor for ukuran
+        // Get ukuran details
         $faktorUkuran = 1;
+        $namaUkuran = null;
         if ($request->has('ukuran_id') && $request->ukuran_id) {
             $ukuran = Ukuran::find($request->ukuran_id);
-            $faktorUkuran = $ukuran ? $ukuran->faktor_harga : 1;
+            if ($ukuran) {
+                $faktorUkuran = $ukuran->faktor_harga;
+                $namaUkuran = $ukuran->size;
+            }
         }
         
-        // Get additional cost for jenis
+        // Get jenis details
         $biayaJenis = 0;
+        $namaJenis = null;
         if ($request->has('jenis_id') && $request->jenis_id) {
             $jenis = Jenis::find($request->jenis_id);
-            $biayaJenis = $jenis ? $jenis->biaya_tambahan : 0;
+            if ($jenis) {
+                $biayaJenis = $jenis->biaya_tambahan;
+                $namaJenis = $jenis->kategori;
+            }
         }
         
-        // Get design cost if applicable
+        // Get design cost details
         $biayaDesain = 0;
+        $namaTingkatDesain = null;
         if ($request->has('tipe_desain') && $request->tipe_desain === 'dibuatkan' && $request->has('biaya_desain_id')) {
             $desain = BiayaDesain::find($request->biaya_desain_id);
-            $biayaDesain = $desain ? $desain->biaya : 0;
+            if ($desain) {
+                $biayaDesain = $desain->biaya;
+                $namaTingkatDesain = $desain->nama_tingkat;
+            }
         }
         
         // Calculate total price
-        // (base price + bahan cost + jenis cost) * ukuran factor + design cost
         $totalHarga = ($hargaDasar + $biayaBahan + $biayaJenis) * $faktorUkuran;
         $hargaTotal = $totalHarga + $biayaDesain;
         
         return response()->json([
             'success' => true,
             'data' => [
-                'harga_dasar' => $hargaDasar,
-                'biaya_bahan' => $biayaBahan,
-                'faktor_ukuran' => $faktorUkuran,
-                'biaya_jenis' => $biayaJenis,
-                'biaya_desain' => $biayaDesain,
+                'item' => [
+                    'id' => $item->id,
+                    'nama' => $namaItem,
+                    'harga_dasar' => $hargaDasar
+                ],
+                'bahan' => $request->bahan_id ? [
+                    'id' => $request->bahan_id,
+                    'nama' => $namaBahan,
+                    'biaya' => $biayaBahan
+                ] : null,
+                'ukuran' => $request->ukuran_id ? [
+                    'id' => $request->ukuran_id,
+                    'nama' => $namaUkuran,
+                    'faktor' => $faktorUkuran
+                ] : null,
+                'jenis' => $request->jenis_id ? [
+                    'id' => $request->jenis_id,
+                    'nama' => $namaJenis,
+                    'biaya' => $biayaJenis
+                ] : null,
+                'desain' => ($request->tipe_desain === 'dibuatkan' && $request->biaya_desain_id) ? [
+                    'id' => $request->biaya_desain_id,
+                    'nama' => $namaTingkatDesain,
+                    'biaya' => $biayaDesain
+                ] : null,
                 'subtotal' => $totalHarga,
                 'harga_total' => $hargaTotal
             ]

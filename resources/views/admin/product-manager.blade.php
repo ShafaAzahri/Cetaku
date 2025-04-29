@@ -70,7 +70,7 @@
                         <table class="table table-bordered table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>No</th>
                                     <th>Nama Produk</th>
                                     <th>Deskripsi</th>
                                     <th>Harga Dasar</th>
@@ -78,9 +78,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($items as $item)
+                                @forelse($items as $index => $item)
                                     <tr>
-                                        <td>{{ $item->id }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>{{ $item->nama_item }}</td>
                                         <td>{{ Str::limit($item->deskripsi, 50) }}</td>
                                         <td>Rp {{ number_format($item->harga_dasar, 0, ',', '.') }}</td>
@@ -123,7 +123,7 @@
                         <table class="table table-bordered table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>No</th>
                                     <th>Item Produk</th>
                                     <th>Nama Bahan</th>
                                     <th>Biaya Tambahan</th>
@@ -131,9 +131,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($bahans as $bahan)
+                                @forelse($bahans as $index => $bahan)
                                     <tr>
-                                        <td>{{ $bahan->id }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>
                                             @if($bahan->items->count() > 0)
                                                 {{ $bahan->items->first()->nama_item }}
@@ -182,7 +182,7 @@
                         <table class="table table-bordered table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>No</th>
                                     <th>Item Produk</th>
                                     <th>Ukuran</th>
                                     <th>Faktor Harga</th>
@@ -190,9 +190,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($ukurans as $ukuran)
+                                @forelse($ukurans as $index => $ukuran)
                                     <tr>
-                                        <td>{{ $ukuran->id }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>
                                             @if($ukuran->items->count() > 0)
                                                 {{ $ukuran->items->first()->nama_item }}
@@ -241,7 +241,7 @@
                         <table class="table table-bordered table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>No</th>
                                     <th>Item Produk</th>
                                     <th>Kategori</th>
                                     <th>Biaya Tambahan</th>
@@ -249,9 +249,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($jenis as $j)
+                                @forelse($jenis as $index => $j)
                                     <tr>
-                                        <td>{{ $j->id }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>
                                             @if($j->items->count() > 0)
                                                 {{ $j->items->first()->nama_item }}
@@ -300,7 +300,7 @@
                         <table class="table table-bordered table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>No</th>
                                     <th>Tingkat</th>
                                     <th>Deskripsi</th>
                                     <th>Biaya</th>
@@ -308,9 +308,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($biayaDesains as $biayaDesain)
+                                @forelse($biayaDesains as $index => $biayaDesain)
                                     <tr>
-                                        <td>{{ $biayaDesain->id }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>{{ $biayaDesain->nama_tingkat }}</td>
                                         <td>{{ Str::limit($biayaDesain->deskripsi, 50) }}</td>
                                         <td>Rp {{ number_format($biayaDesain->biaya, 0, ',', '.') }}</td>
