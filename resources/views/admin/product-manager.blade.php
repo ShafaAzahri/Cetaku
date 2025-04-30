@@ -71,6 +71,7 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
+                                    <th>Gambar</th>
                                     <th>Nama Produk</th>
                                     <th>Deskripsi</th>
                                     <th>Harga Dasar</th>
@@ -81,6 +82,13 @@
                                 @forelse($items as $index => $item)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
+                                        <td>
+                                            @if($item->gambar)
+                                                <img src="{{ asset('storage/' . $item->gambar) }}" alt="{{ $item->nama_item }}" class="img-thumbnail" style="max-height: 50px;">
+                                            @else
+                                                <span class="text-muted">Tidak ada gambar</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $item->nama_item }}</td>
                                         <td>{{ Str::limit($item->deskripsi, 50) }}</td>
                                         <td>Rp {{ number_format($item->harga_dasar, 0, ',', '.') }}</td>
@@ -90,7 +98,8 @@
                                                         data-id="{{ $item->id }}" 
                                                         data-nama="{{ $item->nama_item }}"
                                                         data-deskripsi="{{ $item->deskripsi }}"
-                                                        data-harga="{{ $item->harga_dasar }}">
+                                                        data-harga="{{ $item->harga_dasar }}"
+                                                        data-gambar="{{ $item->gambar ? asset('storage/' . $item->gambar) : '' }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <form action="{{ route('admin.items.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
@@ -105,7 +114,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">Tidak ada produk</td>
+                                        <td colspan="6" class="text-center">Tidak ada produk</td>
                                     </tr>
                                 @endforelse
                             </tbody>

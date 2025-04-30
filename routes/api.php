@@ -5,24 +5,36 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\ProductApiController;
 use App\Http\Controllers\AuthController;
 
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
 */
 
-// Route yang ada sebelumnya - tetap pertahankan
+// Rute Publik
 Route::post('/login', [AuthController::class, 'apiLogin']);
 Route::post('/register', [AuthController::class, 'apiRegister']);
-Route::get('/test', function() {
-    return response()->json(['message' => 'API works!']);
+
+// Rute Produk Publik (yang bisa diakses tanpa login)
+Route::prefix('products')->group(function() {
+    Route::get('/', [ProductApiController::class, 'getAllItems']);
+    Route::get('/{id}', [ProductApiController::class, 'getItem']);
+    Route::post('/calculate-price', [ProductApiController::class, 'calculatePrice']);
+    
+    // Rute untuk mendapatkan opsi produk
+    Route::get('/options/{id}', [ProductApiController::class, 'getItemOptions']);
+    
+    // Rute untuk mendapatkan semua bahan, ukuran, dan jenis
+    Route::get('/bahans', [ProductApiController::class, 'getAllBahans']);
+    Route::get('/ukurans', [ProductApiController::class, 'getAllUkurans']);
+    Route::get('/jenis', [ProductApiController::class, 'getAllJenis']);
+    Route::get('/biaya-desain', [ProductApiController::class, 'getAllBiayaDesain']);
 });
 
 // Protected Routes - Requires API Token
-Route::middleware('auth:api')->group(function () {
-    Route::get('/user', function (Request $request) {
+Route::middleware('auth:api')->group(function() {
+    // User Route
+    Route::get('/user', function(Request $request) {
         $user = $request->user();
         return response()->json([
             'id' => $user->id,
@@ -32,14 +44,13 @@ Route::middleware('auth:api')->group(function () {
         ]);
     });
     
-    // Admin product management routes
-    // Akses ke rute ini akan diverifikasi di controller
-    Route::prefix('admin')->group(function () {
+    // Admin Routes
+    Route::prefix('admin')->group(function() {
         // Item routes
         Route::get('/items', [ProductApiController::class, 'getAllItems']);
         Route::post('/items', [ProductApiController::class, 'storeItem']);
         Route::get('/items/{id}', [ProductApiController::class, 'getItem']);
-        Route::put('/items/{id}', [ProductApiController::class, 'updateItem']);
+        Route::post('/items/{id}', [ProductApiController::class, 'updateItem']); // POST untuk file upload
         Route::delete('/items/{id}', [ProductApiController::class, 'deleteItem']);
         
         // Bahan routes
@@ -70,11 +81,4 @@ Route::middleware('auth:api')->group(function () {
         Route::put('/biaya-desain/{id}', [ProductApiController::class, 'updateBiayaDesain']);
         Route::delete('/biaya-desain/{id}', [ProductApiController::class, 'deleteBiayaDesain']);
     });
-});
-
-// Public product API endpoints
-Route::prefix('products')->group(function () {
-    Route::get('/', [ProductApiController::class, 'getAllItems']);
-    Route::get('/{id}', [ProductApiController::class, 'getItem']);
-    Route::post('/calculate-price', [ProductApiController::class, 'calculatePrice']);
 });

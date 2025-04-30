@@ -62,18 +62,28 @@ class ProductManagerController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_dasar' => 'required|numeric|min:0',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi gambar
         ]);
         
-        $item = Item::create([
+        $data = [
             'nama_item' => $request->nama_item,
             'deskripsi' => $request->deskripsi,
             'harga_dasar' => $request->harga_dasar
-        ]);
+        ];
+        
+        // Handle gambar upload
+        if ($request->hasFile('gambar') && $request->file('gambar')->isValid()) {
+            $gambarPath = $request->file('gambar')->store('product-images', 'public');
+            $data['gambar'] = $gambarPath;
+        }
+        
+        $item = Item::create($data);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Produk berhasil ditambahkan');
     }
     
+
     /**
      * Update an existing product.
      */
@@ -87,20 +97,34 @@ class ProductManagerController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_dasar' => 'required|numeric|min:0',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi gambar
         ]);
         
         $item = Item::findOrFail($id);
         
-        $item->update([
+        $data = [
             'nama_item' => $request->nama_item,
             'deskripsi' => $request->deskripsi,
             'harga_dasar' => $request->harga_dasar
-        ]);
+        ];
+        
+        // Handle gambar upload
+        if ($request->hasFile('gambar') && $request->file('gambar')->isValid()) {
+            // Hapus gambar lama jika ada
+            if ($item->gambar && file_exists(storage_path('app/public/' . $item->gambar))) {
+                unlink(storage_path('app/public/' . $item->gambar));
+            }
+            
+            $gambarPath = $request->file('gambar')->store('product-images', 'public');
+            $data['gambar'] = $gambarPath;
+        }
+        
+        $item->update($data);
         
         return redirect()->route('admin.product-manager')
             ->with('success', 'Produk berhasil diperbarui');
     }
-    
+
     /**
      * Delete a product.
      */
@@ -111,6 +135,11 @@ class ProductManagerController extends Controller
         if ($checkResult) return $checkResult;
         
         $item = Item::findOrFail($id);
+        
+        // Hapus gambar jika ada
+        if ($item->gambar && file_exists(storage_path('app/public/' . $item->gambar))) {
+            unlink(storage_path('app/public/' . $item->gambar));
+        }
         
         // Detach relations
         $item->bahans()->detach();
@@ -413,7 +442,7 @@ class ProductManagerController extends Controller
             'biaya' => $request->biaya
         ]);
         
-        return redirect()->route('admin.product-manager')
+        return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
             ->with('success', 'Biaya Desain berhasil diperbarui');
     }
     

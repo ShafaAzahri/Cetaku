@@ -1,5 +1,40 @@
 // Script untuk form edit pada product-manager
 
+// Simpan ini di public/js/product.js atau tambahkan ke script section di product-manager.blade.php
+
+$(document).ready(function () {
+    // Edit item button click
+    $(".edit-item-btn").on("click", function () {
+        var id = $(this).data("id");
+        var nama = $(this).data("nama");
+        var deskripsi = $(this).data("deskripsi");
+        var harga = $(this).data("harga");
+        var gambar = $(this).data("gambar");
+
+        // Set form action URL
+        $("#editItemForm").attr(
+            "action",
+            baseUrl + "/admin/products/items/" + id
+        );
+
+        // Set form values
+        $("#edit_nama_item").val(nama);
+        $("#edit_deskripsi").val(deskripsi);
+        $("#edit_harga_dasar").val(harga);
+
+        // Handle gambar
+        if (gambar) {
+            $("#current_image").attr("src", gambar);
+            $("#current_image_container").show();
+        } else {
+            $("#current_image_container").hide();
+        }
+
+        // Show the modal
+        $("#editItemModal").modal("show");
+    });
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     // Handle Item Edit Form
     const editItemBtns = document.querySelectorAll(".edit-item-btn");
