@@ -35,18 +35,33 @@
     </div>
     
     <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="{{ asset('js/auth.js') }}"></script>
     
     <script>
+        // Batasi percobaan reload
+        const reloadAttempts = sessionStorage.getItem('reloadAttempts') || 0;
+        if (reloadAttempts > 3) {
+            console.error("Terlalu banyak percobaan reload, menghentikan");
+            sessionStorage.setItem('reloadAttempts', 0);
+        } else {
+            // Tingkatkan counter jika halaman di-reload
+            window.addEventListener('beforeunload', function() {
+                sessionStorage.setItem('reloadAttempts', parseInt(reloadAttempts) + 1);
+            });
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
             // Setup CSRF token untuk semua request API
             axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
-            // Cek autentikasi
+            console.log("DOM loaded in admin.blade.php");
+            
+            /* 
+            // Komentar kode ini sementara untuk debugging
             if (!isLoggedIn()) {
                 window.location.href = '/login';
                 return;
@@ -58,8 +73,10 @@
                 window.location.href = '/user/welcome';
                 return;
             }
+            */
             
             // Tampilkan nama user
+            const user = getCurrentUser();
             if (user) {
                 const userNameElements = document.querySelectorAll('.user-name');
                 userNameElements.forEach(el => {
@@ -73,22 +90,26 @@
             const overlay = document.getElementById('sidebar-overlay');
             
             // Toggle sidebar when button is clicked
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-                
-                // For mobile
-                if (window.innerWidth < 992) {
-                    sidebar.classList.toggle('mobile-visible');
-                    overlay.classList.toggle('active');
-                }
-            });
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                    
+                    // For mobile
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.toggle('mobile-visible');
+                        overlay.classList.toggle('active');
+                    }
+                });
+            }
             
             // Close sidebar when clicking outside on mobile
-            overlay.addEventListener('click', function() {
-                sidebar.classList.remove('mobile-visible');
-                overlay.classList.remove('active');
-            });
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('mobile-visible');
+                    overlay.classList.remove('active');
+                });
+            }
             
             // Adjust sidebar on window resize
             window.addEventListener('resize', function() {
@@ -97,17 +118,6 @@
                     mainContent.classList.remove('expanded');
                     sidebar.classList.remove('mobile-visible');
                     overlay.classList.remove('active');
-                }
-            });
-            
-            // Add active class to current page nav link
-            const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.nav-link');
-            
-            navLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href === currentPath || currentPath.includes(href) && href !== '#') {
-                    link.classList.add('active');
                 }
             });
             

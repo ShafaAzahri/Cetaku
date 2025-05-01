@@ -243,26 +243,16 @@
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="{{ asset('js/auth.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Cek autentikasi
-        if (!isLoggedIn()) {
-            window.location.href = '/login';
-            return;
-        }
-        
-        // Cek role
-        const user = getCurrentUser();
-        if (user && user.role !== 'admin' && user.role !== 'superadmin') {
-            window.location.href = '/user/welcome';
-            return;
-        }
+        console.log("Dashboard script loaded");
         
         // Tampilkan nama admin
-        if (user) {
-            document.getElementById('admin-name').textContent = user.nama;
+        if (typeof getCurrentUser === 'function') {
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('admin-name').textContent = user.nama;
+            }
         }
         
         // Line Chart untuk Statistik Penjualan
@@ -323,6 +313,4 @@
         });
     });
 </script>
-
-<script src="{{ asset('js/check-auth.js') }}"></script>
 @endsection

@@ -1,74 +1,42 @@
-/**
- * Script untuk memeriksa status autentikasi pada halaman awal
- * dan mengarahkan pengguna ke halaman yang sesuai dengan role-nya
- */
+// File check-auth.js
+console.log("Check-auth.js loaded successfully");
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Ambil token dari localStorage
-    const token = localStorage.getItem("auth_token");
+    console.log("DOM loaded in check-auth.js");
 
-    // Jika token tersedia, cek validitasnya dan dapatkan info user
-    if (token) {
-        // Setup token untuk request API
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    // Dapatkan token dari localStorage
+    const token = localStorage.getItem("api_token");
 
-        // Cek apakah token sudah expired
-        const expires = localStorage.getItem("auth_expires");
-        if (expires) {
-            const now = new Date();
-            const expiryDate = new Date(expires);
+    // Jika tidak ada token, redirect ke login
+    if (!token) {
+        console.log("No token found in check-auth.js");
+        // Nonaktifkan redirect untuk debugging
+        // window.location.href = '/login';
+        return;
+    }
 
-            if (now > expiryDate) {
-                // Token sudah expired, hapus data autentikasi
-                localStorage.removeItem("auth_token");
-                localStorage.removeItem("auth_expires");
-                localStorage.removeItem("auth_user");
-                return;
-            }
-        }
+    // Cek tanggal kedaluwarsa
+    const expiresAt = localStorage.getItem("expires_at");
+    if (expiresAt && new Date(expiresAt) < new Date()) {
+        console.log("Token expired in check-auth.js");
+        localStorage.removeItem("api_token");
+        localStorage.removeItem("expires_at");
+        localStorage.removeItem("user");
+        // Nonaktifkan redirect untuk debugging
+        // window.location.href = '/login';
+        return;
+    }
 
-        // Dapatkan info user dari localStorage
-        const userJson = localStorage.getItem("auth_user");
-        if (userJson) {
-            const user = JSON.parse(userJson);
+    // Dapatkan data user dari localStorage
+    const userString = localStorage.getItem("user");
+    if (userString) {
+        const user = JSON.parse(userString);
+        console.log("User logged in:", user.nama);
 
-            // Redirect berdasarkan role
-            if (user.role === "superadmin") {
-                window.location.href = "/superadmin/dashboard";
-            } else if (user.role === "admin") {
-                window.location.href = "/admin/dashboard";
-            } else {
-                window.location.href = "/user/welcome";
-            }
-        } else {
-            // Jika data user tidak ada di localStorage tapi token masih valid
-            // Ambil data user dari API
-            axios
-                .get("/api/auth/user")
-                .then((response) => {
-                    if (response.data.success) {
-                        localStorage.setItem(
-                            "auth_user",
-                            JSON.stringify(response.data.user)
-                        );
-
-                        // Redirect berdasarkan role
-                        if (response.data.user.role === "superadmin") {
-                            window.location.href = "/superadmin/dashboard";
-                        } else if (response.data.user.role === "admin") {
-                            window.location.href = "/admin/dashboard";
-                        } else {
-                            window.location.href = "/user/welcome";
-                        }
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error fetching user data:", error);
-                    // Hapus token jika ada error (token tidak valid)
-                    localStorage.removeItem("auth_token");
-                    localStorage.removeItem("auth_expires");
-                    localStorage.removeItem("auth_user");
-                });
-        }
+        // Tampilkan nama user di sidebar
+        const userNameElements = document.querySelectorAll(".user-name");
+        userNameElements.forEach((el) => {
+            el.textContent = user.nama;
+        });
     }
 });
