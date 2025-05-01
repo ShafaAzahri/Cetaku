@@ -300,26 +300,17 @@ const loadItemsForBahanDropdown = async () => {
             const itemSelect = document.getElementById("item_id");
             const editItemSelect = document.getElementById("edit_item_id");
 
-            // Clear existing options first
-            if (itemSelect) {
-                itemSelect.innerHTML =
-                    '<option value="">-- Pilih Item Produk --</option>';
-            }
-
-            if (editItemSelect) {
-                editItemSelect.innerHTML =
-                    '<option value="">-- Pilih Item Produk --</option>';
-            }
+            // Clear existing options
+            itemSelect.innerHTML =
+                '<option value="">-- Pilih Item Produk --</option>';
+            editItemSelect.innerHTML =
+                '<option value="">-- Pilih Item Produk --</option>';
 
             // Add new options
             items.forEach((item) => {
                 const option = `<option value="${item.id}">${item.nama_item}</option>`;
-                if (itemSelect) {
-                    itemSelect.innerHTML += option;
-                }
-                if (editItemSelect) {
-                    editItemSelect.innerHTML += option;
-                }
+                itemSelect.innerHTML += option;
+                editItemSelect.innerHTML += option;
             });
         }
     } catch (error) {
@@ -443,7 +434,9 @@ const handleEditBahan = async (event) => {
     try {
         const token = localStorage.getItem("api_token");
 
-        // First, get bahan data
+        // Load items for dropdown first
+        await loadItemsForBahanDropdown();
+
         const response = await axios.get(`/api/admin/bahans/${bahanId}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -454,10 +447,7 @@ const handleEditBahan = async (event) => {
         if (response.data.success) {
             const bahan = response.data.data;
 
-            // Store bahan ID for update
-            document.getElementById("editBahanForm").dataset.bahanId = bahanId;
-
-            // Fill form fields first
+            // Fill form
             document.getElementById("edit_nama_bahan").value = bahan.nama_bahan;
             document.getElementById("edit_biaya_tambahan").value =
                 bahan.biaya_tambahan;
@@ -469,59 +459,14 @@ const handleEditBahan = async (event) => {
                 isAvailableCheckbox.checked = bahan.is_available || false;
             }
 
-            // Load and set dropdown
+            // Set item dropdown value
             const editItemSelect = document.getElementById("edit_item_id");
-            if (editItemSelect) {
-                // Clear dropdown first
-                editItemSelect.innerHTML =
-                    '<option value="">-- Pilih Item Produk --</option>';
-
-                // Load items from API
-                const itemsResponse = await axios.get("/api/admin/items/all", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        Accept: "application/json",
-                    },
-                });
-
-                if (itemsResponse.data.success) {
-                    const items = itemsResponse.data.data;
-
-                    // Add all options
-                    items.forEach((item) => {
-                        const option = document.createElement("option");
-                        option.value = item.id;
-                        option.textContent = item.nama_item;
-                        editItemSelect.appendChild(option);
-                    });
-
-                    // Set selected value after all options are added
-                    if (bahan.items && bahan.items.length > 0) {
-                        editItemSelect.value = bahan.items[0].id;
-
-                        // Force update the dropdown
-                        editItemSelect.dispatchEvent(new Event("change"));
-
-                        // Double check the value is set
-                        if (editItemSelect.value != bahan.items[0].id) {
-                            // If not set, try again with a small delay
-                            setTimeout(() => {
-                                editItemSelect.value = bahan.items[0].id;
-                                editItemSelect.dispatchEvent(
-                                    new Event("change")
-                                );
-                            }, 100);
-                        }
-                    }
-
-                    console.log(
-                        "Dropdown populated and value set to:",
-                        editItemSelect.value
-                    );
-                }
+            if (editItemSelect && bahan.items && bahan.items.length > 0) {
+                editItemSelect.value = bahan.items[0].id;
             }
 
-            console.log("Bahan data loaded:", bahan);
+            // Store bahan ID for update
+            document.getElementById("editBahanForm").dataset.bahanId = bahanId;
         }
     } catch (error) {
         console.error("Error loading bahan:", error);
