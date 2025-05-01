@@ -1,4 +1,4 @@
-```php
+
 <!-- Add Bahan Modal -->
 <div class="modal fade" id="addBahanModal" tabindex="-1" aria-labelledby="addBahanModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -94,4 +94,3 @@
         </div>
     </div>
 </div>
-```

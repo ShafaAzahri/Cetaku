@@ -1,4 +1,4 @@
-```php
+
 <!-- Add Item Modal -->
 <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -49,6 +49,8 @@
         <div class="modal-content">
             <form id="editItemForm" method="POST" enctype="multipart/form-data">
                 @csrf
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" name="item_id" id="edit_item_id">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editItemModalLabel">Edit Produk</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -74,7 +76,7 @@
                     
                     <div class="form-group mb-3">
                         <label for="edit_gambar" class="form-label">Gambar Produk</label>
-                        <div id="current_image_container" class="mb-2" style="display: none;">
+                        <div id="current_image_container" class="mb-2">
                             <label>Gambar Saat Ini:</label>
                             <img id="current_image" src="" alt="Gambar Produk" class="img-thumbnail" style="max-height: 150px;">
                         </div>
@@ -90,4 +92,23 @@
         </div>
     </div>
 </div>
-```
+
+<!-- Delete Item Confirmation Modal -->
+<div class="modal fade" id="deleteItemModal" tabindex="-1" aria-labelledby="deleteItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteItemModalLabel">Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Anda yakin ingin menghapus produk <strong id="delete_item_name"></strong>?</p>
+                <p class="text-danger">Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait produk ini.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteItem">Hapus</button>
+            </div>
+        </div>
+    </div>
+</div>

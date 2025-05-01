@@ -203,3 +203,29 @@ function cleanupLocalStorage() {
         localStorage.removeItem(key);
     });
 }
+// Tambahkan ke auth.js
+function checkTokenExpiration() {
+    const expiresAt = localStorage.getItem("expires_at");
+
+    if (!expiresAt) {
+        console.warn("Tanggal kedaluwarsa token tidak ditemukan");
+        return false;
+    }
+
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+
+    return now < expiration;
+}
+
+function handleApiError(error) {
+    console.error("API Error:", error);
+
+    // Jika error adalah 401 Unauthorized, kemungkinan token tidak valid
+    if (error.response && error.response.status === 401) {
+        console.log(
+            "Token tidak valid atau kedaluwarsa. Mengalihkan ke halaman login..."
+        );
+        logout();
+    }
+}

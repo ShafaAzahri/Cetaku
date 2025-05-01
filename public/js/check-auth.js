@@ -1,136 +1,197 @@
 /**
- * Authentication Check and Route Protection
- *
- * This script runs on page load to:
- * 1. Check if user is authenticated
- * 2. Redirect users based on their role if needed
- * 3. Update UI elements with user information
+ * Script pengecekan otentikasi yang sudah diperbaiki
+ * File ini menangani pengecekan otentikasi dan pengalihan halaman
+ * dengan mempertimbangkan akses halaman berdasarkan role
  */
 
-console.log("Check-auth.js loaded successfully");
-
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOM loaded in check-auth.js");
-
-    // First check if token is expired
+// Fungsi untuk mengecek apakah user sudah login
+function isLoggedIn() {
+    const token = localStorage.getItem("api_token");
     const expiresAt = localStorage.getItem("expires_at");
-    if (expiresAt && new Date(expiresAt) < new Date()) {
-        console.log("Token expired, logging out");
+
+    if (!token || !expiresAt) {
+        return false;
+    }
+
+    // Cek apakah token sudah expired
+    return new Date(expiresAt) > new Date();
+}
+
+// Fungsi untuk mendapatkan data user saat ini
+function getCurrentUser() {
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(userStr);
+    } catch (e) {
+        console.error("Error parsing user data:", e);
+        return null;
+    }
+}
+
+// Fungsi untuk mengecek role user
+function checkUserRole(allowedRoles) {
+    const user = getCurrentUser();
+
+    if (!user || !user.role) {
+        return false;
+    }
+
+    // Jika user adalah super_admin, izinkan akses ke semua halaman
+    if (user.role === "super_admin") {
+        return true;
+    }
+
+    // Cek apakah role user termasuk dalam role yang diizinkan
+    return allowedRoles.includes(user.role);
+}
+
+// Fungsi untuk menangani redirect berdasarkan status otentikasi dan role
+function handleAuthCheck() {
+    // Jika user belum login, redirect ke halaman login
+    if (!isLoggedIn()) {
+        window.location.href = "/login";
+        return false;
+    }
+
+    // Dapatkan current path
+    const currentPath = window.location.pathname;
+
+    // Cek meta tag untuk role yang dibutuhkan
+    const requiredRoleElement = document.querySelector(
+        'meta[name="required-role"]'
+    );
+
+    // Jika tidak ada meta tag required-role, izinkan akses
+    if (!requiredRoleElement) {
+        return true;
+    }
+
+    const requiredRole = requiredRoleElement.content;
+
+    // Buat array role yang diizinkan berdasarkan required-role
+    let allowedRoles = [];
+
+    if (requiredRole === "admin") {
+        allowedRoles = ["admin", "super_admin"];
+    } else if (requiredRole === "super_admin") {
+        allowedRoles = ["super_admin"];
+    } else if (requiredRole === "user") {
+        allowedRoles = ["user", "admin", "super_admin"];
+    }
+
+    // Cek apakah user memiliki role yang diizinkan
+    if (!checkUserRole(allowedRoles)) {
+        const user = getCurrentUser();
+        // Redirect berdasarkan role user
+        if (user && user.role) {
+            if (user.role === "super_admin") {
+                window.location.href = "/superadmin/dashboard";
+            } else if (user.role === "admin") {
+                window.location.href = "/admin/dashboard";
+            } else {
+                window.location.href = "/user/welcome";
+            }
+        } else {
+            window.location.href = "/login";
+        }
+        return false;
+    }
+
+    return true;
+}
+
+// Tambahkan event listener untuk DOMContentLoaded
+document.addEventListener("DOMContentLoaded", function () {
+    // Cek apakah halaman membutuhkan otentikasi
+    const authRequiredElement = document.querySelector(
+        'meta[name="auth-required"]'
+    );
+
+    if (authRequiredElement && authRequiredElement.content === "true") {
+        // Jalankan pengecekan otentikasi
+        handleAuthCheck();
+    }
+
+    // Update nama user jika ada
+    const user = getCurrentUser();
+    if (user) {
+        const userNameElements = document.querySelectorAll(".user-name");
+        userNameElements.forEach((element) => {
+            element.textContent = user.nama;
+        });
+
+        // Update avatar jika ada
+        const avatarImgElements = document.querySelectorAll("#user-avatar");
+        if (avatarImgElements.length > 0) {
+            const initials = user.nama
+                .split(" ")
+                .map((name) => name.charAt(0))
+                .join("")
+                .substring(0, 2);
+
+            avatarImgElements.forEach((element) => {
+                element.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    initials
+                )}&background=4361ee&color=fff`;
+            });
+        }
+    }
+
+    // Handle logout
+    const logoutButtons = document.querySelectorAll(".logout-button");
+    logoutButtons.forEach((button) => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+            logout();
+        });
+    });
+});
+
+// Fungsi untuk logout
+function logout() {
+    const token = localStorage.getItem("api_token");
+
+    if (!token) {
+        // Jika tidak ada token, langsung hapus data dan redirect
         clearAuthData();
         window.location.href = "/login";
         return;
     }
 
-    // Check authentication status
-    if (isLoggedIn()) {
-        const user = getCurrentUser();
-        if (!user) {
-            console.log("No user data found even though token exists");
+    // Kirim request logout ke server
+    fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            "X-CSRF-TOKEN":
+                document
+                    .querySelector('meta[name="csrf-token"]')
+                    ?.getAttribute("content") || "",
+        },
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            console.log("Logout successful:", data);
+        })
+        .catch((error) => {
+            console.error("Logout error:", error);
+        })
+        .finally(() => {
+            // Hapus data autentikasi dari localStorage
             clearAuthData();
+            // Redirect ke halaman login
             window.location.href = "/login";
-            return;
-        }
-
-        console.log("User logged in:", user.nama);
-        console.log("Complete user object:", JSON.stringify(user));
-        console.log("User role is:", user.role);
-
-        // Update UI elements with user's name
-        updateUIWithUserInfo(user);
-
-        // Check current path to avoid unnecessary redirects
-        const currentPath = window.location.pathname;
-
-        // Handle role-based access and redirections
-        if (
-            currentPath === "/login" ||
-            currentPath === "/register" ||
-            currentPath === "/"
-        ) {
-            // If user is already logged in and on auth pages, redirect based on role
-            handleRoleBasedRedirect(user.role);
-        } else {
-            // Otherwise, just verify they have access to current page
-            checkAccessToCurrentPage(user.role, currentPath);
-        }
-    } else {
-        // User is not logged in
-        const publicPaths = ["/login", "/register", "/password/reset"];
-        const currentPath = window.location.pathname;
-
-        // If trying to access a protected route, redirect to login
-        if (!publicPaths.includes(currentPath) && currentPath !== "/") {
-            console.log("Unauthorized access attempt, redirecting to login");
-            window.location.href = "/login";
-        }
-    }
-});
-
-/**
- * Update UI elements with user information
- *
- * @param {Object} user User object
- */
-function updateUIWithUserInfo(user) {
-    // Update user name in UI
-    const userNameElements = document.querySelectorAll(".user-name");
-    userNameElements.forEach((el) => {
-        el.textContent = user.nama;
-    });
-
-    // Update user avatar if applicable
-    const avatarElements = document.querySelectorAll(
-        ".user-avatar, #user-avatar"
-    );
-    avatarElements.forEach((el) => {
-        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-            user.nama
-        )}&background=4361ee&color=fff`;
-        if (el.tagName.toLowerCase() === "img") {
-            el.src = avatarUrl;
-        } else {
-            el.style.backgroundImage = `url(${avatarUrl})`;
-        }
-    });
+        });
 }
 
-/**
- * Redirect user based on their role
- *
- * @param {string} role User role
- */
-function handleRoleBasedRedirect(role) {
-    console.log("Handling redirect for role:", role);
-
-    if (role === "super_admin") {
-        console.log("Redirecting to superadmin dashboard");
-        window.location.href = "/superadmin/dashboard";
-    } else if (role === "admin") {
-        console.log("Redirecting to admin dashboard");
-        window.location.href = "/admin/dashboard";
-    } else {
-        console.log("Redirecting to user welcome");
-        window.location.href = "/user/welcome";
-    }
-}
-
-/**
- * Check if user has access to current page based on their role
- *
- * @param {string} role User role
- * @param {string} currentPath Current URL path
- */
-function checkAccessToCurrentPage(role, currentPath) {
-    // Check if user is trying to access a page they don't have permission for
-    if (currentPath.startsWith("/superadmin/") && role !== "super_admin") {
-        console.log("Unauthorized access to superadmin area");
-        handleRoleBasedRedirect(role);
-    } else if (
-        currentPath.startsWith("/admin/") &&
-        role !== "super_admin" &&
-        role !== "admin"
-    ) {
-        console.log("Unauthorized access to admin area");
-        handleRoleBasedRedirect(role);
-    }
+// Fungsi untuk menghapus data autentikasi
+function clearAuthData() {
+    localStorage.removeItem("api_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("expires_at");
 }

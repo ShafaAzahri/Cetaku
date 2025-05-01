@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="auth-required" content="true">
+    <meta name="required-role" content="admin">
     <title>@yield('title', 'Dashboard Admin') | Cetaku</title>
     
     <!-- Google Font: Poppins -->
@@ -39,43 +41,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="{{ asset('js/auth.js') }}"></script>
     
     <script>
-        // Batasi percobaan reload
-        const reloadAttempts = sessionStorage.getItem('reloadAttempts') || 0;
-        if (reloadAttempts > 3) {
-            console.error("Terlalu banyak percobaan reload, menghentikan");
-            sessionStorage.setItem('reloadAttempts', 0);
-        } else {
-            // Tingkatkan counter jika halaman di-reload
-            window.addEventListener('beforeunload', function() {
-                sessionStorage.setItem('reloadAttempts', parseInt(reloadAttempts) + 1);
-            });
-        }
-        
         document.addEventListener('DOMContentLoaded', function() {
             // Setup CSRF token untuk semua request API
             axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             
             console.log("DOM loaded in admin.blade.php");
             
-            /* 
-            // Komentar kode ini sementara untuk debugging
-            if (!isLoggedIn()) {
-                window.location.href = '/login';
-                return;
-            }
-            
-            // Cek role
-            const user = getCurrentUser();
-            if (user && user.role !== 'admin' && user.role !== 'superadmin') {
-                window.location.href = '/user/welcome';
-                return;
-            }
-            */
-            
-            // Tampilkan nama user
+            // Tampilkan nama user 
             const user = getCurrentUser();
             if (user) {
                 const userNameElements = document.querySelectorAll('.user-name');
@@ -132,9 +106,10 @@
         });
     </script>
     
-    @yield('scripts')
-    
+    <!-- Load auth scripts at the end -->
     <script src="{{ asset('js/auth.js') }}"></script>
     <script src="{{ asset('js/check-auth.js') }}"></script>
+    
+    @yield('scripts')
 </body>
 </html>
