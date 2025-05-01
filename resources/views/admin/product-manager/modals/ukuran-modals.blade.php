@@ -1,8 +1,9 @@
+```php
 <!-- Add Ukuran Modal -->
 <div class="modal fade" id="addUkuranModal" tabindex="-1" aria-labelledby="addUkuranModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.ukurans.store') }}" method="POST">
+            <form id="addUkuranForm" method="POST">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="addUkuranModalLabel">Tambah Ukuran Baru</h5>
@@ -13,9 +14,7 @@
                         <label for="item_id_ukuran" class="form-label">Item Produk <span class="text-danger">*</span></label>
                         <select name="item_id" id="item_id_ukuran" class="form-control" required>
                             <option value="">-- Pilih Item Produk --</option>
-                            @foreach($items as $item)
-                                <option value="{{ $item->id }}">{{ $item->nama_item }}</option>
-                            @endforeach
+                            <!-- Options will be filled by JavaScript -->
                         </select>
                     </div>
                     
@@ -44,9 +43,8 @@
 <div class="modal fade" id="editUkuranModal" tabindex="-1" aria-labelledby="editUkuranModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="editUkuranForm" action="" method="POST">
+            <form id="editUkuranForm" method="POST">
                 @csrf
-                @method('PUT')
                 <div class="modal-header">
                     <h5 class="modal-title" id="editUkuranModalLabel">Edit Ukuran</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -56,9 +54,7 @@
                         <label for="edit_item_id_ukuran" class="form-label">Item Produk <span class="text-danger">*</span></label>
                         <select name="item_id" id="edit_item_id_ukuran" class="form-control" required>
                             <option value="">-- Pilih Item Produk --</option>
-                            @foreach($items as $item)
-                                <option value="{{ $item->id }}">{{ $item->nama_item }}</option>
-                            @endforeach
+                            <!-- Options will be filled by JavaScript -->
                         </select>
                     </div>
                     

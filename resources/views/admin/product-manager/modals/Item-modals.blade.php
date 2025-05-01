@@ -1,8 +1,9 @@
+```php
 <!-- Add Item Modal -->
 <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.items.store') }}" method="POST" enctype="multipart/form-data">
+            <form id="addItemForm" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="addItemModalLabel">Tambah Produk Baru</h5>
@@ -46,9 +47,8 @@
 <div class="modal fade" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form id="editItemForm" action="" method="POST" enctype="multipart/form-data">
+            <form id="editItemForm" method="POST" enctype="multipart/form-data">
                 @csrf
-                @method('PUT')
                 <div class="modal-header">
                     <h5 class="modal-title" id="editItemModalLabel">Edit Produk</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -90,3 +90,4 @@
         </div>
     </div>
 </div>
+```

@@ -1,28 +1,46 @@
+```php
 @extends('admin.layout.admin')
 
 @section('title', 'Kelola Produk')
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('css/product.css') }}">
+<style>
+    .add-button {
+        margin-bottom: 1.5rem;
+    }
+    
+    .item-actions, .bahan-actions, .ukuran-actions, .jenis-actions, .desain-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    
+    .nav-tabs {
+        margin-bottom: 1.5rem;
+    }
+    
+    .tab-content {
+        padding-top: 1rem;
+    }
+    
+    #current_image_container {
+        margin-bottom: 1rem;
+    }
+    
+    #current_image {
+        max-height: 150px;
+    }
+</style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
-    <!-- Alert Messages -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    <!-- Placeholder untuk alert messages -->
+    <div id="alert-container"></div>
     
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="card">
         <div class="card-header bg-white">
             <h5 class="mb-0">Kelola Produk</h5>
@@ -79,44 +97,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($items as $index => $item)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            @if($item->gambar)
-                                                <img src="{{ asset('storage/' . $item->gambar) }}" alt="{{ $item->nama_item }}" class="img-thumbnail" style="max-height: 50px;">
-                                            @else
-                                                <span class="text-muted">Tidak ada gambar</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $item->nama_item }}</td>
-                                        <td>{{ Str::limit($item->deskripsi, 50) }}</td>
-                                        <td>Rp {{ number_format($item->harga_dasar, 0, ',', '.') }}</td>
-                                        <td>
-                                            <div class="item-actions">
-                                                <button type="button" class="btn btn-sm btn-info edit-item-btn" 
-                                                        data-id="{{ $item->id }}" 
-                                                        data-nama="{{ $item->nama_item }}"
-                                                        data-deskripsi="{{ $item->deskripsi }}"
-                                                        data-harga="{{ $item->harga_dasar }}"
-                                                        data-gambar="{{ $item->gambar ? asset('storage/' . $item->gambar) : '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <form action="{{ route('admin.items.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center">Tidak ada produk</td>
-                                    </tr>
-                                @endforelse
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -140,42 +123,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($bahans as $index => $bahan)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            @if($bahan->items->count() > 0)
-                                                {{ $bahan->items->first()->nama_item }}
-                                            @else
-                                                <span class="text-muted">Tidak terkait</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $bahan->nama_bahan }}</td>
-                                        <td>Rp {{ number_format($bahan->biaya_tambahan, 0, ',', '.') }}</td>
-                                        <td>
-                                            <div class="bahan-actions">
-                                                <button type="button" class="btn btn-sm btn-info edit-bahan-btn" 
-                                                        data-id="{{ $bahan->id }}" 
-                                                        data-nama="{{ $bahan->nama_bahan }}"
-                                                        data-biaya="{{ $bahan->biaya_tambahan }}"
-                                                        data-item="{{ $bahan->items->count() > 0 ? $bahan->items->first()->id : '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <form action="{{ route('admin.bahans.destroy', $bahan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus bahan ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">Tidak ada bahan</td>
-                                    </tr>
-                                @endforelse
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -199,42 +149,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($ukurans as $index => $ukuran)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            @if($ukuran->items->count() > 0)
-                                                {{ $ukuran->items->first()->nama_item }}
-                                            @else
-                                                <span class="text-muted">Tidak terkait</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $ukuran->size }}</td>
-                                        <td>x{{ number_format($ukuran->faktor_harga, 2) }}</td>
-                                        <td>
-                                            <div class="ukuran-actions">
-                                                <button type="button" class="btn btn-sm btn-info edit-ukuran-btn" 
-                                                        data-id="{{ $ukuran->id }}" 
-                                                        data-size="{{ $ukuran->size }}"
-                                                        data-faktor="{{ $ukuran->faktor_harga }}"
-                                                        data-item="{{ $ukuran->items->count() > 0 ? $ukuran->items->first()->id : '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <form action="{{ route('admin.ukurans.destroy', $ukuran->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus ukuran ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">Tidak ada ukuran</td>
-                                    </tr>
-                                @endforelse
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -258,42 +175,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($jenis as $index => $j)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>
-                                            @if($j->items->count() > 0)
-                                                {{ $j->items->first()->nama_item }}
-                                            @else
-                                                <span class="text-muted">Tidak terkait</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $j->kategori }}</td>
-                                        <td>Rp {{ number_format($j->biaya_tambahan, 0, ',', '.') }}</td>
-                                        <td>
-                                            <div class="jenis-actions">
-                                                <button type="button" class="btn btn-sm btn-info edit-jenis-btn" 
-                                                        data-id="{{ $j->id }}" 
-                                                        data-kategori="{{ $j->kategori }}"
-                                                        data-biaya="{{ $j->biaya_tambahan }}"
-                                                        data-item="{{ $j->items->count() > 0 ? $j->items->first()->id : '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <form action="{{ route('admin.jenis.destroy', $j->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus jenis ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">Tidak ada jenis</td>
-                                    </tr>
-                                @endforelse
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -316,34 +200,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($biayaDesains as $index => $biayaDesain)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>Rp {{ number_format($biayaDesain->biaya, 0, ',', '.') }}</td>
-                                        <td>{{ Str::limit($biayaDesain->deskripsi, 50) }}</td>
-                                        <td>
-                                            <div class="desain-actions">
-                                                <button type="button" class="btn btn-sm btn-info edit-biaya-desain-btn" 
-                                                        data-id="{{ $biayaDesain->id }}" 
-                                                        data-deskripsi="{{ $biayaDesain->deskripsi }}"
-                                                        data-biaya="{{ $biayaDesain->biaya }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <form action="{{ route('admin.biaya-desain.destroy', $biayaDesain->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus biaya desain ini?');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                        <i class="fas fa-trash"></i> Hapus
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center">Tidak ada biaya desain</td>
-                                    </tr>
-                                @endforelse
+                                <tr>
+                                    <td colspan="4" class="text-center">Loading...</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -362,8 +221,24 @@
 @endsection
 
 @section('scripts')
+@section('scripts')
 <script>
-    var baseUrl = "{{ url('/') }}";
+    // Check authentication before loading content
+    document.addEventListener('DOMContentLoaded', function() {
+        // Define base URL for assets
+        var baseUrl = "{{ url('/') }}";
+        
+        // Check if API token exists
+        if (!localStorage.getItem('api_token')) {
+            // Redirect to login page if token doesn't exist
+            window.location.href = "{{ route('login') }}";
+        }
+    });
 </script>
 <script src="{{ asset('js/product.js') }}"></script>
 @endsection
+<script src="{{ asset('js/product.js') }}"></script>
+<script src="{{ asset('js/auth.js') }}"></script>
+<script src="{{ asset('js/check-auth.js') }}"></script>
+@endsection
+```

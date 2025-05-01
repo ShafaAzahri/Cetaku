@@ -20,26 +20,34 @@ class ApiTokenServiceProvider extends ServiceProvider
     /**
      * Bootstrap services.
      */
-    public function boot(): void
-    {
-        Auth::viaRequest('api-token', function (Request $request) {
-            $token = $request->header('Authorization');
-            
-            if (str_starts_with($token, 'Bearer ')) {
-                $token = substr($token, 7);
-            }
-            
-            if (!$token) {
-                return null;
-            }
-            
-            $user = User::where('api_token', $token)->first();
-            
-            if (!$user || !$user->isTokenValid()) {
-                return null;
-            }
-            
-            return $user;
-        });
-    }
+    // app/Providers/ApiTokenServiceProvider.php
+public function boot(): void
+{
+    Auth::viaRequest('api-token', function (Request $request) {
+        // Debug untuk melihat token yang dikirim
+        \Log::info('API Token Request', [
+            'token' => $request->bearerToken(),
+            'headers' => $request->headers->all()
+        ]);
+        
+        $token = $request->bearerToken();
+        
+        if (!$token) {
+            return null;
+        }
+        
+        $user = User::where('api_token', $token)->first();
+        
+        // Debug untuk melihat user yang ditemukan
+        \Log::info('User found with token', [
+            'user' => $user ? $user->id : 'null'
+        ]);
+        
+        if (!$user || !$user->isTokenValid()) {
+            return null;
+        }
+        
+        return $user;
+    });
+}
 }
