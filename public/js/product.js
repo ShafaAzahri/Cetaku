@@ -300,22 +300,33 @@ const loadItemsForBahanDropdown = async () => {
             const itemSelect = document.getElementById("item_id");
             const editItemSelect = document.getElementById("edit_item_id");
 
-            // Clear existing options
-            itemSelect.innerHTML =
-                '<option value="">-- Pilih Item Produk --</option>';
-            editItemSelect.innerHTML =
-                '<option value="">-- Pilih Item Produk --</option>';
+            // Untuk Add Bahan Modal
+            if (itemSelect) {
+                itemSelect.innerHTML =
+                    '<option value="">-- Pilih Item Produk --</option>';
+                items.forEach((item) => {
+                    const option = document.createElement("option");
+                    option.value = item.id;
+                    option.textContent = item.nama_item;
+                    itemSelect.appendChild(option);
+                });
+            }
 
-            // Add new options
-            items.forEach((item) => {
-                const option = `<option value="${item.id}">${item.nama_item}</option>`;
-                itemSelect.innerHTML += option;
-                editItemSelect.innerHTML += option;
-            });
+            // Untuk Edit Bahan Modal
+            if (editItemSelect) {
+                editItemSelect.innerHTML =
+                    '<option value="">-- Pilih Item Produk --</option>';
+                items.forEach((item) => {
+                    const option = document.createElement("option");
+                    option.value = item.id;
+                    option.textContent = item.nama_item;
+                    editItemSelect.appendChild(option);
+                });
+            }
         }
     } catch (error) {
         console.error("Error loading items:", error);
-        showAlert("danger", "Gagal memuat daftar item");
+        showAlert("Gagal memuat daftar item", "danger");
     }
 };
 
