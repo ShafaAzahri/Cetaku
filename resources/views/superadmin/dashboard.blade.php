@@ -351,7 +351,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link" id="logout-button">
+                <a href="#" class="nav-link logout-button">
                     <i class="fas fa-sign-out-alt"></i>
                     <span class="nav-text">Logout</span>
                 </a>
@@ -383,14 +383,14 @@
                 </div>
                 <div class="dropdown">
                     <a class="dropdown-toggle text-decoration-none text-dark" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="d-none d-sm-inline-block me-1" id="user-name">Super Admin</span>
+                        <span class="d-none d-sm-inline-block me-1 user-name">Super Administrator</span>
                         <i class="fas fa-chevron-down fa-xs"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Profil</a></li>
                         <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" id="navbar-logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                        <li><a class="dropdown-item logout-button" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     </ul>
                 </div>
             </div>
@@ -404,7 +404,7 @@
                     <div class="dashboard-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h4>Selamat Datang, <span id="welcome-name">Super Admin</span>!</h4>
+                                <h4>Selamat Datang, <span id="welcome-name" class="user-name">Super Administrator</span>!</h4>
                                 <p>Panel kontrol untuk manajemen sistem Cetaku. Anda memiliki akses penuh ke seluruh fitur.</p>
                             </div>
                             <div>
@@ -462,7 +462,9 @@
                 <div class="col-md-8">
                     <div class="dashboard-card">
                         <h5 class="mb-4">Revenue Overview</h5>
-                        <canvas id="revenueChart" style="width: 100%; height: 300px;"></canvas>
+                        <div style="height: 300px; width: 100%;">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -529,33 +531,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="{{ asset('js/auth.js') }}"></script>
+    <script src="{{ asset('js/check-auth.js') }}"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Cek autentikasi
-            if (!isLoggedIn()) {
-                window.location.href = '/login';
-                return;
-            }
-            
-            // Cek role
-            const user = getCurrentUser();
-            if (user && user.role !== 'superadmin') {
-                if (user.role === 'admin') {
-                    window.location.href = '/admin/dashboard';
-                } else {
-                    window.location.href = '/user/welcome';
-                }
-                return;
-            }
-            
-            // Tampilkan nama user
-            if (user) {
-                document.getElementById('user-name').textContent = user.nama;
-                document.getElementById('welcome-name').textContent = user.nama;
-                document.getElementById('user-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nama)}&background=4361ee&color=fff`;
-            }
-            
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const toggleBtn = document.getElementById('toggle-sidebar');
@@ -590,55 +569,64 @@
             });
             
             // Handle logout
-            document.getElementById('logout-button').addEventListener('click', function(e) {
-                e.preventDefault();
-                logout();
+            const logoutButtons = document.querySelectorAll('.logout-button');
+            logoutButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    logout();
+                });
             });
             
-            document.getElementById('navbar-logout').addEventListener('click', function(e) {
-                e.preventDefault();
-                logout();
-            });
-            
-            // Revenue Chart
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            const revenueChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    datasets: [{
-                        label: 'Revenue 2025',
-                        data: [18500, 22000, 19500, 24000, 29000, 32000, 35000, 38000, 36000, 40000, 43000, 50000],
-                        borderColor: '#4361ee',
-                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                borderDash: [5, 5]
-                            }
+            // Create Revenue Chart - Completely rewritten implementation
+            setTimeout(() => {
+                const ctx = document.getElementById('revenueChart');
+                if (ctx) {
+                    const myChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                            datasets: [{
+                                label: 'Revenue 2025',
+                                data: [18500, 22000, 19500, 24000, 29000, 32000, 35000, 38000, 36000, 40000, 43000, 50000],
+                                backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                                borderColor: '#4361ee',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: true
+                            }]
                         },
-                        x: {
-                            grid: {
-                                display: false
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 60000,
+                                    grid: {
+                                        drawBorder: false,
+                                        borderDash: [5, 5]
+                                    },
+                                    ticks: {
+                                        stepSize: 10000
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
                             }
                         }
-                    }
+                    });
+                } else {
+                    console.error('Revenue chart canvas not found');
                 }
-            });
+            }, 500); // Add a small delay to ensure the DOM is ready
         });
     </script>
 </body>

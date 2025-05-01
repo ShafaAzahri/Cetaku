@@ -133,5 +133,8 @@
     </script>
     
     @yield('scripts')
+    
+    <script src="{{ asset('js/auth.js') }}"></script>
+    <script src="{{ asset('js/check-auth.js') }}"></script>
 </body>
 </html>

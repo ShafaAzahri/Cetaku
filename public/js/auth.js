@@ -1,145 +1,205 @@
-// File auth.js
-// Versi minimal untuk menghindari redirect loop
+/**
+ * Authentication Utility Functions
+ *
+ * This file contains utility functions for authentication in the front-end
+ * including login, logout, and checking authentication state.
+ */
 
-// Simpan token di localStorage
-function setAuthToken(token, expiresAt, user) {
-    localStorage.setItem("api_token", token);
-    localStorage.setItem("expires_at", expiresAt);
-    localStorage.setItem("user", JSON.stringify(user));
+// Setup CSRF token for all requests
+if (document.querySelector('meta[name="csrf-token"]')) {
+    axios.defaults.headers.common["X-CSRF-TOKEN"] = document
+        .querySelector('meta[name="csrf-token"]')
+        .getAttribute("content");
 }
 
-// Hapus token dari localStorage
-function clearAuthToken() {
-    localStorage.removeItem("api_token");
-    localStorage.removeItem("expires_at");
-    localStorage.removeItem("user");
-}
-
-// Cek apakah user sudah login
+/**
+ * Check if user is currently logged in
+ *
+ * @returns {boolean} True if user is logged in, false otherwise
+ */
 function isLoggedIn() {
-    console.log("isLoggedIn called");
     const token = localStorage.getItem("api_token");
     const expiresAt = localStorage.getItem("expires_at");
 
-    // Debug
+    // Debug logging
+    console.log("isLoggedIn called");
     console.log("Token:", token);
     console.log("Expires at:", expiresAt);
 
-    // Cek jika token dan tanggal kedaluwarsa ada
-    if (!token || !expiresAt) {
-        console.log("No token or expiry found");
-        return false;
-    }
-
-    // Cek jika token sudah kedaluwarsa
-    if (new Date(expiresAt) < new Date()) {
-        console.log("Token expired");
-        return false;
-    }
-
-    return true;
+    return token && new Date(expiresAt) > new Date();
 }
 
-// Dapatkan data user dari localStorage
+/**
+ * Get the current authenticated user
+ *
+ * @returns {Object|null} User object if authenticated, null otherwise
+ */
 function getCurrentUser() {
-    const userString = localStorage.getItem("user");
-    if (!userString) {
-        return null;
+    if (isLoggedIn()) {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+            return JSON.parse(userStr);
+        }
     }
-    return JSON.parse(userString);
+    return null;
 }
 
-// Fungsi login
+/**
+ * Handle user login
+ *
+ * @param {string} email User email
+ * @param {string} password User password
+ * @returns {Promise<boolean>} True if login successful, false otherwise
+ */
 async function login(email, password) {
     try {
+        console.log("Attempting login for:", email);
         const response = await axios.post("/api/auth/login", {
             email: email,
             password: password,
         });
 
+        console.log("Login response:", response.data);
+
         if (response.data.success) {
-            setAuthToken(
-                response.data.api_token,
-                response.data.expires_at,
-                response.data.user
-            );
+            // Store the token and user info in localStorage
+            localStorage.setItem("api_token", response.data.api_token);
+            localStorage.setItem("user", JSON.stringify(response.data.user));
+            localStorage.setItem("expires_at", response.data.expires_at);
 
-            // Redirect ke halaman yang sesuai
-            if (response.data.redirect_url) {
-                window.location.href = response.data.redirect_url;
-            }
+            // Clean up any old or redundant storage keys
+            cleanupLocalStorage();
 
+            // Redirect to the appropriate page
+            window.location.href = response.data.redirect_url;
             return true;
+        } else {
+            console.error("Login failed:", response.data.message);
+            return false;
         }
-
-        return false;
     } catch (error) {
         console.error("Login error:", error);
+
+        // More detailed error logging
+        if (error.response) {
+            console.error("Error data:", error.response.data);
+            console.error("Error status:", error.response.status);
+        } else if (error.request) {
+            console.error("Error request:", error.request);
+        } else {
+            console.error("Error message:", error.message);
+        }
+
         throw error;
     }
 }
 
-// Fungsi register
-async function register(nama, email, password, password_confirmation) {
+/**
+ * Handle user registration
+ *
+ * @param {string} nama User full name
+ * @param {string} email User email
+ * @param {string} password User password
+ * @param {string} passwordConfirmation Password confirmation
+ * @returns {Promise<boolean>} True if registration successful, false otherwise
+ */
+async function register(nama, email, password, passwordConfirmation) {
     try {
         const response = await axios.post("/api/auth/register", {
             nama: nama,
             email: email,
             password: password,
-            password_confirmation: password_confirmation,
+            password_confirmation: passwordConfirmation,
         });
 
         if (response.data.success) {
-            setAuthToken(
-                response.data.api_token,
-                response.data.expires_at,
-                response.data.user
-            );
+            // Store the token and user info in localStorage
+            localStorage.setItem("api_token", response.data.api_token);
+            localStorage.setItem("user", JSON.stringify(response.data.user));
+            localStorage.setItem("expires_at", response.data.expires_at);
 
-            // Redirect ke halaman yang sesuai
-            if (response.data.redirect_url) {
-                window.location.href = response.data.redirect_url;
-            }
+            // Clean up any old or redundant storage keys
+            cleanupLocalStorage();
 
+            // Redirect to the appropriate page
+            window.location.href = response.data.redirect_url;
             return true;
+        } else {
+            return false;
         }
-
-        return false;
     } catch (error) {
         console.error("Registration error:", error);
         throw error;
     }
 }
 
-// Fungsi logout
+/**
+ * Handle user logout
+ *
+ * @returns {Promise<boolean>} True if logout successful, false otherwise
+ */
 async function logout() {
-    console.log("Logout called");
     try {
         const token = localStorage.getItem("api_token");
-
-        if (token) {
-            await axios.post(
-                "/api/auth/logout",
-                {},
-                {
-                    headers: {
-                        Authorization: "Bearer " + token,
-                    },
-                }
-            );
+        if (!token) {
+            return false;
         }
 
-        clearAuthToken();
-        window.location.href = "/login";
+        const response = await axios.post(
+            "/api/auth/logout",
+            {},
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
 
-        return true;
+        if (response.data.success) {
+            // Clear all auth data from localStorage
+            clearAuthData();
+
+            // Redirect to login page
+            window.location.href = response.data.redirect_url || "/login";
+            return true;
+        } else {
+            return false;
+        }
     } catch (error) {
         console.error("Logout error:", error);
 
-        // Hapus token meskipun API gagal
-        clearAuthToken();
+        // Force logout even if API call fails
+        clearAuthData();
         window.location.href = "/login";
-
         return false;
     }
+}
+
+/**
+ * Clear all authentication data from localStorage
+ */
+function clearAuthData() {
+    localStorage.removeItem("api_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("expires_at");
+
+    // Also clear any other auth-related keys
+    cleanupLocalStorage();
+}
+
+/**
+ * Clean up redundant or deprecated localStorage keys
+ */
+function cleanupLocalStorage() {
+    const keysToRemove = [
+        "user_role",
+        "user_name",
+        "auth_user",
+        "auth_token",
+        "auth_expires",
+    ];
+
+    keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+    });
 }

@@ -54,11 +54,20 @@ class AuthApiController extends Controller
                     'last_login_ip' => $request->ip()
                 ]);
             
-            // Get updated user
-            $updatedUser = User::find($user->id);
+            // Get updated user - use findOrFail to get a single user
+            $updatedUser = User::findOrFail($user->id);
+            
+            // Get user role
+            $roleName = $updatedUser->role ? $updatedUser->role->nama_role : null;
             
             // Get the redirect URL based on role
-            $redirectUrl = $this->getRedirectUrlByRole($updatedUser);
+            $redirectUrl = '/user/welcome'; // Default
+            
+            if ($roleName === 'super_admin') {
+                $redirectUrl = '/superadmin/dashboard';
+            } elseif ($roleName === 'admin') {
+                $redirectUrl = '/admin/dashboard';
+            }
             
             return response()->json([
                 'success' => true,
@@ -66,7 +75,7 @@ class AuthApiController extends Controller
                     'id' => $updatedUser->id,
                     'nama' => $updatedUser->nama,
                     'email' => $updatedUser->email,
-                    'role' => $updatedUser->role->nama_role ?? null
+                    'role' => $roleName
                 ],
                 'api_token' => $token,
                 'expires_at' => $expiresAt,
@@ -239,7 +248,7 @@ class AuthApiController extends Controller
      */
     private function getRedirectUrlByRole(User $user)
     {
-        if ($user->hasRole('superadmin')) {
+        if ($user->hasRole('super_admin')) {
             return '/superadmin/dashboard';
         } elseif ($user->hasRole('admin')) {
             return '/admin/dashboard';

@@ -56,7 +56,7 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
 // User routes
 Route::prefix('user')->name('user.')->group(function () {
     Route::get('/welcome', function () {
-        return view('user.welcome');
+        return view('welcome');
     })->name('welcome');
     
     // Route lain untuk user biasa

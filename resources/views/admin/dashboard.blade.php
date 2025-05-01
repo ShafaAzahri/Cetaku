@@ -1,316 +1,540 @@
-@extends('admin.layout.admin')
-
-@section('title', 'Dashboard Admin')
-
-@section('content')
-<div class="container-fluid p-4">
-    <!-- Row 1: Welcome & Stats -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h5 class="card-title">Selamat Datang, <span id="admin-name">Admin</span>!</h5>
-                            <p class="card-text text-muted">Anda login sebagai Administrator</p>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fas fa-user-tie text-white"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <div class="row row-cols-1 row-cols-md-3 g-3">
-                        <div class="col">
-                            <div class="card border-0 bg-light h-100">
-                                <div class="card-body text-center">
-                                    <h3 class="text-primary mb-2">30</h3>
-                                    <p class="card-text mb-0">Pesanan</p>
-                                    <small class="text-muted">Bulan Ini</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="card border-0 bg-light h-100">
-                                <div class="card-body text-center">
-                                    <h3 class="text-success mb-2">12</h3>
-                                    <p class="card-text mb-0">Selesai</p>
-                                    <small class="text-muted">Bulan Ini</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="card border-0 bg-light h-100">
-                                <div class="card-body text-center">
-                                    <h3 class="text-warning mb-2">8</h3>
-                                    <p class="card-text mb-0">Pending</p>
-                                    <small class="text-muted">Saat Ini</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistik dan Grafik -->
-    <div class="row">
-        <!-- Statistik Penjualan -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                    <h5 class="m-0">Statistik Penjualan</h5>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesMonthDropdown" data-bs-toggle="dropdown">
-                            Mei 2025
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesMonthDropdown">
-                            <li><a class="dropdown-item" href="#">April 2025</a></li>
-                            <li><a class="dropdown-item" href="#">Mei 2025</a></li>
-                            <li><a class="dropdown-item" href="#">Juni 2025</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <p class="mb-2">30 Pesanan</p>
-                    <div style="height: 250px; position: relative;">
-                        <canvas id="salesChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Total Penjualan -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                    <h5 class="m-0">Total Penjualan</h5>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="totalMonthDropdown" data-bs-toggle="dropdown">
-                            Mei 2025
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="totalMonthDropdown">
-                            <li><a class="dropdown-item" href="#">April 2025</a></li>
-                            <li><a class="dropdown-item" href="#">Mei 2025</a></li>
-                            <li><a class="dropdown-item" href="#">Juni 2025</a></li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="card-body text-center">
-                    <h3 class="text-primary mb-3">2.000.000,00 IDR</h3>
-                    <p class="mb-3">30 Pesanan</p>
-                    <div style="height: 200px; max-width: 200px; margin: 0 auto; position: relative;">
-                        <canvas id="doughnutChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="auth-required" content="true">
+    <meta name="required-role" content="admin">
+    <title>Dashboard Admin | Cetaku</title>
     
-    <!-- Jadwal Pesanan -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow-sm">
-                <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                    <h5 class="m-0">Jadwal Pesanan</h5>
-                    <div class="d-flex align-items-center">
-                        <button class="btn btn-sm btn-outline-secondary me-2" type="button" id="calendarMonthDropdown" data-bs-toggle="dropdown">
-                            Mei, 2025
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calendarMonthDropdown">
-                            <li><a class="dropdown-item" href="#">April, 2025</a></li>
-                            <li><a class="dropdown-item" href="#">Mei, 2025</a></li>
-                            <li><a class="dropdown-item" href="#">Juni, 2025</a></li>
-                        </ul>
-                        <div class="btn-group ms-2">
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-chevron-left"></i>
+    <!-- Google Font: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+    
+    <!-- Immediate auth check script -->
+    <script>
+        // Immediate auth check - runs before anything else
+        (function() {
+            function redirectToLogin() {
+                localStorage.removeItem('api_token');
+                localStorage.removeItem('user');
+                localStorage.removeItem('expires_at');
+                window.location.href = '/login';
+            }
+            
+            // Check if authentication is required
+            if (document.querySelector('meta[name="auth-required"]')) {
+                const token = localStorage.getItem('api_token');
+                const expiresAt = localStorage.getItem('expires_at');
+                const userStr = localStorage.getItem('user');
+                
+                // Check for basic auth requirements
+                if (!token || !expiresAt || new Date(expiresAt) <= new Date()) {
+                    console.log("Authentication required but missing or expired token. Redirecting to login...");
+                    redirectToLogin();
+                    return;
+                }
+                
+                // Check for role requirements
+                try {
+                    const requiredRole = document.querySelector('meta[name="required-role"]')?.content;
+                    if (requiredRole && userStr) {
+                        const user = JSON.parse(userStr);
+                        if (!user.role || (
+                            requiredRole === 'super_admin' && user.role !== 'super_admin') || 
+                            (requiredRole === 'admin' && user.role !== 'admin' && user.role !== 'super_admin')
+                        ) {
+                            console.log("Authentication passed but insufficient role permissions. Redirecting...");
+                            // Redirect based on user's actual role
+                            if (user.role === 'super_admin') {
+                                window.location.href = '/superadmin/dashboard';
+                            } else if (user.role === 'admin') {
+                                window.location.href = '/admin/dashboard';
+                            } else {
+                                window.location.href = '/user/welcome';
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error checking role permissions:", e);
+                    redirectToLogin();
+                }
+            }
+        })();
+    </script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand-logo">
+            <i class="fas fa-print"></i>
+            <span class="brand-text">CETAKU</span>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="{{ route('admin.dashboard') }}" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span class="nav-text">Beranda</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('admin.product-manager') }}" class="nav-link">
+                    <i class="fas fa-boxes"></i>
+                    <span class="nav-text">Kelola Produk</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="nav-text">Pesanan</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span class="nav-text">Pelanggan</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-user-tie"></i>
+                    <span class="nav-text">Operator</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-truck"></i>
+                    <span class="nav-text">Ekspedisi</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-history"></i>
+                    <span class="nav-text">Riwayat</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link logout-button">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="nav-text">Logout</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+    
+    <!-- Overlay for mobile sidebar -->
+    <div class="overlay" id="sidebar-overlay"></div>
+    
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <!-- Top Navbar -->
+        <nav class="navbar">
+            <div class="d-flex align-items-center">
+                <div class="toggle-sidebar me-3" id="toggle-sidebar">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </div>
+            
+            <form class="search-form d-none d-md-block">
+                <input type="text" class="search-input" placeholder="Masukkan ID Pemesanan dan ID Customer untuk mencari detail info">
+            </form>
+            
+            <div class="user-profile">
+                <div class="avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=4361ee&color=fff" alt="User Avatar" id="user-avatar">
+                </div>
+                <div class="dropdown">
+                    <a class="dropdown-toggle text-decoration-none text-dark" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="d-none d-sm-inline-block me-1 user-name">Administrator</span>
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> Profil</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <button type="button" class="dropdown-item logout-button">
+                                <i class="fas fa-sign-out-alt"></i> Logout
                             </button>
-                            <button class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Page Content -->
+        <div class="content">
+            <!-- Row 1: Welcome & Stats -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h5 class="card-title">Selamat Datang, <span class="user-name">Administrator</span>!</h5>
+                                    <p class="card-text text-muted">Anda login sebagai Administrator</p>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user-tie text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-bordered mb-0">
-                            <thead>
-                                <tr class="text-center">
-                                    <th width="14.28%">MINGGU</th>
-                                    <th width="14.28%">SENIN</th>
-                                    <th width="14.28%">SELASA</th>
-                                    <th width="14.28%">RABU</th>
-                                    <th width="14.28%">KAMIS</th>
-                                    <th width="14.28%">JUMAT</th>
-                                    <th width="14.28%">SABTU</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr style="height: 100px;">
-                                    <td class="bg-light text-danger">
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">1</span>
+                <div class="col-md-6">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="row row-cols-1 row-cols-md-3 g-3">
+                                <div class="col">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body text-center">
+                                            <h3 class="text-primary mb-2">30</h3>
+                                            <p class="card-text mb-0">Pesanan</p>
+                                            <small class="text-muted">Bulan Ini</small>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">2</span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body text-center">
+                                            <h3 class="text-success mb-2">12</h3>
+                                            <p class="card-text mb-0">Selesai</p>
+                                            <small class="text-muted">Bulan Ini</small>
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">3</span>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body text-center">
+                                            <h3 class="text-warning mb-2">8</h3>
+                                            <p class="card-text mb-0">Pending</p>
+                                            <small class="text-muted">Saat Ini</small>
                                         </div>
-                                        <div class="p-1">
-                                            <small class="d-block p-1 rounded text-primary bg-light">Pesanan 1</small>
-                                            <small class="d-block p-1 rounded text-primary bg-light">Pelanggan 2</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">4</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">5</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">6</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">7</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr style="height: 100px;">
-                                    <td class="bg-light text-danger">
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">8</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">9</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">10</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">11</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">12</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">13</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-end p-1">
-                                            <span class="fw-bold">14</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistik dan Grafik -->
+            <div class="row">
+                <!-- Statistik Penjualan -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                            <h5 class="m-0">Statistik Penjualan</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesMonthDropdown" data-bs-toggle="dropdown">
+                                    Mei 2025
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesMonthDropdown">
+                                    <li><a class="dropdown-item" href="#">April 2025</a></li>
+                                    <li><a class="dropdown-item" href="#">Mei 2025</a></li>
+                                    <li><a class="dropdown-item" href="#">Juni 2025</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2">30 Pesanan</p>
+                            <div style="height: 250px;">
+                                <canvas id="salesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Total Penjualan -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                            <h5 class="m-0">Total Penjualan</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="totalMonthDropdown" data-bs-toggle="dropdown">
+                                    Mei 2025
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="totalMonthDropdown">
+                                    <li><a class="dropdown-item" href="#">April 2025</a></li>
+                                    <li><a class="dropdown-item" href="#">Mei 2025</a></li>
+                                    <li><a class="dropdown-item" href="#">Juni 2025</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body text-center">
+                            <h3 class="text-primary mb-3">2.000.000,00 IDR</h3>
+                            <p class="mb-3">30 Pesanan</p>
+                            <div style="height: 200px; max-width: 200px; margin: 0 auto;">
+                                <canvas id="doughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Jadwal Pesanan -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                            <h5 class="m-0">Jadwal Pesanan</h5>
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-sm btn-outline-secondary me-2" type="button" id="calendarMonthDropdown" data-bs-toggle="dropdown">
+                                    Mei, 2025
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calendarMonthDropdown">
+                                    <li><a class="dropdown-item" href="#">April, 2025</a></li>
+                                    <li><a class="dropdown-item" href="#">Mei, 2025</a></li>
+                                    <li><a class="dropdown-item" href="#">Juni, 2025</a></li>
+                                </ul>
+                                <div class="btn-group ms-2">
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0">
+                                    <thead>
+                                        <tr class="text-center">
+                                            <th width="14.28%">MINGGU</th>
+                                            <th width="14.28%">SENIN</th>
+                                            <th width="14.28%">SELASA</th>
+                                            <th width="14.28%">RABU</th>
+                                            <th width="14.28%">KAMIS</th>
+                                            <th width="14.28%">JUMAT</th>
+                                            <th width="14.28%">SABTU</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="height: 100px;">
+                                            <td class="bg-light text-danger">
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">1</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">2</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">3</span>
+                                                </div>
+                                                <div class="p-1">
+                                                    <small class="d-block p-1 rounded text-primary bg-light">Pesanan 1</small>
+                                                    <small class="d-block p-1 rounded text-primary bg-light">Pelanggan 2</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">4</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">5</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">6</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">7</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr style="height: 100px;">
+                                            <td class="bg-light text-danger">
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">8</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">9</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">10</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">11</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">12</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">13</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex justify-content-end p-1">
+                                                    <span class="fw-bold">14</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-@endsection
 
-@section('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("Dashboard script loaded");
-        
-        // Tampilkan nama admin
-        if (typeof getCurrentUser === 'function') {
-            const user = getCurrentUser();
-            if (user) {
-                document.getElementById('admin-name').textContent = user.nama;
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ asset('js/auth.js') }}"></script>
+    <script src="{{ asset('js/check-auth.js') }}"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggle
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('main-content');
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                    
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.toggle('mobile-visible');
+                        overlay.classList.toggle('active');
+                    }
+                });
             }
-        }
-        
-        // Line Chart untuk Statistik Penjualan
-        const salesCtx = document.getElementById('salesChart').getContext('2d');
-        const salesChart = new Chart(salesCtx, {
-            type: 'line',
-            data: {
-                labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'],
-                datasets: [{
-                    label: 'Pesanan',
-                    data: [12, 14, 15, 17, 19, 25],
-                    borderColor: '#007bff',
-                    tension: 0.1,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 30
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            
+            if (overlay) {
+                overlay.addEventListener('click', function() {
+                    sidebar.classList.remove('mobile-visible');
+                    overlay.classList.remove('active');
+                });
+            }
+            
+            // Responsive adjustments
+            window.addEventListener('resize', function() {
+                if (window.innerWidth < 992) {
+                    sidebar.classList.remove('collapsed');
+                    mainContent.classList.remove('expanded');
+                    sidebar.classList.remove('mobile-visible');
+                    overlay.classList.remove('active');
                 }
-            }
-        });
-
-        // Doughnut Chart untuk Total Penjualan
-        const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
-        const doughnutChart = new Chart(doughnutCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pemesanan', 'Selesai', 'Gagal'],
-                datasets: [{
-                    data: [20, 8, 2],
-                    backgroundColor: [
-                        '#007bff',
-                        '#28a745',
-                        '#dc3545'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
+            });
+            
+            // Sales Chart
+            setTimeout(() => {
+                const salesCtx = document.getElementById('salesChart');
+                if (salesCtx) {
+                    const salesChart = new Chart(salesCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'],
+                            datasets: [{
+                                label: 'Pesanan',
+                                data: [12, 14, 15, 17, 19, 25],
+                                borderColor: '#007bff',
+                                tension: 0.1,
+                                fill: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 30,
+                                    ticks: {
+                                        stepSize: 5
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
                 }
-            }
+                
+                // Doughnut Chart
+                const doughnutCtx = document.getElementById('doughnutChart');
+                if (doughnutCtx) {
+                    const doughnutChart = new Chart(doughnutCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Pemesanan', 'Selesai', 'Gagal'],
+                            datasets: [{
+                                data: [20, 8, 2],
+                                backgroundColor: [
+                                    '#007bff',
+                                    '#28a745',
+                                    '#dc3545'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 500);
+            
+            // Logout handlers - additional backup
+            const logoutButtons = document.querySelectorAll('.logout-button');
+            logoutButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (typeof logout === 'function') {
+                        logout();
+                    } else {
+                        // Fallback if auth.js is not loaded properly
+                        localStorage.removeItem('api_token');
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('expires_at');
+                        window.location.href = '/login';
+                    }
+                });
+            });
         });
-    });
-</script>
-@endsection
+    </script>
+</body>
+</html>
