@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Cetaku | Login</title>
     
     <!-- Google Font: Source Sans Pro -->
@@ -30,28 +31,20 @@
             
             <h1 class="welcome-text">Selamat datang kembali</h1>
             
-            <form action="{{ route('login') }}" method="POST">
+            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+            
+            <form id="login-form">
                 @csrf
-                
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
                 
                 <div class="form-group">
                     <label class="form-label">Login</label>
-                    <input type="email" name="email" class="form-control" placeholder="Enter your email" value="{{ old('email') }}" required>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email" required>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Password</label>
                     <div class="password-field">
-                        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
                         <span class="password-toggle">
                             <i class="fas fa-eye"></i>
                         </span>
@@ -66,7 +59,10 @@
                     <a href="{{ route('password.request') }}" class="forgot-link">Lupa password?</a>
                 </div>
                 
-                <button type="submit" class="btn btn-login">Login</button>
+                <button type="submit" class="btn btn-login" id="login-button">
+                    <span class="button-text">Login</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
                 
                 <button type="button" class="btn btn-google">
                     <img src="{{ asset('images/google.png') }}" alt="Google logo" style="width: 20px; height: 20px;">
@@ -81,7 +77,12 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ asset('js/auth.js') }}"></script>
     <script>
+        // Setup CSRF token untuk semua request API
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
         // Toggle password visibility
         document.querySelector('.password-toggle').addEventListener('click', function() {
             const passwordInput = document.querySelector('input[name="password"]');
@@ -95,6 +96,54 @@
                 passwordInput.type = 'password';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+            }
+        });
+        
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const buttonText = document.querySelector('.button-text');
+            const spinner = document.querySelector('.spinner-border');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Tampilkan loading
+            buttonText.classList.add('d-none');
+            spinner.classList.remove('d-none');
+            errorMessage.classList.add('d-none');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const success = await login(email, password);
+                
+                if (!success) {
+                    errorMessage.textContent = 'Email atau password salah.';
+                    errorMessage.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = 'Terjadi kesalahan saat login. Silakan coba lagi.';
+                errorMessage.classList.remove('d-none');
+            } finally {
+                // Kembalikan tombol ke kondisi awal
+                buttonText.classList.remove('d-none');
+                spinner.classList.add('d-none');
+            }
+        });
+        
+        // Cek apakah sudah login saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isLoggedIn()) {
+                const user = getCurrentUser();
+                if (user.role === 'superadmin') {
+                    window.location.href = '/superadmin/dashboard';
+                } else if (user.role === 'admin') {
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    window.location.href = '/user/welcome';
+                }
             }
         });
     </script>

@@ -57,6 +57,9 @@ class AuthApiController extends Controller
             // Get updated user
             $updatedUser = User::find($user->id);
             
+            // Get the redirect URL based on role
+            $redirectUrl = $this->getRedirectUrlByRole($updatedUser);
+            
             return response()->json([
                 'success' => true,
                 'user' => [
@@ -66,7 +69,8 @@ class AuthApiController extends Controller
                     'role' => $updatedUser->role->nama_role ?? null
                 ],
                 'api_token' => $token,
-                'expires_at' => $expiresAt
+                'expires_at' => $expiresAt,
+                'redirect_url' => $redirectUrl
             ]);
         }
 
@@ -123,6 +127,9 @@ class AuthApiController extends Controller
         // Get the newly created user
         $user = User::find($userId);
 
+        // Get redirect URL for user
+        $redirectUrl = '/user/welcome';
+
         return response()->json([
             'success' => true,
             'message' => 'Pendaftaran berhasil',
@@ -133,7 +140,8 @@ class AuthApiController extends Controller
                 'role' => $userRole->nama_role
             ],
             'api_token' => $token,
-            'expires_at' => $expiresAt
+            'expires_at' => $expiresAt,
+            'redirect_url' => $redirectUrl
         ], 201);
     }
 
@@ -165,6 +173,9 @@ class AuthApiController extends Controller
             ], 401);
         }
         
+        // Get redirect URL based on role
+        $redirectUrl = $this->getRedirectUrlByRole($user);
+        
         return response()->json([
             'success' => true,
             'user' => [
@@ -172,7 +183,8 @@ class AuthApiController extends Controller
                 'nama' => $user->nama,
                 'email' => $user->email,
                 'role' => $user->role->nama_role ?? null
-            ]
+            ],
+            'redirect_url' => $redirectUrl
         ]);
     }
 
@@ -214,7 +226,25 @@ class AuthApiController extends Controller
         
         return response()->json([
             'success' => true,
-            'message' => 'Logout berhasil'
+            'message' => 'Logout berhasil',
+            'redirect_url' => '/'
         ]);
+    }
+    
+    /**
+     * Get redirect URL based on user role
+     *
+     * @param User $user
+     * @return string
+     */
+    private function getRedirectUrlByRole(User $user)
+    {
+        if ($user->hasRole('superadmin')) {
+            return '/superadmin/dashboard';
+        } elseif ($user->hasRole('admin')) {
+            return '/admin/dashboard';
+        } else {
+            return '/user/welcome';
+        }
     }
 }

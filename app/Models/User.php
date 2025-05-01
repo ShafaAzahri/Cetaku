@@ -75,4 +75,50 @@ class User extends Authenticatable
     {
         return $this->role && $this->role->nama_role === $roleName;
     }
+    
+    /**
+     * Check if user is a user (normal user role)
+     * 
+     * @return bool
+     */
+    public function isUser()
+    {
+        return $this->hasRole('user');
+    }
+    
+    /**
+     * Check if user is an admin
+     * 
+     * @return bool
+     */
+    public function isAdmin()
+    {
+        return $this->hasRole('admin');
+    }
+    
+    /**
+     * Check if user is a super admin
+     * 
+     * @return bool
+     */
+    public function isSuperAdmin()
+    {
+        return $this->hasRole('super_admin');
+    }
+    
+    /**
+     * Get user's redirect path after login
+     * 
+     * @return string
+     */
+    public function getRedirectPath()
+    {
+        if ($this->isSuperAdmin()) {
+            return '/superadmin/AdminDashboard';
+        } elseif ($this->isAdmin()) {
+            return '/dashboard';
+        } else {
+            return '/welcome';
+        }
+    }
 }

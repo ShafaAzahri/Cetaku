@@ -11,11 +11,11 @@
     
     <div class="user-profile">
         <div class="avatar">
-            <img src="https://ui-avatars.com/api/?name={{ Auth::user()->nama }}&background=4361ee&color=fff" alt="User Avatar">
+            <img src="https://ui-avatars.com/api/?name=&background=4361ee&color=fff" alt="User Avatar">
         </div>
         <div class="dropdown">
             <a class="dropdown-toggle text-decoration-none text-dark" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="d-none d-sm-inline-block me-1">{{ Auth::user()->nama }}</span>
+                <span class="d-none d-sm-inline-block me-1 user-name"></span>
                 <i class="fas fa-chevron-down fa-xs"></i>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -23,10 +23,9 @@
                 <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <form action="{{ route('logout') }}" method="POST">
-                        @csrf
-                        <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt"></i> Logout</button>
-                    </form>
+                    <button type="button" class="dropdown-item logout-button">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
                 </li>
             </ul>
         </div>

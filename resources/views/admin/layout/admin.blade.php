@@ -38,9 +38,35 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ asset('js/auth.js') }}"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Setup CSRF token untuk semua request API
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            // Cek autentikasi
+            if (!isLoggedIn()) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Cek role
+            const user = getCurrentUser();
+            if (user && user.role !== 'admin' && user.role !== 'superadmin') {
+                window.location.href = '/user/welcome';
+                return;
+            }
+            
+            // Tampilkan nama user
+            if (user) {
+                const userNameElements = document.querySelectorAll('.user-name');
+                userNameElements.forEach(el => {
+                    el.textContent = user.nama;
+                });
+            }
+            
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const toggleBtn = document.getElementById('toggle-sidebar');
@@ -83,6 +109,15 @@
                 if (href === currentPath || currentPath.includes(href) && href !== '#') {
                     link.classList.add('active');
                 }
+            });
+            
+            // Handle logout
+            const logoutButtons = document.querySelectorAll('.logout-button');
+            logoutButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    logout();
+                });
             });
         });
     </script>

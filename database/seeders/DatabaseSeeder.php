@@ -6,7 +6,6 @@ use App\Models\User;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -22,7 +21,10 @@ class DatabaseSeeder extends Seeder
         // Create admin user
         $this->createAdminUser();
         
-        // Create test user (your existing code)
+        // Create super admin user
+        $this->createSuperAdminUser();
+        
+        // Create test user
         $this->createTestUser();
     }
     
@@ -36,6 +38,9 @@ class DatabaseSeeder extends Seeder
         
         // Create user role if it doesn't exist
         Role::firstOrCreate(['nama_role' => 'user']);
+        
+        // Create super_admin role if it doesn't exist
+        Role::firstOrCreate(['nama_role' => 'super_admin']);
     }
     
     /**
@@ -53,6 +58,28 @@ class DatabaseSeeder extends Seeder
                     'nama' => 'Administrator',
                     'password' => Hash::make('admin123'), // Change this in production!
                     'role_id' => $adminRole->id,
+                    'api_token' => Str::random(60),
+                    'token_expires_at' => now()->addDays(30),
+                ]
+            );
+        }
+    }
+    
+    /**
+     * Create super admin user
+     */
+    private function createSuperAdminUser(): void
+    {
+        // Get super_admin role
+        $superAdminRole = Role::where('nama_role', 'super_admin')->first();
+        
+        if ($superAdminRole) {
+            User::firstOrCreate(
+                ['email' => 'superadmin@example.com'],
+                [
+                    'nama' => 'Super Administrator',
+                    'password' => Hash::make('superadmin123'), // Change this in production!
+                    'role_id' => $superAdminRole->id,
                     'api_token' => Str::random(60),
                     'token_expires_at' => now()->addDays(30),
                 ]

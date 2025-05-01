@@ -19,5 +19,8 @@ class RoleSeeder extends Seeder
         
         // Create user role if it doesn't exist
         Role::firstOrCreate(['nama_role' => 'user']);
+
+        // Create user role if it doesn't exist
+        Role::firstOrCreate(['nama_role' => 'superadmin']);
     }
 }

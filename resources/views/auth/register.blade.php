@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Cetaku | Daftar</title>
     
     <!-- Google Font: Source Sans Pro -->
@@ -12,7 +13,6 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/register.css') }}">
-
 </head>
 <body>
     <div class="register-container">
@@ -30,61 +30,25 @@
             
             <h1 class="welcome-text">Selamat datang</h1>
             
-            @if(session('success'))
-                <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header border-0">
-                                <h5 class="modal-title text-success" id="successModalLabel">
-                                    <i class="fas fa-check-circle me-2"></i>Registrasi Berhasil!
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p class="mb-4">{{ session('success') }}</p>
-                                <div class="d-grid gap-2">
-                                    <a href="{{ route('login') }}" class="btn btn-primary">Ya, Login Sekarang</a>
-                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Nanti Saja</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="successAlert" class="alert alert-success alert-dismissible fade show d-none" role="alert">
-                    <i class="fas fa-check-circle me-2"></i>
-                    Registrasi berhasil! Anda dapat login kapan saja dengan akun yang telah Anda buat.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
+            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
             
-            <form action="{{ route('register') }}" method="POST">
+            <form id="register-form">
                 @csrf
-                
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
                 
                 <div class="form-group">
                     <label class="form-label">Nama Panjang</label>
-                    <input type="text" name="nama" class="form-control" placeholder="Your full name" value="{{ old('nama') }}" required>
+                    <input type="text" name="nama" id="nama" class="form-control" placeholder="Your full name" required>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" name="email" class="form-control" placeholder="Enter your email" value="{{ old('email') }}" required>
+                    <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email" required>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Password</label>
                     <div class="password-field">
-                        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
                         <span class="password-toggle">
                             <i class="fas fa-eye"></i>
                         </span>
@@ -94,14 +58,17 @@
                 <div class="form-group">
                     <label class="form-label">Konfirmasi Password</label>
                     <div class="password-field">
-                        <input type="password" name="password_confirmation" class="form-control" placeholder="Konfirmasi password" required>
+                        <input type="password" name="password_confirmation" id="password_confirmation" class="form-control" placeholder="Konfirmasi password" required>
                         <span class="password-toggle-confirm">
                             <i class="fas fa-eye"></i>
                         </span>
                     </div>
                 </div>
                 
-                <button type="submit" class="btn btn-register">Sign Up</button>
+                <button type="submit" class="btn btn-register" id="register-button">
+                    <span class="button-text">Sign Up</span>
+                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                </button>
                 
                 <button type="button" class="btn btn-google">
                     <img src="{{ asset('images/google.png') }}" alt="Google logo" style="width: 20px; height: 20px;">
@@ -116,26 +83,11 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="{{ asset('js/auth.js') }}"></script>
     <script>
-        // Show success modal if exists
-        document.addEventListener('DOMContentLoaded', function() {
-            @if(session('success'))
-                var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-                successModal.show();
-                
-                // Event listener for modal dismiss button
-                document.querySelector('[data-bs-dismiss="modal"]').addEventListener('click', function() {
-                    var successAlert = document.getElementById('successAlert');
-                    successAlert.classList.remove('d-none');
-                });
-                
-                // Event listener for modal close button (X)
-                document.querySelector('.btn-close[data-bs-dismiss="modal"]').addEventListener('click', function() {
-                    var successAlert = document.getElementById('successAlert');
-                    successAlert.classList.remove('d-none');
-                });
-            @endif
-        });
+        // Setup CSRF token untuk semua request API
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         // Toggle password visibility for password field
         document.querySelector('.password-toggle').addEventListener('click', function() {
@@ -166,6 +118,82 @@
                 passwordInput.type = 'password';
                 icon.classList.remove('fa-eye-slash');
                 icon.classList.add('fa-eye');
+            }
+        });
+        
+        // Handle register form submission
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const buttonText = document.querySelector('.button-text');
+            const spinner = document.querySelector('.spinner-border');
+            const errorMessage = document.getElementById('error-message');
+            
+            // Tampilkan loading
+            buttonText.classList.add('d-none');
+            spinner.classList.remove('d-none');
+            errorMessage.classList.add('d-none');
+            
+            const nama = document.getElementById('nama').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirmation = document.getElementById('password_confirmation').value;
+            
+            // Validasi sederhana
+            if (password !== passwordConfirmation) {
+                errorMessage.textContent = 'Password dan konfirmasi password tidak cocok.';
+                errorMessage.classList.remove('d-none');
+                buttonText.classList.remove('d-none');
+                spinner.classList.add('d-none');
+                return;
+            }
+            
+            try {
+                const success = await register(nama, email, password, passwordConfirmation);
+                
+                if (!success) {
+                    errorMessage.textContent = 'Gagal mendaftar. Silakan coba lagi.';
+                    errorMessage.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                
+                if (error.response && error.response.data && error.response.data.errors) {
+                    // Tampilkan pesan error dari validasi API
+                    const errors = error.response.data.errors;
+                    let errorHtml = '<ul class="mb-0">';
+                    
+                    for (const field in errors) {
+                        errors[field].forEach(message => {
+                            errorHtml += `<li>${message}</li>`;
+                        });
+                    }
+                    
+                    errorHtml += '</ul>';
+                    errorMessage.innerHTML = errorHtml;
+                } else {
+                    errorMessage.textContent = 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.';
+                }
+                
+                errorMessage.classList.remove('d-none');
+            } finally {
+                // Kembalikan tombol ke kondisi awal
+                buttonText.classList.remove('d-none');
+                spinner.classList.add('d-none');
+            }
+        });
+        
+        // Cek apakah sudah login saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isLoggedIn()) {
+                const user = getCurrentUser();
+                if (user.role === 'superadmin') {
+                    window.location.href = '/superadmin/dashboard';
+                } else if (user.role === 'admin') {
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    window.location.href = '/user/welcome';
+                }
             }
         });
     </script>

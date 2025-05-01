@@ -4,6 +4,62 @@
 
 @section('content')
 <div class="container-fluid p-4">
+    <!-- Row 1: Welcome & Stats -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Selamat Datang, <span id="admin-name">Admin</span>!</h5>
+                            <p class="card-text text-muted">Anda login sebagai Administrator</p>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-user-tie text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <div class="row row-cols-1 row-cols-md-3 g-3">
+                        <div class="col">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <h3 class="text-primary mb-2">30</h3>
+                                    <p class="card-text mb-0">Pesanan</p>
+                                    <small class="text-muted">Bulan Ini</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <h3 class="text-success mb-2">12</h3>
+                                    <p class="card-text mb-0">Selesai</p>
+                                    <small class="text-muted">Bulan Ini</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <h3 class="text-warning mb-2">8</h3>
+                                    <p class="card-text mb-0">Pending</p>
+                                    <small class="text-muted">Saat Ini</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistik dan Grafik -->
     <div class="row">
         <!-- Statistik Penjualan -->
@@ -187,8 +243,28 @@
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="{{ asset('js/auth.js') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Cek autentikasi
+        if (!isLoggedIn()) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        // Cek role
+        const user = getCurrentUser();
+        if (user && user.role !== 'admin' && user.role !== 'superadmin') {
+            window.location.href = '/user/welcome';
+            return;
+        }
+        
+        // Tampilkan nama admin
+        if (user) {
+            document.getElementById('admin-name').textContent = user.nama;
+        }
+        
         // Line Chart untuk Statistik Penjualan
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         const salesChart = new Chart(salesCtx, {
@@ -247,4 +323,6 @@
         });
     });
 </script>
+
+<script src="{{ asset('js/check-auth.js') }}"></script>
 @endsection
