@@ -31,22 +31,44 @@
             
             <h1 class="welcome-text">Selamat datang kembali</h1>
             
-            <div id="error-message" class="alert alert-danger d-none" role="alert"></div>
+            @if(session('error'))
+                <div class="alert alert-danger" role="alert">
+                    {{ session('error') }}
+                </div>
+            @endif
             
-            <form id="login-form">
+            @if(session('success'))
+                <div class="alert alert-success" role="alert">
+                    {{ session('success') }}
+                </div>
+            @endif
+            
+            @if($errors->any())
+                <div class="alert alert-danger" role="alert">
+                    <ul class="mb-0">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+            
+            <form action="{{ route('login.submit') }}" method="POST">
                 @csrf
                 
                 <div class="form-group">
                     <label class="form-label">Login</label>
-                    <input type="email" name="email" id="email" class="form-control" placeholder="Enter your email" required>
+                    <input type="email" name="email" id="email" class="form-control" 
+                           placeholder="Enter your email" value="{{ old('email') }}" required>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Password</label>
                     <div class="password-field">
-                        <input type="password" name="password" id="password" class="form-control" placeholder="Enter password" required>
-                        <span class="password-toggle">
-                            <i class="fas fa-eye"></i>
+                        <input type="password" name="password" id="password" class="form-control" 
+                               placeholder="Enter password" required>
+                        <span class="password-toggle" onclick="togglePassword()">
+                            <i class="fas fa-eye" id="toggleIcon"></i>
                         </span>
                     </div>
                 </div>
@@ -59,12 +81,11 @@
                     <a href="{{ route('password.request') }}" class="forgot-link">Lupa password?</a>
                 </div>
                 
-                <button type="submit" class="btn btn-login" id="login-button">
+                <button type="submit" class="btn btn-login">
                     <span class="button-text">Login</span>
-                    <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                 </button>
                 
-                <button type="button" class="btn btn-google">
+                <button type="button" class="btn btn-google" disabled>
                     <img src="{{ asset('images/google.png') }}" alt="Google logo" style="width: 20px; height: 20px;">
                     Or sign in with Google
                 </button>
@@ -77,75 +98,22 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="{{ asset('js/auth.js') }}"></script>
     <script>
-        // Setup CSRF token untuk semua request API
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        // Toggle password visibility
-        document.querySelector('.password-toggle').addEventListener('click', function() {
-            const passwordInput = document.querySelector('input[name="password"]');
-            const icon = this.querySelector('i');
+        // Simple toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
             
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
             } else {
                 passwordInput.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
             }
-        });
-        
-        // Handle login form submission
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const buttonText = document.querySelector('.button-text');
-            const spinner = document.querySelector('.spinner-border');
-            const errorMessage = document.getElementById('error-message');
-            
-            // Tampilkan loading
-            buttonText.classList.add('d-none');
-            spinner.classList.remove('d-none');
-            errorMessage.classList.add('d-none');
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                const success = await login(email, password);
-                
-                if (!success) {
-                    errorMessage.textContent = 'Email atau password salah.';
-                    errorMessage.classList.remove('d-none');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                errorMessage.textContent = 'Terjadi kesalahan saat login. Silakan coba lagi.';
-                errorMessage.classList.remove('d-none');
-            } finally {
-                // Kembalikan tombol ke kondisi awal
-                buttonText.classList.remove('d-none');
-                spinner.classList.add('d-none');
-            }
-        });
-        
-        // Cek apakah sudah login saat halaman dimuat
-        document.addEventListener('DOMContentLoaded', function() {
-            if (isLoggedIn()) {
-                const user = getCurrentUser();
-                if (user.role === 'superadmin') {
-                    window.location.href = '/superadmin/dashboard';
-                } else if (user.role === 'admin') {
-                    window.location.href = '/admin/dashboard';
-                } else {
-                    window.location.href = '/user/welcome';
-                }
-            }
-        });
+        }
     </script>
 </body>
-</html>
+</html> 

@@ -2,10 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="auth-required" content="true">
-    <meta name="required-role" content="admin">
     <title>Dashboard Admin | Cetaku</title>
     
     <!-- Google Font: Poppins -->
@@ -16,58 +14,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
-    
-    <!-- Immediate auth check script -->
-    <script>
-        // Immediate auth check - runs before anything else
-        (function() {
-            function redirectToLogin() {
-                localStorage.removeItem('api_token');
-                localStorage.removeItem('user');
-                localStorage.removeItem('expires_at');
-                window.location.href = '/login';
-            }
-            
-            // Check if authentication is required
-            if (document.querySelector('meta[name="auth-required"]')) {
-                const token = localStorage.getItem('api_token');
-                const expiresAt = localStorage.getItem('expires_at');
-                const userStr = localStorage.getItem('user');
-                
-                // Check for basic auth requirements
-                if (!token || !expiresAt || new Date(expiresAt) <= new Date()) {
-                    console.log("Authentication required but missing or expired token. Redirecting to login...");
-                    redirectToLogin();
-                    return;
-                }
-                
-                // Check for role requirements
-                try {
-                    const requiredRole = document.querySelector('meta[name="required-role"]')?.content;
-                    if (requiredRole && userStr) {
-                        const user = JSON.parse(userStr);
-                        if (!user.role || (
-                            requiredRole === 'super_admin' && user.role !== 'super_admin') || 
-                            (requiredRole === 'admin' && user.role !== 'admin' && user.role !== 'super_admin')
-                        ) {
-                            console.log("Authentication passed but insufficient role permissions. Redirecting...");
-                            // Redirect based on user's actual role
-                            if (user.role === 'super_admin') {
-                                window.location.href = '/superadmin/dashboard';
-                            } else if (user.role === 'admin') {
-                                window.location.href = '/admin/dashboard';
-                            } else {
-                                window.location.href = '/user/welcome';
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error checking role permissions:", e);
-                    redirectToLogin();
-                }
-            }
-        })();
-    </script>
 </head>
 <body>
     <!-- Sidebar -->
@@ -120,7 +66,10 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="#" class="nav-link logout-button">
+                <form action="{{ route('logout') }}" method="POST" id="logout-form" style="display: none;">
+                    @csrf
+                </form>
+                <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fas fa-sign-out-alt"></i>
                     <span class="nav-text">Logout</span>
                 </a>
@@ -147,11 +96,11 @@
             
             <div class="user-profile">
                 <div class="avatar">
-                    <img src="https://ui-avatars.com/api/?name=Admin&background=4361ee&color=fff" alt="User Avatar" id="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name={{ session('user')['nama'] }}&background=4361ee&color=fff" alt="User Avatar" id="user-avatar">
                 </div>
                 <div class="dropdown">
                     <a class="dropdown-toggle text-decoration-none text-dark" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="d-none d-sm-inline-block me-1 user-name">Administrator</span>
+                        <span class="d-none d-sm-inline-block me-1 user-name">{{ session('user')['nama'] }}</span>
                         <i class="fas fa-chevron-down fa-xs"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
@@ -159,9 +108,9 @@
                         <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Pengaturan</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <button type="button" class="dropdown-item logout-button">
+                            <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt"></i> Logout
-                            </button>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -177,7 +126,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h5 class="card-title">Selamat Datang, <span class="user-name">Administrator</span>!</h5>
+                                    <h5 class="card-title">Selamat Datang, {{ session('user')['nama'] }}!</h5>
                                     <p class="card-text text-muted">Anda login sebagai Administrator</p>
                                 </div>
                                 <div class="d-flex align-items-center">
@@ -279,132 +228,6 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Jadwal Pesanan -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="card shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                            <h5 class="m-0">Jadwal Pesanan</h5>
-                            <div class="d-flex align-items-center">
-                                <button class="btn btn-sm btn-outline-secondary me-2" type="button" id="calendarMonthDropdown" data-bs-toggle="dropdown">
-                                    Mei, 2025
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="calendarMonthDropdown">
-                                    <li><a class="dropdown-item" href="#">April, 2025</a></li>
-                                    <li><a class="dropdown-item" href="#">Mei, 2025</a></li>
-                                    <li><a class="dropdown-item" href="#">Juni, 2025</a></li>
-                                </ul>
-                                <div class="btn-group ms-2">
-                                    <button class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table table-bordered mb-0">
-                                    <thead>
-                                        <tr class="text-center">
-                                            <th width="14.28%">MINGGU</th>
-                                            <th width="14.28%">SENIN</th>
-                                            <th width="14.28%">SELASA</th>
-                                            <th width="14.28%">RABU</th>
-                                            <th width="14.28%">KAMIS</th>
-                                            <th width="14.28%">JUMAT</th>
-                                            <th width="14.28%">SABTU</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr style="height: 100px;">
-                                            <td class="bg-light text-danger">
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">1</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">2</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">3</span>
-                                                </div>
-                                                <div class="p-1">
-                                                    <small class="d-block p-1 rounded text-primary bg-light">Pesanan 1</small>
-                                                    <small class="d-block p-1 rounded text-primary bg-light">Pelanggan 2</small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">4</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">5</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">6</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">7</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr style="height: 100px;">
-                                            <td class="bg-light text-danger">
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">8</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">9</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">10</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">11</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">12</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">13</span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex justify-content-end p-1">
-                                                    <span class="fw-bold">14</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -412,8 +235,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ asset('js/auth.js') }}"></script>
-    <script src="{{ asset('js/check-auth.js') }}"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -453,87 +274,68 @@
             });
             
             // Sales Chart
-            setTimeout(() => {
-                const salesCtx = document.getElementById('salesChart');
-                if (salesCtx) {
-                    const salesChart = new Chart(salesCtx, {
-                        type: 'line',
-                        data: {
-                            labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'],
-                            datasets: [{
-                                label: 'Pesanan',
-                                data: [12, 14, 15, 17, 19, 25],
-                                borderColor: '#007bff',
-                                tension: 0.1,
-                                fill: false
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    max: 30,
-                                    ticks: {
-                                        stepSize: 5
-                                    }
-                                }
-                            },
-                            plugins: {
-                                legend: {
-                                    display: false
+            const salesCtx = document.getElementById('salesChart');
+            if (salesCtx) {
+                const salesChart = new Chart(salesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'],
+                        datasets: [{
+                            label: 'Pesanan',
+                            data: [12, 14, 15, 17, 19, 25],
+                            borderColor: '#007bff',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 30,
+                                ticks: {
+                                    stepSize: 5
                                 }
                             }
-                        }
-                    });
-                }
-                
-                // Doughnut Chart
-                const doughnutCtx = document.getElementById('doughnutChart');
-                if (doughnutCtx) {
-                    const doughnutChart = new Chart(doughnutCtx, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Pemesanan', 'Selesai', 'Gagal'],
-                            datasets: [{
-                                data: [20, 8, 2],
-                                backgroundColor: [
-                                    '#007bff',
-                                    '#28a745',
-                                    '#dc3545'
-                                ]
-                            }]
                         },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom'
-                                }
+                        plugins: {
+                            legend: {
+                                display: false
                             }
                         }
-                    });
-                }
-            }, 500);
-            
-            // Logout handlers - additional backup
-            const logoutButtons = document.querySelectorAll('.logout-button');
-            logoutButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (typeof logout === 'function') {
-                        logout();
-                    } else {
-                        // Fallback if auth.js is not loaded properly
-                        localStorage.removeItem('api_token');
-                        localStorage.removeItem('user');
-                        localStorage.removeItem('expires_at');
-                        window.location.href = '/login';
                     }
                 });
-            });
+            }
+            
+            // Doughnut Chart
+            const doughnutCtx = document.getElementById('doughnutChart');
+            if (doughnutCtx) {
+                const doughnutChart = new Chart(doughnutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Pemesanan', 'Selesai', 'Gagal'],
+                        datasets: [{
+                            data: [20, 8, 2],
+                            backgroundColor: [
+                                '#007bff',
+                                '#28a745',
+                                '#dc3545'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

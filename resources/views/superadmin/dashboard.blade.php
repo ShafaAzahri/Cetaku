@@ -311,7 +311,7 @@
     <aside class="sidebar" id="sidebar">
         <div class="brand-logo">
             <i class="fas fa-print"></i>
-            <span class="brand-text">CETAKU SUPER</span>
+            <span class="brand-text">CETAKU</span>
         </div>
         <ul class="nav-list">
             <li class="nav-item">
@@ -336,18 +336,6 @@
                 <a href="#" class="nav-link">
                     <i class="fas fa-store"></i>
                     <span class="nav-text">Toko Management</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-chart-line"></i>
-                    <span class="nav-text">Sales Reports</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-cog"></i>
-                    <span class="nav-text">System Settings</span>
                 </a>
             </li>
             <li class="nav-item">
