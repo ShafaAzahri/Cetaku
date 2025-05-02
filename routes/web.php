@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\ProductManagerController;
 
 // Public routes
 Route::get('/', function () {
@@ -27,24 +28,36 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         return view('admin.dashboard');
     })->name('dashboard');
     
-    Route::get('/product-manager', function () {
-        return view('admin.product-manager');
-    })->name('product-manager');
-});
-
-// Superadmin routes with middleware
-Route::middleware(['admin'])->prefix('superadmin')->name('superadmin.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('superadmin.dashboard');
-    })->name('dashboard');
-});
-
-// User routes
-Route::prefix('user')->name('user.')->group(function () {
-    Route::get('/welcome', function () {
-        if (!session()->has('api_token')) {
-            return redirect()->route('login');
-        }
-        return view('welcome');
-    })->name('welcome');
+    // Product Manager Routes
+    Route::get('/product-manager', [ProductManagerController::class, 'index'])->name('product-manager');
+    
+    // Item Routes
+    Route::post('/items', [ProductManagerController::class, 'storeItem'])->name('items.store');
+    Route::get('/items/{id}/edit', [ProductManagerController::class, 'editItem'])->name('items.edit');
+    Route::put('/items/{id}', [ProductManagerController::class, 'updateItem'])->name('items.update');
+    Route::delete('/items/{id}', [ProductManagerController::class, 'destroyItem'])->name('items.destroy');
+    
+    // Bahan Routes
+    Route::post('/bahans', [ProductManagerController::class, 'storeBahan'])->name('bahans.store');
+    Route::get('/bahans/{id}/edit', [ProductManagerController::class, 'editBahan'])->name('bahans.edit');
+    Route::put('/bahans/{id}', [ProductManagerController::class, 'updateBahan'])->name('bahans.update');
+    Route::delete('/bahans/{id}', [ProductManagerController::class, 'destroyBahan'])->name('bahans.destroy');
+    
+    // Ukuran Routes
+    Route::post('/ukurans', [ProductManagerController::class, 'storeUkuran'])->name('ukurans.store');
+    Route::get('/ukurans/{id}/edit', [ProductManagerController::class, 'editUkuran'])->name('ukurans.edit');
+    Route::put('/ukurans/{id}', [ProductManagerController::class, 'updateUkuran'])->name('ukurans.update');
+    Route::delete('/ukurans/{id}', [ProductManagerController::class, 'destroyUkuran'])->name('ukurans.destroy');
+    
+    // Jenis Routes
+    Route::post('/jenis', [ProductManagerController::class, 'storeJenis'])->name('jenis.store');
+    Route::get('/jenis/{id}/edit', [ProductManagerController::class, 'editJenis'])->name('jenis.edit');
+    Route::put('/jenis/{id}', [ProductManagerController::class, 'updateJenis'])->name('jenis.update');
+    Route::delete('/jenis/{id}', [ProductManagerController::class, 'destroyJenis'])->name('jenis.destroy');
+    
+    // Biaya Desain Routes
+    Route::post('/biaya-desain', [ProductManagerController::class, 'storeBiayaDesain'])->name('biaya-desain.store');
+    Route::get('/biaya-desain/{id}/edit', [ProductManagerController::class, 'editBiayaDesain'])->name('biaya-desain.edit');
+    Route::put('/biaya-desain/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desain.update');
+    Route::delete('/biaya-desain/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desain.destroy');
 });
