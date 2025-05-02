@@ -10,33 +10,40 @@ use Illuminate\Support\Facades\Validator;
 class BiayaDesainController extends Controller
 {
     /**
-     * Display a listing of the design costs.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index(Request $request)
+ * Display a listing of the design costs.
+ *
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function index(Request $request)
     {
-        $query = BiayaDesain::query();
-        
-        // Search by description
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('deskripsi', 'LIKE', "%{$search}%");
+        try {
+            $query = BiayaDesain::query();
+            
+            // Search by description
+            if ($request->has('search')) {
+                $search = $request->input('search');
+                $query->where('deskripsi', 'LIKE', "%{$search}%");
+            }
+            
+            // Sort
+            $sortField = $request->input('sort_by', 'id');
+            $sortDirection = $request->input('sort_direction', 'desc');
+            $query->orderBy($sortField, $sortDirection);
+            
+            // Pagination
+            $perPage = $request->input('per_page', 10);
+            $biayaDesains = $query->paginate($perPage);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $biayaDesains
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching design costs: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Sort
-        $sortField = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortField, $sortDirection);
-        
-        // Pagination
-        $perPage = $request->input('per_page', 10);
-        $biayaDesains = $query->paginate($perPage);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $biayaDesains
-        ]);
     }
 
     /**

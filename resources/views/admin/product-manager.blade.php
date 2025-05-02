@@ -89,23 +89,26 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if(isset($items) && is_array($items) && count($items) > 0)
-                                    @foreach($items as $index => $item)
+                                @php
+                                $itemsArray = isset($items) ? (is_array($items) ? $items : (is_object($items) && method_exists($items, 'toArray') ? $items->toArray() : [])) : [];
+                                @endphp
+                                
+                                @if(!empty($itemsArray))
+                                    @foreach($itemsArray as $index => $item)
                                     <tr>
-                                        <td>{{ (int)$index + 1 }}</td>
+                                        <td>{{ $index + 1 }}</td>
                                         <td>
-                                            @if(is_array($item) && isset($item['gambar']) && $item['gambar'])
+                                            @if(isset($item['gambar']) && $item['gambar'])
                                                 <img src="{{ asset('storage/' . $item['gambar']) }}" alt="{{ $item['nama_item'] ?? 'Produk' }}" class="img-thumbnail" width="80">
                                             @else
                                                 <div class="text-center"><i class="fas fa-image text-muted"></i></div>
                                             @endif
                                         </td>
-                                        <td>{{ is_array($item) && isset($item['nama_item']) ? $item['nama_item'] : '-' }}</td>
-                                        <td>{{ is_array($item) && isset($item['deskripsi']) ? $item['deskripsi'] : '-' }}</td>
-                                        <td>Rp {{ is_array($item) && isset($item['harga_dasar']) ? number_format($item['harga_dasar'], 0, ',', '.') : '0' }}</td>
+                                        <td>{{ $item['nama_item'] ?? '-' }}</td>
+                                        <td>{{ $item['deskripsi'] ?? '-' }}</td>
+                                        <td>Rp {{ number_format($item['harga_dasar'] ?? 0, 0, ',', '.') }}</td>
                                         <td>
                                             <div class="action-buttons">
-                                                @if(is_array($item) && isset($item['id']))
                                                 <a href="{{ route('admin.items.edit', $item['id']) }}" class="btn btn-sm btn-info">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
@@ -116,7 +119,6 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
-                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -153,24 +155,26 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if(isset($bahans) && is_array($bahans) && count($bahans) > 0)
-                                    @foreach($bahans as $index => $bahan)
+                                @php
+                                $bahansArray = isset($bahans) ? (is_array($bahans) ? $bahans : (is_object($bahans) && method_exists($bahans, 'toArray') ? $bahans->toArray() : [])) : [];
+                                @endphp
+                                
+                                @if(!empty($bahansArray))
+                                    @foreach($bahansArray as $index => $bahan)
                                     <tr>
-                                        <td>{{ (int)$index + 1 }}</td>
-                                        <td>{{ is_array($bahan) && isset($bahan['nama_bahan']) ? $bahan['nama_bahan'] : '-' }}</td>
-                                        <td>Rp {{ is_array($bahan) && isset($bahan['biaya_tambahan']) ? number_format($bahan['biaya_tambahan'], 0, ',', '.') : '0' }}</td>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $bahan['nama_bahan'] ?? '-' }}</td>
+                                        <td>Rp {{ number_format($bahan['biaya_tambahan'] ?? 0, 0, ',', '.') }}</td>
                                         <td>
-                                            @if(is_array($bahan) && isset($bahan['is_available']))
-                                                <span class="badge {{ $bahan['is_available'] ? 'bg-success' : 'bg-danger' }}">
-                                                    {{ $bahan['is_available'] ? 'Tersedia' : 'Tidak Tersedia' }}
-                                                </span>
-                                            @else
-                                                <span class="badge bg-secondary">Tidak Diketahui</span>
-                                            @endif
+                                            @php
+                                            $isAvailable = isset($bahan['is_available']) ? (bool)$bahan['is_available'] : true;
+                                            @endphp
+                                            <span class="badge {{ $isAvailable ? 'bg-success' : 'bg-danger' }}">
+                                                {{ $isAvailable ? 'Tersedia' : 'Tidak Tersedia' }}
+                                            </span>
                                         </td>
                                         <td>
                                             <div class="action-buttons">
-                                                @if(is_array($bahan) && isset($bahan['id']))
                                                 <a href="{{ route('admin.bahans.edit', $bahan['id']) }}" class="btn btn-sm btn-info">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
@@ -181,7 +185,6 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
-                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -197,6 +200,7 @@
                 </div>
                 @endif
                 
+                <!-- Ukurans Tab -->
                 <!-- Ukurans Tab -->
                 @if($activeTab == 'ukurans')
                 <div class="tab-pane fade show active" id="ukurans" role="tabpanel">
@@ -217,15 +221,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if(isset($ukurans) && is_array($ukurans) && count($ukurans) > 0)
-                                    @foreach($ukurans as $index => $ukuran)
+                                @php
+                                $ukuransArray = isset($ukurans) ? (is_array($ukurans) ? $ukurans : (is_object($ukurans) && method_exists($ukurans, 'toArray') ? $ukurans->toArray() : [])) : [];
+                                @endphp
+                                
+                                @if(!empty($ukuransArray))
+                                    @foreach($ukuransArray as $index => $ukuran)
                                     <tr>
-                                        <td>{{ (int)$index + 1 }}</td>
-                                        <td>{{ is_array($ukuran) && isset($ukuran['size']) ? $ukuran['size'] : '-' }}</td>
-                                        <td>{{ is_array($ukuran) && isset($ukuran['faktor_harga']) ? $ukuran['faktor_harga'] . 'x' : '-' }}</td>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $ukuran['size'] ?? '-' }}</td>
+                                        <td>{{ $ukuran['faktor_harga'] ?? '1' }}x</td>
                                         <td>
                                             <div class="action-buttons">
-                                                @if(is_array($ukuran) && isset($ukuran['id']))
                                                 <a href="{{ route('admin.ukurans.edit', $ukuran['id']) }}" class="btn btn-sm btn-info">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
@@ -236,7 +243,6 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
-                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -327,15 +333,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @if(isset($biayaDesain) && is_array($biayaDesain) && count($biayaDesain) > 0)
-                                    @foreach($biayaDesain as $index => $biaya)
+                                @php
+                                $biayaDesainArray = isset($biayaDesain) ? (is_array($biayaDesain) ? $biayaDesain : (is_object($biayaDesain) && method_exists($biayaDesain, 'toArray') ? $biayaDesain->toArray() : [])) : [];
+                                @endphp
+                                
+                                @if(!empty($biayaDesainArray))
+                                    @foreach($biayaDesainArray as $index => $biaya)
                                     <tr>
-                                        <td>{{ (int)$index + 1 }}</td>
-                                        <td>Rp {{ is_array($biaya) && isset($biaya['biaya']) ? number_format($biaya['biaya'], 0, ',', '.') : '0' }}</td>
-                                        <td>{{ is_array($biaya) && isset($biaya['deskripsi']) ? $biaya['deskripsi'] : '-' }}</td>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>Rp {{ number_format($biaya['biaya'] ?? 0, 0, ',', '.') }}</td>
+                                        <td>{{ $biaya['deskripsi'] ?? '-' }}</td>
                                         <td>
                                             <div class="action-buttons">
-                                                @if(is_array($biaya) && isset($biaya['id']))
                                                 <a href="{{ route('admin.biaya-desain.edit', $biaya['id']) }}" class="btn btn-sm btn-info">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
@@ -346,7 +355,6 @@
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </form>
-                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -361,10 +369,6 @@
                     </div>
                 </div>
                 @endif
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Modals -->
 @include('admin.product-manager.modals.item-modals')

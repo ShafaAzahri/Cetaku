@@ -10,6 +10,7 @@ use App\Models\ItemJenis;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class ItemController extends Controller
 {
@@ -20,27 +21,46 @@ class ItemController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Item::query();
-        
-        // Search by name
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('nama_item', 'LIKE', "%{$search}%");
+        try {
+            $query = Item::query();
+            
+            // Search by name
+            if ($request->has('search')) {
+                $search = $request->input('search');
+                $query->where('nama_item', 'LIKE', "%{$search}%");
+            }
+            
+            // Sort
+            $sortField = $request->input('sort_by', 'id');
+            $sortDirection = $request->input('sort_direction', 'desc');
+            $query->orderBy($sortField, $sortDirection);
+            
+            // Pagination
+            $perPage = $request->input('per_page', 10);
+            $items = $query->paginate($perPage);
+            
+            // Log debug info
+            Log::debug('API Items fetched', [
+                'total' => $items->total(),
+                'per_page' => $items->perPage(),
+                'count' => $items->count(),
+                'first_item' => $items->first()
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'data' => $items
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in ItemController@index: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching items: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Sort
-        $sortField = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortField, $sortDirection);
-        
-        // Pagination
-        $perPage = $request->input('per_page', 10);
-        $items = $query->paginate($perPage);
-        
-        return response()->json([
-            'success' => true,
-            'data' => $items
-        ]);
     }
 
     /**

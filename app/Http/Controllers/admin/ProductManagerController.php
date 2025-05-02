@@ -37,89 +37,106 @@ class ProductManagerController extends Controller
                 'activeTab' => $activeTab
             ];
             
+            // Function to process API response and extract data
+            $processApiResponse = function($response, $dataType) {
+                if ($response->successful()) {
+                    $responseData = $response->json();
+                    
+                    // Log successful response
+                    Log::debug("API {$dataType} Response Success", [
+                        'response_structure' => array_keys($responseData),
+                        'data_exists' => isset($responseData['data']),
+                        'data_type' => gettype($responseData['data'] ?? null),
+                    ]);
+                    
+                    // Check if we have a paginated response or direct data
+                    if (isset($responseData['data']['data'])) {
+                        // It's a paginated response
+                        return [
+                            'data' => $responseData['data']['data'],
+                            'pagination' => [
+                                'total' => $responseData['data']['total'],
+                                'per_page' => $responseData['data']['per_page'],
+                                'current_page' => $responseData['data']['current_page'],
+                                'last_page' => $responseData['data']['last_page']
+                            ]
+                        ];
+                    } else if (isset($responseData['data'])) {
+                        // It's a direct data array
+                        return ['data' => $responseData['data']];
+                    } else {
+                        // Fallback for unexpected format
+                        Log::warning("Unexpected {$dataType} API response format", ['response' => $responseData]);
+                        return ['data' => []];
+                    }
+                } else {
+                    // Log error response
+                    Log::error("Error fetching {$dataType}: " . $response->body());
+                    return ['data' => []];
+                }
+            };
+            
+            // Always fetch items for dropdowns if needed
+            $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
+            if ($itemsDropdownResponse->successful()) {
+                $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
+            } else {
+                Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
+                $data['itemsDropdown'] = [];
+            }
+            
             // Fetch data based on active tab
             switch ($activeTab) {
                 case 'items':
                     $itemsResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items');
-                    if ($itemsResponse->successful()) {
-                        $data['items'] = $itemsResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching items: ' . $itemsResponse->body());
-                        $data['items'] = [];
+                    $result = $processApiResponse($itemsResponse, 'items');
+                    $data['items'] = $result['data'];
+                    if (isset($result['pagination'])) {
+                        $data['pagination'] = $result['pagination'];
                     }
                     break;
                     
                 case 'bahans':
                     $bahansResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/bahans');
-                    if ($bahansResponse->successful()) {
-                        $data['bahans'] = $bahansResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching bahans: ' . $bahansResponse->body());
-                        $data['bahans'] = [];
-                    }
-                    
-                    // Also get items for dropdown
-                    $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-                    if ($itemsDropdownResponse->successful()) {
-                        $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
-                        $data['itemsDropdown'] = [];
+                    $result = $processApiResponse($bahansResponse, 'bahans');
+                    $data['bahans'] = $result['data'];
+                    if (isset($result['pagination'])) {
+                        $data['pagination'] = $result['pagination'];
                     }
                     break;
                     
                 case 'ukurans':
                     $ukuransResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/ukurans');
-                    if ($ukuransResponse->successful()) {
-                        $data['ukurans'] = $ukuransResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching ukurans: ' . $ukuransResponse->body());
-                        $data['ukurans'] = [];
-                    }
-                    
-                    // Also get items for dropdown
-                    $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-                    if ($itemsDropdownResponse->successful()) {
-                        $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
-                        $data['itemsDropdown'] = [];
+                    $result = $processApiResponse($ukuransResponse, 'ukurans');
+                    $data['ukurans'] = $result['data'];
+                    if (isset($result['pagination'])) {
+                        $data['pagination'] = $result['pagination'];
                     }
                     break;
                     
                 case 'jenis':
                     $jenisResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/jenis');
-                    if ($jenisResponse->successful()) {
-                        $data['jenis'] = $jenisResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching jenis: ' . $jenisResponse->body());
-                        $data['jenis'] = [];
-                    }
-                    
-                    // Also get items for dropdown
-                    $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-                    if ($itemsDropdownResponse->successful()) {
-                        $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
-                        $data['itemsDropdown'] = [];
+                    $result = $processApiResponse($jenisResponse, 'jenis');
+                    $data['jenis'] = $result['data'];
+                    if (isset($result['pagination'])) {
+                        $data['pagination'] = $result['pagination'];
                     }
                     break;
                     
                 case 'biaya-desain':
                     $biayaDesainResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/biaya-desain');
-                    if ($biayaDesainResponse->successful()) {
-                        $data['biayaDesain'] = $biayaDesainResponse->json()['data'] ?? [];
-                    } else {
-                        Log::error('Error fetching biaya desain: ' . $biayaDesainResponse->body());
-                        $data['biayaDesain'] = [];
+                    $result = $processApiResponse($biayaDesainResponse, 'biaya-desain');
+                    $data['biayaDesain'] = $result['data'];
+                    if (isset($result['pagination'])) {
+                        $data['pagination'] = $result['pagination'];
                     }
                     break;
             }
             
             Log::info('ProductManager rendering view with data', [
                 'active_tab' => $activeTab,
-                'has_data' => !empty($data)
+                'data_keys' => array_keys($data),
+                'has_data' => !empty($data[$activeTab === 'biaya-desain' ? 'biayaDesain' : $activeTab])
             ]);
             
             return view('admin.product-manager', $data);

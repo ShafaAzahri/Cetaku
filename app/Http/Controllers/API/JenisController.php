@@ -11,38 +11,45 @@ use Illuminate\Support\Facades\Validator;
 class JenisController extends Controller
 {
     /**
-     * Display a listing of the categories.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function index(Request $request)
+ * Display a listing of the categories.
+ *
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function index(Request $request)
     {
-        $query = Jenis::query();
-        
-        // Search by category
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where('kategori', 'LIKE', "%{$search}%");
+        try {
+            $query = Jenis::query();
+            
+            // Search by category
+            if ($request->has('search')) {
+                $search = $request->input('search');
+                $query->where('kategori', 'LIKE', "%{$search}%");
+            }
+            
+            // Sort
+            $sortField = $request->input('sort_by', 'id');
+            $sortDirection = $request->input('sort_direction', 'desc');
+            $query->orderBy($sortField, $sortDirection);
+            
+            // Pagination
+            $perPage = $request->input('per_page', 10);
+            $jenis = $query->paginate($perPage);
+            
+            // Load associated items
+            $jenis->each(function ($jenisItem) {
+                $jenisItem->load('items');
+            });
+            
+            return response()->json([
+                'success' => true,
+                'data' => $jenis
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching categories: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Sort
-        $sortField = $request->input('sort_by', 'id');
-        $sortDirection = $request->input('sort_direction', 'desc');
-        $query->orderBy($sortField, $sortDirection);
-        
-        // Pagination
-        $perPage = $request->input('per_page', 10);
-        $jenis = $query->paginate($perPage);
-        
-        // Load associated items
-        $jenis->each(function ($jenis) {
-            $jenis->load('items');
-        });
-        
-        return response()->json([
-            'success' => true,
-            'data' => $jenis
-        ]);
     }
 
     /**
