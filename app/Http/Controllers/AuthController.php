@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash; // Tambahkan ini
+use Illuminate\Support\Str; // Tambahkan ini
 
 class AuthController extends Controller
 {
@@ -37,24 +41,14 @@ class AuthController extends Controller
     public function showRegistrationForm()
     {
         if (session()->has('api_token')) {
-            $user = session('user');
-            if (isset($user['role'])) {
-                switch ($user['role']) {
-                    case 'super_admin':
-                        return redirect()->route('superadmin.dashboard');
-                    case 'admin':
-                        return redirect()->route('admin.dashboard');
-                    default:
-                        return redirect()->route('user.welcome');
-                }
-            }
+            return $this->redirectBasedOnRole(session('user'));
         }
 
         return view('auth.register');
     }
 
     /**
-     * Handle login request
+     * Handle login request - Rewritten for better error handling and debugging
      */
     public function login(Request $request)
     {
@@ -70,57 +64,60 @@ class AuthController extends Controller
         }
 
         try {
-            // Call API for login
-            $response = Http::post(config('app.url') . '/api/auth/login', [
-                'email' => $request->email,
-                'password' => $request->password,
-            ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
+            // Attempt direct database login first
+            $user = User::where('email', $request->email)->first();
+            
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                Log::warning('Login failed - Invalid credentials', [
+                    'email' => $request->email
+                ]);
                 
-                if ($data['success']) {
-                    // Store data in session
-                    session([
-                        'api_token' => $data['api_token'],
-                        'user' => $data['user'],
-                        'expires_at' => $data['expires_at'],
-                    ]);
-
-                    Log::info('User logged in', [
-                        'user_id' => $data['user']['id'] ?? null,
-                        'email' => $data['user']['email'] ?? null,
-                        'role' => $data['user']['role'] ?? null
-                    ]);
-
-                    // Redirect based on role
-                    switch ($data['user']['role']) {
-                        case 'admin':
-                            return redirect()->route('admin.dashboard');
-                        case 'super_admin':
-                            return redirect()->route('superadmin.dashboard');
-                        default:
-                            return redirect()->route('user.welcome');
-                    }
-                }
+                return redirect()->back()
+                    ->with('error', 'Email atau password salah')
+                    ->withInput($request->except('password'));
             }
-
-            Log::warning('Login failed', [
-                'email' => $request->email,
-                'response' => $response->json()
+            
+            // Generate and save token directly
+            $token = Str::random(60);
+            $expiresAt = now()->addDays(30);
+            
+            $user->api_token = $token;
+            $user->token_expires_at = $expiresAt;
+            $user->last_login_at = now();
+            $user->last_login_ip = $request->ip();
+            $user->save();
+            
+            // Get role information
+            $roleName = $user->role ? $user->role->nama_role : 'user';
+            
+            // Store session data
+            session([
+                'api_token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'nama' => $user->nama,
+                    'email' => $user->email,
+                    'role' => $roleName
+                ],
+                'expires_at' => $expiresAt,
             ]);
-
-            return redirect()->back()
-                ->with('error', 'Email atau password salah')
-                ->withInput($request->except('password'));
-
+            
+            Log::info('User logged in successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role' => $roleName
+            ]);
+            
+            // Redirect based on role
+            return $this->redirectBasedOnRole(['role' => $roleName]);
+            
         } catch (\Exception $e) {
             Log::error('Login error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan. Silakan coba lagi.')
+                ->with('error', 'Terjadi kesalahan sistem. Silakan coba lagi (' . $e->getMessage() . ')')
                 ->withInput($request->except('password'));
         }
     }
@@ -143,52 +140,50 @@ class AuthController extends Controller
         }
 
         try {
-            // Call API for register
-            $response = Http::post(config('app.url') . '/api/auth/register', [
+            // Create user directly
+            $userRole = \App\Models\Role::where('nama_role', 'user')->first();
+            if (!$userRole) {
+                $userRole = \App\Models\Role::create(['nama_role' => 'user']);
+            }
+            
+            $token = Str::random(60);
+            $expiresAt = now()->addDays(30);
+            
+            $user = User::create([
                 'nama' => $request->nama,
                 'email' => $request->email,
-                'password' => $request->password,
-                'password_confirmation' => $request->password_confirmation,
+                'password' => Hash::make($request->password),
+                'role_id' => $userRole->id,
+                'api_token' => $token,
+                'token_expires_at' => $expiresAt,
             ]);
-
-            if ($response->successful()) {
-                $data = $response->json();
-                
-                if ($data['success']) {
-                    // Store data in session
-                    session([
-                        'api_token' => $data['api_token'],
-                        'user' => $data['user'],
-                        'expires_at' => $data['expires_at'],
-                    ]);
-
-                    Log::info('User registered', [
-                        'user_id' => $data['user']['id'] ?? null,
-                        'email' => $data['user']['email'] ?? null,
-                        'role' => $data['user']['role'] ?? null
-                    ]);
-
-                    // Redirect to welcome page
-                    return redirect($data['redirect_url'] ?? '/user/welcome');
-                }
-            }
-
-            Log::warning('Registration failed', [
-                'email' => $request->email,
-                'response' => $response->json()
+            
+            // Store session data
+            session([
+                'api_token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'nama' => $user->nama,
+                    'email' => $user->email,
+                    'role' => 'user'
+                ],
+                'expires_at' => $expiresAt,
             ]);
-
-            return redirect()->back()
-                ->withErrors(['error' => 'Gagal mendaftar. Silakan coba lagi.'])
-                ->withInput($request->except(['password', 'password_confirmation']));
-
+            
+            Log::info('User registered successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email
+            ]);
+            
+            return redirect()->route('user.welcome');
+            
         } catch (\Exception $e) {
             Log::error('Register error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan. Silakan coba lagi.')
+                ->with('error', 'Terjadi kesalahan. Silakan coba lagi (' . $e->getMessage() . ')')
                 ->withInput($request->except(['password', 'password_confirmation']));
         }
     }
@@ -199,18 +194,18 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            if (session()->has('api_token')) {
-                Http::withToken(session('api_token'))
-                    ->post(config('app.url') . '/api/auth/logout');
-                
-                Log::info('User logged out', [
-                    'user' => session('user')
-                ]);
+            // Directly update database
+            if (session()->has('api_token') && session()->has('user')) {
+                $userId = session('user')['id'] ?? null;
+                if ($userId) {
+                    User::where('id', $userId)->update([
+                        'api_token' => null,
+                        'token_expires_at' => null
+                    ]);
+                }
             }
         } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Logout error: ' . $e->getMessage());
         }
 
         // Clear session
@@ -218,5 +213,22 @@ class AuthController extends Controller
         
         return redirect()->route('login')
             ->with('success', 'Berhasil logout');
+    }
+    
+    /**
+     * Helper method to redirect based on role
+     */
+    private function redirectBasedOnRole($user)
+    {
+        $role = $user['role'] ?? null;
+        
+        switch ($role) {
+            case 'super_admin':
+                return redirect()->route('superadmin.dashboard');
+            case 'admin':
+                return redirect()->route('admin.dashboard');
+            default:
+                return redirect()->route('user.welcome');
+        }
     }
 }

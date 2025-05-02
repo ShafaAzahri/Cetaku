@@ -23,12 +23,15 @@ class AuthApiController extends Controller
      */
     public function login(Request $request)
     {
+        Log::info('API login attempt', ['email' => $request->email]);
+        
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
             'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
+            Log::warning('API login validation failed', ['errors' => $validator->errors()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error',
@@ -38,65 +41,83 @@ class AuthApiController extends Controller
 
         $credentials = $request->only('email', 'password');
         
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            
-            // Generate a new API token
-            $token = Str::random(60);
-            $expiresAt = now()->addDays(30);
-            
-            // Update user with new token using DB facade
-            DB::table('users')
-                ->where('id', $user->id)
-                ->update([
-                    'api_token' => $token,
-                    'token_expires_at' => $expiresAt,
-                    'last_login_at' => now(),
-                    'last_login_ip' => $request->ip()
+        try {
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+                
+                Log::info('API login successful for user', [
+                    'user_id' => $user->id,
+                    'email' => $user->email
                 ]);
-            
-            // Get updated user
-            $updatedUser = User::with('role')->findOrFail($user->id);
-            
-            // Get user role
-            $role = $updatedUser->role;
-            $roleName = $role ? $role->nama_role : null;
-            
-            // Log the role data for debugging
-            Log::info('User login successful', [
-                'user_id' => $updatedUser->id,
-                'email' => $updatedUser->email,
-                'role_id' => $updatedUser->role_id,
-                'role_name' => $roleName
-            ]);
-            
-            // Get the redirect URL based on role
-            $redirectUrl = '/user/welcome'; // Default
-            
-            if ($roleName === 'super_admin') {
-                $redirectUrl = '/superadmin/dashboard';
-            } elseif ($roleName === 'admin') {
-                $redirectUrl = '/admin/dashboard';
+                
+                // Generate a new API token
+                $token = Str::random(60);
+                $expiresAt = now()->addDays(30);
+                
+                // Update user with new token using DB facade
+                $updated = DB::table('users')
+                    ->where('id', $user->id)
+                    ->update([
+                        'api_token' => $token,
+                        'token_expires_at' => $expiresAt,
+                        'last_login_at' => now(),
+                        'last_login_ip' => $request->ip()
+                    ]);
+                    
+                Log::info('Token update result', ['updated' => $updated]);
+                
+                // Get updated user
+                $updatedUser = User::with('role')->findOrFail($user->id);
+                
+                // Get user role
+                $role = $updatedUser->role;
+                $roleName = $role ? $role->nama_role : null;
+                
+                // Log the role data for debugging
+                Log::info('User role data', [
+                    'user_id' => $updatedUser->id,
+                    'role_id' => $updatedUser->role_id,
+                    'role_name' => $roleName
+                ]);
+                
+                // Get the redirect URL based on role
+                $redirectUrl = '/user/welcome'; // Default
+                
+                if ($roleName === 'super_admin') {
+                    $redirectUrl = '/superadmin/dashboard';
+                } elseif ($roleName === 'admin') {
+                    $redirectUrl = '/admin/dashboard';
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'user' => [
+                        'id' => $updatedUser->id,
+                        'nama' => $updatedUser->nama,
+                        'email' => $updatedUser->email,
+                        'role' => $roleName
+                    ],
+                    'api_token' => $token,
+                    'expires_at' => $expiresAt,
+                    'redirect_url' => $redirectUrl
+                ]);
             }
+
+            Log::warning('API login authentication failed', ['email' => $request->email]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Email atau password salah'
+            ], 401);
+        } catch (\Exception $e) {
+            Log::error('API login exception: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
-                'success' => true,
-                'user' => [
-                    'id' => $updatedUser->id,
-                    'nama' => $updatedUser->nama,
-                    'email' => $updatedUser->email,
-                    'role' => $roleName
-                ],
-                'api_token' => $token,
-                'expires_at' => $expiresAt,
-                'redirect_url' => $redirectUrl
-            ]);
+                'success' => false,
+                'message' => 'Terjadi kesalahan pada sistem'
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Email atau password salah'
-        ], 401);
     }
 
     /**

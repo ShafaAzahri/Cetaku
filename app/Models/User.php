@@ -61,18 +61,44 @@ class User extends Authenticatable
      *
      * @return bool
      */
+    /**
+ * Check if the user's token is valid.
+ *
+ * @return bool
+ */
     public function isTokenValid()
     {
-        $isValid = $this->api_token && now()->lt($this->token_expires_at);
-        
-        Log::debug('Token validity check', [
-            'user_id' => $this->id,
-            'has_token' => (bool) $this->api_token,
-            'token_expires_at' => $this->token_expires_at,
-            'is_valid' => $isValid
-        ]);
-        
-        return $isValid;
+        try {
+            // Check if token exists
+            if (empty($this->api_token)) {
+                Log::debug('Token validation failed: No token', ['user_id' => $this->id]);
+                return false;
+            }
+            
+            // Check if expiry date exists
+            if (empty($this->token_expires_at)) {
+                Log::debug('Token validation failed: No expiry date', ['user_id' => $this->id]);
+                return false;
+            }
+            
+            // Compare dates
+            $isValid = now()->lt($this->token_expires_at);
+            
+            Log::debug('Token validity check', [
+                'user_id' => $this->id,
+                'has_token' => (bool) $this->api_token,
+                'token_expires_at' => $this->token_expires_at,
+                'now' => now(),
+                'is_valid' => $isValid
+            ]);
+            
+            return $isValid;
+        } catch (\Exception $e) {
+            Log::error('Error checking token validity: ' . $e->getMessage(), [
+                'user_id' => $this->id
+            ]);
+            return false;
+        }
     }
 
     /**
