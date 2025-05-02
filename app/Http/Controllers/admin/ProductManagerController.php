@@ -15,21 +15,29 @@ class ProductManagerController extends Controller
      */
     public function index(Request $request)
     {
+        // Add debug logging
+        Log::info('ProductManager accessed', [
+            'user' => session('user'),
+            'has_token' => session()->has('api_token'),
+            'active_tab' => $request->get('tab', 'items')
+        ]);
+        
         $activeTab = $request->get('tab', 'items');
         
         try {
             $token = session('api_token');
             
             if (!$token) {
+                Log::error('ProductManager: No API token in session');
                 return redirect()->route('login')->with('error', 'Session expired. Please login again.');
             }
             
-            // Inisialisasi array untuk menyimpan data
+            // Initialize array to store data
             $data = [
                 'activeTab' => $activeTab
             ];
             
-            // Ambil data sesuai tab yang aktif
+            // Fetch data based on active tab
             switch ($activeTab) {
                 case 'items':
                     $itemsResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items');
@@ -50,7 +58,7 @@ class ProductManagerController extends Controller
                         $data['bahans'] = [];
                     }
                     
-                    // Ambil juga items untuk dropdown
+                    // Also get items for dropdown
                     $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
                     if ($itemsDropdownResponse->successful()) {
                         $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
@@ -69,7 +77,7 @@ class ProductManagerController extends Controller
                         $data['ukurans'] = [];
                     }
                     
-                    // Ambil juga items untuk dropdown
+                    // Also get items for dropdown
                     $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
                     if ($itemsDropdownResponse->successful()) {
                         $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
@@ -88,7 +96,7 @@ class ProductManagerController extends Controller
                         $data['jenis'] = [];
                     }
                     
-                    // Ambil juga items untuk dropdown
+                    // Also get items for dropdown
                     $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
                     if ($itemsDropdownResponse->successful()) {
                         $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
@@ -109,10 +117,17 @@ class ProductManagerController extends Controller
                     break;
             }
             
+            Log::info('ProductManager rendering view with data', [
+                'active_tab' => $activeTab,
+                'has_data' => !empty($data)
+            ]);
+            
             return view('admin.product-manager', $data);
             
         } catch (\Exception $e) {
-            Log::error('Error in ProductManagerController@index: ' . $e->getMessage());
+            Log::error('Error in ProductManagerController@index: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengambil data: ' . $e->getMessage());
         }
     }

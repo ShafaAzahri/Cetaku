@@ -5,7 +5,7 @@
     </div>
     <ul class="nav-list">
         <li class="nav-item">
-            <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                 <i class="fas fa-tachometer-alt"></i>
                 <span class="nav-text">Beranda</span>
             </a>
@@ -44,6 +44,15 @@
             <a href="#" class="nav-link">
                 <i class="fas fa-history"></i>
                 <span class="nav-text">Riwayat</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <form action="{{ route('logout') }}" method="POST" id="logout-form" style="display: none;">
+                @csrf
+            </form>
+            <a href="#" class="nav-link logout-button" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="nav-text">Logout</span>
             </a>
         </li>
     </ul>

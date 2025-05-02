@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\ProductManagerController;
+use App\Http\Controllers\AdminController;
+use Illuminate\Support\Facades\Log;
 
 // Public routes
 Route::get('/', function () {
@@ -22,13 +24,22 @@ Route::get('/password/reset', function () {
     return view('auth.login');
 })->name('password.request');
 
+// Debug route for checking session data
+Route::get('/debug/session', function () {
+    Log::info('Session debug', ['session' => session()->all()]);
+    return response()->json([
+        'api_token' => session()->has('api_token'),
+        'user' => session('user'),
+        'expires_at' => session('expires_at')
+    ]);
+});
+
 // Admin routes with middleware
 Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('dashboard');
+    // Dashboard route
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // Product Manager Routes
+    // Product Manager Routes - using the correct namespace
     Route::get('/product-manager', [ProductManagerController::class, 'index'])->name('product-manager');
     
     // Item Routes

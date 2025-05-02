@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -54,11 +55,20 @@ class AuthApiController extends Controller
                     'last_login_ip' => $request->ip()
                 ]);
             
-            // Get updated user - use findOrFail to get a single user
-            $updatedUser = User::findOrFail($user->id);
+            // Get updated user
+            $updatedUser = User::with('role')->findOrFail($user->id);
             
             // Get user role
-            $roleName = $updatedUser->role ? $updatedUser->role->nama_role : null;
+            $role = $updatedUser->role;
+            $roleName = $role ? $role->nama_role : null;
+            
+            // Log the role data for debugging
+            Log::info('User login successful', [
+                'user_id' => $updatedUser->id,
+                'email' => $updatedUser->email,
+                'role_id' => $updatedUser->role_id,
+                'role_name' => $roleName
+            ]);
             
             // Get the redirect URL based on role
             $redirectUrl = '/user/welcome'; // Default
@@ -134,7 +144,7 @@ class AuthApiController extends Controller
         ]);
         
         // Get the newly created user
-        $user = User::find($userId);
+        $user = User::with('role')->find($userId);
 
         // Get redirect URL for user
         $redirectUrl = '/user/welcome';
@@ -173,7 +183,7 @@ class AuthApiController extends Controller
         }
         
         // Find user with the token
-        $user = User::where('api_token', $token)->first();
+        $user = User::where('api_token', $token)->with('role')->first();
         
         if (!$user || now()->gt($user->token_expires_at)) {
             return response()->json([
@@ -181,6 +191,9 @@ class AuthApiController extends Controller
                 'message' => 'Invalid or expired token'
             ], 401);
         }
+        
+        // Get role name
+        $roleName = $user->role ? $user->role->nama_role : null;
         
         // Get redirect URL based on role
         $redirectUrl = $this->getRedirectUrlByRole($user);
@@ -191,7 +204,7 @@ class AuthApiController extends Controller
                 'id' => $user->id,
                 'nama' => $user->nama,
                 'email' => $user->email,
-                'role' => $user->role->nama_role ?? null
+                'role' => $roleName
             ],
             'redirect_url' => $redirectUrl
         ]);
@@ -248,9 +261,11 @@ class AuthApiController extends Controller
      */
     private function getRedirectUrlByRole(User $user)
     {
-        if ($user->hasRole('super_admin')) {
+        $roleName = $user->role ? $user->role->nama_role : null;
+        
+        if ($roleName === 'super_admin') {
             return '/superadmin/dashboard';
-        } elseif ($user->hasRole('admin')) {
+        } elseif ($roleName === 'admin') {
             return '/admin/dashboard';
         } else {
             return '/user/welcome';

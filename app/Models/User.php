@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
 class User extends Authenticatable
 {
@@ -62,7 +63,16 @@ class User extends Authenticatable
      */
     public function isTokenValid()
     {
-        return $this->api_token && now()->lt($this->token_expires_at);
+        $isValid = $this->api_token && now()->lt($this->token_expires_at);
+        
+        Log::debug('Token validity check', [
+            'user_id' => $this->id,
+            'has_token' => (bool) $this->api_token,
+            'token_expires_at' => $this->token_expires_at,
+            'is_valid' => $isValid
+        ]);
+        
+        return $isValid;
     }
 
     /**
@@ -73,11 +83,21 @@ class User extends Authenticatable
      */
     public function hasRole($roleName)
     {
-        return $this->role && $this->role->nama_role === $roleName;
+        $hasRole = $this->role && $this->role->nama_role === $roleName;
+        
+        Log::debug('Role check', [
+            'user_id' => $this->id,
+            'role_id' => $this->role_id,
+            'role_name' => $this->role ? $this->role->nama_role : null,
+            'checked_role' => $roleName,
+            'has_role' => $hasRole
+        ]);
+        
+        return $hasRole;
     }
     
     /**
-     * Check if user is a user (normal user role)
+     * Check if user is a regular user
      * 
      * @return bool
      */
@@ -114,11 +134,11 @@ class User extends Authenticatable
     public function getRedirectPath()
     {
         if ($this->isSuperAdmin()) {
-            return '/superadmin/AdminDashboard';
+            return '/superadmin/dashboard';
         } elseif ($this->isAdmin()) {
-            return '/dashboard';
+            return '/admin/dashboard';
         } else {
-            return '/welcome';
+            return '/user/welcome';
         }
     }
 }

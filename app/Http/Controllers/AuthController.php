@@ -16,13 +16,15 @@ class AuthController extends Controller
     {
         if (session()->has('api_token')) {
             $user = session('user');
-            switch ($user['role']) {
-                case 'super_admin':
-                    return redirect()->route('superadmin.dashboard');
-                case 'admin':
-                    return redirect()->route('admin.dashboard');
-                default:
-                    return redirect()->route('user.welcome');
+            if (isset($user['role'])) {
+                switch ($user['role']) {
+                    case 'super_admin':
+                        return redirect()->route('superadmin.dashboard');
+                    case 'admin':
+                        return redirect()->route('admin.dashboard');
+                    default:
+                        return redirect()->route('user.welcome');
+                }
             }
         }
 
@@ -36,13 +38,15 @@ class AuthController extends Controller
     {
         if (session()->has('api_token')) {
             $user = session('user');
-            switch ($user['role']) {
-                case 'super_admin':
-                    return redirect()->route('superadmin.dashboard');
-                case 'admin':
-                    return redirect()->route('admin.dashboard');
-                default:
-                    return redirect()->route('user.welcome');
+            if (isset($user['role'])) {
+                switch ($user['role']) {
+                    case 'super_admin':
+                        return redirect()->route('superadmin.dashboard');
+                    case 'admin':
+                        return redirect()->route('admin.dashboard');
+                    default:
+                        return redirect()->route('user.welcome');
+                }
             }
         }
 
@@ -66,7 +70,7 @@ class AuthController extends Controller
         }
 
         try {
-            // Call API untuk login
+            // Call API for login
             $response = Http::post(config('app.url') . '/api/auth/login', [
                 'email' => $request->email,
                 'password' => $request->password,
@@ -76,14 +80,20 @@ class AuthController extends Controller
                 $data = $response->json();
                 
                 if ($data['success']) {
-                    // Simpan data ke session
+                    // Store data in session
                     session([
                         'api_token' => $data['api_token'],
                         'user' => $data['user'],
                         'expires_at' => $data['expires_at'],
                     ]);
 
-                    // Redirect berdasarkan role
+                    Log::info('User logged in', [
+                        'user_id' => $data['user']['id'] ?? null,
+                        'email' => $data['user']['email'] ?? null,
+                        'role' => $data['user']['role'] ?? null
+                    ]);
+
+                    // Redirect based on role
                     switch ($data['user']['role']) {
                         case 'admin':
                             return redirect()->route('admin.dashboard');
@@ -95,12 +105,19 @@ class AuthController extends Controller
                 }
             }
 
+            Log::warning('Login failed', [
+                'email' => $request->email,
+                'response' => $response->json()
+            ]);
+
             return redirect()->back()
                 ->with('error', 'Email atau password salah')
                 ->withInput($request->except('password'));
 
         } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage());
+            Log::error('Login error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan. Silakan coba lagi.')
@@ -126,7 +143,7 @@ class AuthController extends Controller
         }
 
         try {
-            // Call API untuk register
+            // Call API for register
             $response = Http::post(config('app.url') . '/api/auth/register', [
                 'nama' => $request->nama,
                 'email' => $request->email,
@@ -138,24 +155,37 @@ class AuthController extends Controller
                 $data = $response->json();
                 
                 if ($data['success']) {
-                    // Simpan data ke session
+                    // Store data in session
                     session([
                         'api_token' => $data['api_token'],
                         'user' => $data['user'],
                         'expires_at' => $data['expires_at'],
                     ]);
 
-                    // Redirect ke welcome page
+                    Log::info('User registered', [
+                        'user_id' => $data['user']['id'] ?? null,
+                        'email' => $data['user']['email'] ?? null,
+                        'role' => $data['user']['role'] ?? null
+                    ]);
+
+                    // Redirect to welcome page
                     return redirect($data['redirect_url'] ?? '/user/welcome');
                 }
             }
+
+            Log::warning('Registration failed', [
+                'email' => $request->email,
+                'response' => $response->json()
+            ]);
 
             return redirect()->back()
                 ->withErrors(['error' => 'Gagal mendaftar. Silakan coba lagi.'])
                 ->withInput($request->except(['password', 'password_confirmation']));
 
         } catch (\Exception $e) {
-            Log::error('Register error: ' . $e->getMessage());
+            Log::error('Register error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan. Silakan coba lagi.')
@@ -172,12 +202,18 @@ class AuthController extends Controller
             if (session()->has('api_token')) {
                 Http::withToken(session('api_token'))
                     ->post(config('app.url') . '/api/auth/logout');
+                
+                Log::info('User logged out', [
+                    'user' => session('user')
+                ]);
             }
         } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
+            Log::error('Logout error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
-        // Hapus session
+        // Clear session
         session()->flush();
         
         return redirect()->route('login')
