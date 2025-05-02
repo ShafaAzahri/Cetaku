@@ -6,192 +6,66 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ProductManagerController extends Controller
 {
+    // Cache TTL in seconds (15 minutes)
+    protected $cacheTTL = 900;
+    
     /**
-     * Display product manager page
+     * Display product manager page with optimized data loading
      */
     public function index(Request $request)
     {
-        // Log akses dan data sesi untuk debugging
-        Log::info('ProductManager diakses', [
-            'user' => session('user'),
-            'has_token' => session()->has('api_token'),
+        // Only log important information
+        Log::info('ProductManager accessed', [
+            'user_id' => session('user.id') ?? 'unknown',
             'active_tab' => $request->get('tab', 'items')
         ]);
         
-        // Cek akses sebelum melanjutkan
+        // Check access before continuing
         if (!session()->has('api_token') || !session()->has('user')) {
-            Log::warning('Akses ProductManager ditolak: Token tidak ada');
             return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
         }
         
-        // Cek peran pengguna
+        // Check user role
         $user = session('user');
         if (!isset($user['role']) || ($user['role'] !== 'admin' && $user['role'] !== 'super_admin')) {
-            Log::warning('Akses ProductManager ditolak: Bukan admin', [
-                'role' => $user['role'] ?? 'tidak diketahui'
-            ]);
             return redirect()->route('login')->with('error', 'Anda tidak memiliki akses ke halaman ini');
         }
         
         $activeTab = $request->get('tab', 'items');
+        $token = session('api_token');
+        $baseUrl = config('app.url');
         
+        // Set basic data with items dropdown for modals
+        $data = [
+            'activeTab' => $activeTab,
+            'itemsDropdown' => $this->getItemsDropdown($token, $baseUrl)
+        ];
+        
+        // Only load data for the active tab to improve performance
         try {
-            $token = session('api_token');
-            
-            // Inisialisasi array untuk menyimpan data
-            $data = [
-                'activeTab' => $activeTab
-            ];
-            
-            // Fungsi untuk memproses respons API dan mengekstrak data
-            $processApiResponse = function($response, $dataType) {
-                if ($response->successful()) {
-                    $responseData = $response->json();
-                    
-                    // Log respons sukses
-                    Log::debug("API {$dataType} Response Success", [
-                        'response_structure' => array_keys($responseData),
-                        'data_exists' => isset($responseData['data']),
-                    ]);
-                    
-                    // Periksa apakah kita memiliki respons dengan pagination atau data langsung
-                    if (isset($responseData['data']['data'])) {
-                        // Ini adalah respons dengan pagination
-                        return [
-                            'data' => $responseData['data']['data'],
-                            'pagination' => [
-                                'total' => $responseData['data']['total'],
-                                'per_page' => $responseData['data']['per_page'],
-                                'current_page' => $responseData['data']['current_page'],
-                                'last_page' => $responseData['data']['last_page']
-                            ]
-                        ];
-                    } else if (isset($responseData['data'])) {
-                        // Ini adalah array data langsung
-                        return ['data' => $responseData['data']];
-                    } else {
-                        // Fallback untuk format yang tidak terduga
-                        Log::warning("Format respons API {$dataType} tidak terduga", ['response' => $responseData]);
-                        return ['data' => []];
-                    }
-                } else {
-                    // Log respons error
-                    Log::error("Error fetching {$dataType}: " . $response->body());
-                    return ['data' => []];
-                }
-            };
-            
-            // Selalu ambil items untuk dropdown jika diperlukan
-            $baseUrl = config('app.url');
-            Log::debug('Base URL untuk API calls', ['url' => $baseUrl]);
-            
-            try {
-                $itemsDropdownResponse = Http::withToken($token)
-                    ->get($baseUrl . '/api/admin/items/all');
-                
-                if ($itemsDropdownResponse->successful()) {
-                    $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
-                } else {
-                    Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
-                    $data['itemsDropdown'] = [];
-                }
-            } catch (\Exception $e) {
-                Log::error('Exception during API call for items dropdown: ' . $e->getMessage());
-                $data['itemsDropdown'] = [];
-            }
-            
-            // Ambil data berdasarkan tab aktif
             switch ($activeTab) {
                 case 'items':
-                    try {
-                        $itemsResponse = Http::withToken($token)
-                            ->withHeaders(['Accept' => 'application/json'])
-                            ->get($baseUrl . '/api/admin/items');
-                        $result = $processApiResponse($itemsResponse, 'items');
-                        $data['items'] = $result['data'];
-                        if (isset($result['pagination'])) {
-                            $data['pagination'] = $result['pagination'];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Exception during API call for items: ' . $e->getMessage());
-                        $data['items'] = [];
-                    }
+                    $data['items'] = $this->getItems($token, $baseUrl, $request);
                     break;
-                    
                 case 'bahans':
-                    try {
-                        $bahansResponse = Http::withToken($token)
-                            ->withHeaders(['Accept' => 'application/json'])
-                            ->get($baseUrl . '/api/admin/bahans');
-                        $result = $processApiResponse($bahansResponse, 'bahans');
-                        $data['bahans'] = $result['data'];
-                        if (isset($result['pagination'])) {
-                            $data['pagination'] = $result['pagination'];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Exception during API call for bahans: ' . $e->getMessage());
-                        $data['bahans'] = [];
-                    }
+                    $data['bahans'] = $this->getBahans($token, $baseUrl, $request);
                     break;
-                    
                 case 'ukurans':
-                    try {
-                        $ukuransResponse = Http::withToken($token)
-                            ->withHeaders(['Accept' => 'application/json'])
-                            ->get($baseUrl . '/api/admin/ukurans');
-                        $result = $processApiResponse($ukuransResponse, 'ukurans');
-                        $data['ukurans'] = $result['data'];
-                        if (isset($result['pagination'])) {
-                            $data['pagination'] = $result['pagination'];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Exception during API call for ukurans: ' . $e->getMessage());
-                        $data['ukurans'] = [];
-                    }
+                    $data['ukurans'] = $this->getUkurans($token, $baseUrl, $request);
                     break;
-                    
                 case 'jenis':
-                    try {
-                        $jenisResponse = Http::withToken($token)
-                            ->withHeaders(['Accept' => 'application/json'])
-                            ->get($baseUrl . '/api/admin/jenis');
-                        $result = $processApiResponse($jenisResponse, 'jenis');
-                        $data['jenis'] = $result['data'];
-                        if (isset($result['pagination'])) {
-                            $data['pagination'] = $result['pagination'];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Exception during API call for jenis: ' . $e->getMessage());
-                        $data['jenis'] = [];
-                    }
+                    $data['jenis'] = $this->getJenis($token, $baseUrl, $request);
                     break;
-                    
                 case 'biaya-desain':
-                    try {
-                        $biayaDesainResponse = Http::withToken($token)
-                            ->withHeaders(['Accept' => 'application/json'])
-                            ->get($baseUrl . '/api/admin/biaya-desain');
-                        $result = $processApiResponse($biayaDesainResponse, 'biaya-desain');
-                        $data['biayaDesain'] = $result['data'];
-                        if (isset($result['pagination'])) {
-                            $data['pagination'] = $result['pagination'];
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Exception during API call for biaya-desain: ' . $e->getMessage());
-                        $data['biayaDesain'] = [];
-                    }
+                    $data['biayaDesain'] = $this->getBiayaDesain($token, $baseUrl, $request);
                     break;
             }
-            
-            Log::info('ProductManager rendering view with data', [
-                'active_tab' => $activeTab,
-                'data_keys' => array_keys($data),
-                'has_data' => !empty($data[$activeTab === 'biaya-desain' ? 'biayaDesain' : $activeTab])
-            ]);
             
             return view('admin.product-manager', $data);
             
@@ -199,8 +73,205 @@ class ProductManagerController extends Controller
             Log::error('Error in ProductManagerController@index: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
+            
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengambil data: ' . $e->getMessage());
         }
+    }
+    
+    /**
+     * Get items dropdown data (cached)
+     */
+    private function getItemsDropdown($token, $baseUrl)
+    {
+        try {
+            return Cache::store('file')->remember('items_dropdown', $this->cacheTTL, function() use ($token, $baseUrl) {
+                $response = Http::withToken($token)
+                    ->get($baseUrl . '/api/admin/items/all');
+                
+                if ($response->successful()) {
+                    return $response->json()['data'] ?? [];
+                }
+                
+                Log::error('Error fetching items dropdown: ' . $response->body());
+                return [];
+            });
+        } catch (\Exception $e) {
+            // Fallback jika cache error
+            Log::error('Cache error: ' . $e->getMessage());
+            $response = Http::withToken($token)
+                ->get($baseUrl . '/api/admin/items/all');
+            
+            if ($response->successful()) {
+                return $response->json()['data'] ?? [];
+            }
+            
+            return [];
+        }
+    }
+    
+    /**
+     * Get items data (cached)
+     */
+    private function getItems($token, $baseUrl, $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', '');
+        $cacheKey = "items_p{$page}_pp{$perPage}_s" . md5($search);
+        
+        return Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $baseUrl, $page, $perPage, $search) {
+            $queryParams = [
+                'page' => $page,
+                'per_page' => $perPage
+            ];
+            
+            if (!empty($search)) {
+                $queryParams['search'] = $search;
+            }
+            
+            $response = Http::withToken($token)
+                ->get($baseUrl . '/api/admin/items', $queryParams);
+            
+            if ($response->successful()) {
+                $responseData = $response->json();
+                return $responseData['data'] ?? [];
+            }
+            
+            Log::error('Error fetching items: ' . $response->body());
+            return [];
+        });
+    }
+    
+    /**
+     * Get bahans data (cached)
+     */
+    private function getBahans($token, $baseUrl, $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', '');
+        $cacheKey = "bahans_p{$page}_pp{$perPage}_s" . md5($search);
+        
+        return Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $baseUrl, $page, $perPage, $search) {
+            $queryParams = [
+                'page' => $page,
+                'per_page' => $perPage
+            ];
+            
+            if (!empty($search)) {
+                $queryParams['search'] = $search;
+            }
+            
+            $response = Http::withToken($token)
+                ->get($baseUrl . '/api/admin/bahans', $queryParams);
+            
+            if ($response->successful()) {
+                $responseData = $response->json();
+                return $responseData['data'] ?? [];
+            }
+            
+            Log::error('Error fetching bahans: ' . $response->body());
+            return [];
+        });
+    }
+    
+    /**
+     * Get ukurans data (cached)
+     */
+    private function getUkurans($token, $baseUrl, $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', '');
+        $cacheKey = "ukurans_p{$page}_pp{$perPage}_s" . md5($search);
+        
+        return Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $baseUrl, $page, $perPage, $search) {
+            $queryParams = [
+                'page' => $page,
+                'per_page' => $perPage
+            ];
+            
+            if (!empty($search)) {
+                $queryParams['search'] = $search;
+            }
+            
+            $response = Http::withToken($token)
+                ->get($baseUrl . '/api/admin/ukurans', $queryParams);
+            
+            if ($response->successful()) {
+                $responseData = $response->json();
+                return $responseData['data'] ?? [];
+            }
+            
+            Log::error('Error fetching ukurans: ' . $response->body());
+            return [];
+        });
+    }
+    
+    /**
+     * Get jenis data (cached)
+     */
+    private function getJenis($token, $baseUrl, $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', '');
+        $cacheKey = "jenis_p{$page}_pp{$perPage}_s" . md5($search);
+        
+        return Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $baseUrl, $page, $perPage, $search) {
+            $queryParams = [
+                'page' => $page,
+                'per_page' => $perPage
+            ];
+            
+            if (!empty($search)) {
+                $queryParams['search'] = $search;
+            }
+            
+            $response = Http::withToken($token)
+                ->get($baseUrl . '/api/admin/jenis', $queryParams);
+            
+            if ($response->successful()) {
+                $responseData = $response->json();
+                return $responseData['data'] ?? [];
+            }
+            
+            Log::error('Error fetching jenis: ' . $response->body());
+            return [];
+        });
+    }
+    
+    /**
+     * Get biaya-desain data (cached)
+     */
+    private function getBiayaDesain($token, $baseUrl, $request)
+    {
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search', '');
+        $cacheKey = "biaya_desain_p{$page}_pp{$perPage}_s" . md5($search);
+        
+        return Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $baseUrl, $page, $perPage, $search) {
+            $queryParams = [
+                'page' => $page,
+                'per_page' => $perPage
+            ];
+            
+            if (!empty($search)) {
+                $queryParams['search'] = $search;
+            }
+            
+            $response = Http::withToken($token)
+                ->get($baseUrl . '/api/admin/biaya-desain', $queryParams);
+            
+            if ($response->successful()) {
+                $responseData = $response->json();
+                return $responseData['data'] ?? [];
+            }
+            
+            Log::error('Error fetching biaya-desain: ' . $response->body());
+            return [];
+        });
     }
     
     /**
@@ -244,6 +315,9 @@ class ProductManagerController extends Controller
             }
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearItemsCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Produk berhasil ditambahkan');
             } else {
@@ -302,6 +376,9 @@ class ProductManagerController extends Controller
             }
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearItemsCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Produk berhasil diperbarui');
             } else {
@@ -334,6 +411,9 @@ class ProductManagerController extends Controller
             $response = Http::withToken($token)->delete(config('app.url') . '/api/admin/items/' . $id);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearItemsCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Produk berhasil dihapus');
             } else {
@@ -346,36 +426,6 @@ class ProductManagerController extends Controller
             Log::error('Error in destroyItem: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menghapus produk: ' . $e->getMessage());
-        }
-    }
-    
-    /**
-     * Show edit form for item
-     */
-    public function editItem($id)
-    {
-        try {
-            $token = session('api_token');
-            
-            if (!$token) {
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
-            
-            $response = Http::withToken($token)->get(config('app.url') . '/api/admin/items/' . $id);
-            
-            if ($response->successful()) {
-                $item = $response->json()['data'];
-                return view('admin.product-manager.edit-item', compact('item'));
-            } else {
-                Log::error('API Error editItem: ' . $response->body());
-                return redirect()->back()
-                    ->with('error', 'Gagal mendapatkan data produk: ' . $response->json()['message'] ?? 'Unknown error');
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Error in editItem: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mengambil data produk: ' . $e->getMessage());
         }
     }
     
@@ -406,6 +456,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearBahansCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
                     ->with('success', 'Bahan berhasil ditambahkan');
             } else {
@@ -450,6 +503,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearBahansCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
                     ->with('success', 'Bahan berhasil diperbarui');
             } else {
@@ -482,6 +538,9 @@ class ProductManagerController extends Controller
             $response = Http::withToken($token)->delete(config('app.url') . '/api/admin/bahans/' . $id);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearBahansCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
                     ->with('success', 'Bahan berhasil dihapus');
             } else {
@@ -494,41 +553,6 @@ class ProductManagerController extends Controller
             Log::error('Error in destroyBahan: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menghapus bahan: ' . $e->getMessage());
-        }
-    }
-    
-    /**
-     * Show edit form for bahan
-     */
-    public function editBahan($id)
-    {
-        try {
-            $token = session('api_token');
-            
-            if (!$token) {
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
-            
-            // Get bahan data
-            $bahanResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/bahans/' . $id);
-            
-            // Get items for dropdown
-            $itemsResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-            
-            if ($bahanResponse->successful() && $itemsResponse->successful()) {
-                $bahan = $bahanResponse->json()['data'];
-                $items = $itemsResponse->json()['data'];
-                return view('admin.product-manager.edit-bahan', compact('bahan', 'items'));
-            } else {
-                Log::error('API Error editBahan: ' . $bahanResponse->body());
-                return redirect()->back()
-                    ->with('error', 'Gagal mendapatkan data bahan: ' . $bahanResponse->json()['message'] ?? 'Unknown error');
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Error in editBahan: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mengambil data bahan: ' . $e->getMessage());
         }
     }
     
@@ -558,6 +582,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearUkuransCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
                     ->with('success', 'Ukuran berhasil ditambahkan');
             } else {
@@ -601,6 +628,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearUkuransCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
                     ->with('success', 'Ukuran berhasil diperbarui');
             } else {
@@ -633,6 +663,9 @@ class ProductManagerController extends Controller
             $response = Http::withToken($token)->delete(config('app.url') . '/api/admin/ukurans/' . $id);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearUkuransCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
                     ->with('success', 'Ukuran berhasil dihapus');
             } else {
@@ -674,6 +707,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearJenisCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
                     ->with('success', 'Jenis berhasil ditambahkan');
             } else {
@@ -717,6 +753,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearJenisCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
                     ->with('success', 'Jenis berhasil diperbarui');
             } else {
@@ -749,6 +788,9 @@ class ProductManagerController extends Controller
             $response = Http::withToken($token)->delete(config('app.url') . '/api/admin/jenis/' . $id);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearJenisCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
                     ->with('success', 'Jenis berhasil dihapus');
             } else {
@@ -788,6 +830,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearBiayaDesainCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
                     ->with('success', 'Biaya Desain berhasil ditambahkan');
             } else {
@@ -805,9 +850,6 @@ class ProductManagerController extends Controller
         }
     }
     
-    /**
-     * Update an existing biaya desain
-     */
     /**
      * Update an existing biaya desain
      */
@@ -832,6 +874,9 @@ class ProductManagerController extends Controller
                 ]);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearBiayaDesainCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
                     ->with('success', 'Biaya Desain berhasil diperbarui');
             } else {
@@ -864,6 +909,9 @@ class ProductManagerController extends Controller
             $response = Http::withToken($token)->delete(config('app.url') . '/api/admin/biaya-desain/' . $id);
             
             if ($response->successful()) {
+                // Clear relevant caches
+                $this->clearBiayaDesainCache();
+                
                 return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
                     ->with('success', 'Biaya Desain berhasil dihapus');
             } else {
@@ -880,7 +928,7 @@ class ProductManagerController extends Controller
     }
     
     /**
-     * Show edit form for item
+     * Show edit form for biaya desain
      */
     public function editBiayaDesain($id)
     {
@@ -910,72 +958,62 @@ class ProductManagerController extends Controller
     }
     
     /**
-     * Show edit form for ukuran
+     * Clear items cache
      */
-    public function editUkuran($id)
+    private function clearItemsCache()
     {
-        try {
-            $token = session('api_token');
-            
-            if (!$token) {
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
-            
-            // Get ukuran data
-            $ukuranResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/ukurans/' . $id);
-            
-            // Get items for dropdown
-            $itemsResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-            
-            if ($ukuranResponse->successful() && $itemsResponse->successful()) {
-                $ukuran = $ukuranResponse->json()['data'];
-                $items = $itemsResponse->json()['data'];
-                return view('admin.product-manager.edit-ukuran', compact('ukuran', 'items'));
-            } else {
-                Log::error('API Error editUkuran: ' . $ukuranResponse->body());
-                return redirect()->back()
-                    ->with('error', 'Gagal mendapatkan data ukuran: ' . $ukuranResponse->json()['message'] ?? 'Unknown error');
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Error in editUkuran: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mengambil data ukuran: ' . $e->getMessage());
-        }
+        $this->forgetCacheKeysWithPrefix('items_');
+        Cache::forget('items_dropdown');
     }
     
     /**
-     * Show edit form for jenis
+     * Clear bahans cache
      */
-    public function editJenis($id)
+    private function clearBahansCache()
     {
-        try {
-            $token = session('api_token');
+        $this->forgetCacheKeysWithPrefix('bahans_');
+    }
+    
+    /**
+     * Clear ukurans cache
+     */
+    private function clearUkuransCache()
+    {
+        $this->forgetCacheKeysWithPrefix('ukurans_');
+    }
+    
+    /**
+     * Clear jenis cache
+     */
+    private function clearJenisCache()
+    {
+        $this->forgetCacheKeysWithPrefix('jenis_');
+    }
+    
+    /**
+     * Clear biaya desain cache
+     */
+    private function clearBiayaDesainCache()
+    {
+        $this->forgetCacheKeysWithPrefix('biaya_desain_');
+    }
+    
+    /**
+     * Helper method to clear caches by prefix
+     */
+    private function forgetCacheKeysWithPrefix($prefix)
+    {
+        // Simple implementation for file or array cache drivers
+        if (Cache::getStore() instanceof \Illuminate\Cache\FileStore) {
+            $cachePath = storage_path('framework/cache/data');
+            $pattern = $cachePath . '/*' . $prefix . '*';
             
-            if (!$token) {
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
+            foreach (glob($pattern) as $key) {
+                @unlink($key);
             }
-            
-            // Get jenis data
-            $jenisResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/jenis/' . $id);
-            
-            // Get items for dropdown
-            $itemsResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-            
-            if ($jenisResponse->successful() && $itemsResponse->successful()) {
-                $jenis = $jenisResponse->json()['data'];
-                $items = $itemsResponse->json()['data'];
-                return view('admin.product-manager.edit-jenis', compact('jenis', 'items'));
-            } else {
-                Log::error('API Error editJenis: ' . $jenisResponse->body());
-                return redirect()->back()
-                    ->with('error', 'Gagal mendapatkan data jenis: ' . $jenisResponse->json()['message'] ?? 'Unknown error');
-            }
-            
-        } catch (\Exception $e) {
-            Log::error('Error in editJenis: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan saat mengambil data jenis: ' . $e->getMessage());
+        } else {
+            // Fallback for other cache drivers - less efficient
+            Cache::flush();
         }
     }
 }
