@@ -15,43 +15,52 @@ class ProductManagerController extends Controller
      */
     public function index(Request $request)
     {
-        // Add debug logging
-        Log::info('ProductManager accessed', [
+        // Log akses dan data sesi untuk debugging
+        Log::info('ProductManager diakses', [
             'user' => session('user'),
             'has_token' => session()->has('api_token'),
             'active_tab' => $request->get('tab', 'items')
         ]);
+        
+        // Cek akses sebelum melanjutkan
+        if (!session()->has('api_token') || !session()->has('user')) {
+            Log::warning('Akses ProductManager ditolak: Token tidak ada');
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+        }
+        
+        // Cek peran pengguna
+        $user = session('user');
+        if (!isset($user['role']) || ($user['role'] !== 'admin' && $user['role'] !== 'super_admin')) {
+            Log::warning('Akses ProductManager ditolak: Bukan admin', [
+                'role' => $user['role'] ?? 'tidak diketahui'
+            ]);
+            return redirect()->route('login')->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
         
         $activeTab = $request->get('tab', 'items');
         
         try {
             $token = session('api_token');
             
-            if (!$token) {
-                Log::error('ProductManager: No API token in session');
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
-            
-            // Initialize array to store data
+            // Inisialisasi array untuk menyimpan data
             $data = [
                 'activeTab' => $activeTab
             ];
             
-            // Function to process API response and extract data
+            // Fungsi untuk memproses respons API dan mengekstrak data
             $processApiResponse = function($response, $dataType) {
                 if ($response->successful()) {
                     $responseData = $response->json();
                     
-                    // Log successful response
+                    // Log respons sukses
                     Log::debug("API {$dataType} Response Success", [
                         'response_structure' => array_keys($responseData),
                         'data_exists' => isset($responseData['data']),
-                        'data_type' => gettype($responseData['data'] ?? null),
                     ]);
                     
-                    // Check if we have a paginated response or direct data
+                    // Periksa apakah kita memiliki respons dengan pagination atau data langsung
                     if (isset($responseData['data']['data'])) {
-                        // It's a paginated response
+                        // Ini adalah respons dengan pagination
                         return [
                             'data' => $responseData['data']['data'],
                             'pagination' => [
@@ -62,73 +71,118 @@ class ProductManagerController extends Controller
                             ]
                         ];
                     } else if (isset($responseData['data'])) {
-                        // It's a direct data array
+                        // Ini adalah array data langsung
                         return ['data' => $responseData['data']];
                     } else {
-                        // Fallback for unexpected format
-                        Log::warning("Unexpected {$dataType} API response format", ['response' => $responseData]);
+                        // Fallback untuk format yang tidak terduga
+                        Log::warning("Format respons API {$dataType} tidak terduga", ['response' => $responseData]);
                         return ['data' => []];
                     }
                 } else {
-                    // Log error response
+                    // Log respons error
                     Log::error("Error fetching {$dataType}: " . $response->body());
                     return ['data' => []];
                 }
             };
             
-            // Always fetch items for dropdowns if needed
-            $itemsDropdownResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items/all');
-            if ($itemsDropdownResponse->successful()) {
-                $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
-            } else {
-                Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
+            // Selalu ambil items untuk dropdown jika diperlukan
+            $baseUrl = config('app.url');
+            Log::debug('Base URL untuk API calls', ['url' => $baseUrl]);
+            
+            try {
+                $itemsDropdownResponse = Http::withToken($token)
+                    ->get($baseUrl . '/api/admin/items/all');
+                
+                if ($itemsDropdownResponse->successful()) {
+                    $data['itemsDropdown'] = $itemsDropdownResponse->json()['data'] ?? [];
+                } else {
+                    Log::error('Error fetching items dropdown: ' . $itemsDropdownResponse->body());
+                    $data['itemsDropdown'] = [];
+                }
+            } catch (\Exception $e) {
+                Log::error('Exception during API call for items dropdown: ' . $e->getMessage());
                 $data['itemsDropdown'] = [];
             }
             
-            // Fetch data based on active tab
+            // Ambil data berdasarkan tab aktif
             switch ($activeTab) {
                 case 'items':
-                    $itemsResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/items');
-                    $result = $processApiResponse($itemsResponse, 'items');
-                    $data['items'] = $result['data'];
-                    if (isset($result['pagination'])) {
-                        $data['pagination'] = $result['pagination'];
+                    try {
+                        $itemsResponse = Http::withToken($token)
+                            ->withHeaders(['Accept' => 'application/json'])
+                            ->get($baseUrl . '/api/admin/items');
+                        $result = $processApiResponse($itemsResponse, 'items');
+                        $data['items'] = $result['data'];
+                        if (isset($result['pagination'])) {
+                            $data['pagination'] = $result['pagination'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Exception during API call for items: ' . $e->getMessage());
+                        $data['items'] = [];
                     }
                     break;
                     
                 case 'bahans':
-                    $bahansResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/bahans');
-                    $result = $processApiResponse($bahansResponse, 'bahans');
-                    $data['bahans'] = $result['data'];
-                    if (isset($result['pagination'])) {
-                        $data['pagination'] = $result['pagination'];
+                    try {
+                        $bahansResponse = Http::withToken($token)
+                            ->withHeaders(['Accept' => 'application/json'])
+                            ->get($baseUrl . '/api/admin/bahans');
+                        $result = $processApiResponse($bahansResponse, 'bahans');
+                        $data['bahans'] = $result['data'];
+                        if (isset($result['pagination'])) {
+                            $data['pagination'] = $result['pagination'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Exception during API call for bahans: ' . $e->getMessage());
+                        $data['bahans'] = [];
                     }
                     break;
                     
                 case 'ukurans':
-                    $ukuransResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/ukurans');
-                    $result = $processApiResponse($ukuransResponse, 'ukurans');
-                    $data['ukurans'] = $result['data'];
-                    if (isset($result['pagination'])) {
-                        $data['pagination'] = $result['pagination'];
+                    try {
+                        $ukuransResponse = Http::withToken($token)
+                            ->withHeaders(['Accept' => 'application/json'])
+                            ->get($baseUrl . '/api/admin/ukurans');
+                        $result = $processApiResponse($ukuransResponse, 'ukurans');
+                        $data['ukurans'] = $result['data'];
+                        if (isset($result['pagination'])) {
+                            $data['pagination'] = $result['pagination'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Exception during API call for ukurans: ' . $e->getMessage());
+                        $data['ukurans'] = [];
                     }
                     break;
                     
                 case 'jenis':
-                    $jenisResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/jenis');
-                    $result = $processApiResponse($jenisResponse, 'jenis');
-                    $data['jenis'] = $result['data'];
-                    if (isset($result['pagination'])) {
-                        $data['pagination'] = $result['pagination'];
+                    try {
+                        $jenisResponse = Http::withToken($token)
+                            ->withHeaders(['Accept' => 'application/json'])
+                            ->get($baseUrl . '/api/admin/jenis');
+                        $result = $processApiResponse($jenisResponse, 'jenis');
+                        $data['jenis'] = $result['data'];
+                        if (isset($result['pagination'])) {
+                            $data['pagination'] = $result['pagination'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Exception during API call for jenis: ' . $e->getMessage());
+                        $data['jenis'] = [];
                     }
                     break;
                     
                 case 'biaya-desain':
-                    $biayaDesainResponse = Http::withToken($token)->get(config('app.url') . '/api/admin/biaya-desain');
-                    $result = $processApiResponse($biayaDesainResponse, 'biaya-desain');
-                    $data['biayaDesain'] = $result['data'];
-                    if (isset($result['pagination'])) {
-                        $data['pagination'] = $result['pagination'];
+                    try {
+                        $biayaDesainResponse = Http::withToken($token)
+                            ->withHeaders(['Accept' => 'application/json'])
+                            ->get($baseUrl . '/api/admin/biaya-desain');
+                        $result = $processApiResponse($biayaDesainResponse, 'biaya-desain');
+                        $data['biayaDesain'] = $result['data'];
+                        if (isset($result['pagination'])) {
+                            $data['pagination'] = $result['pagination'];
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Exception during API call for biaya-desain: ' . $e->getMessage());
+                        $data['biayaDesain'] = [];
                     }
                     break;
             }

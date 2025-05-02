@@ -201,7 +201,6 @@
                 @endif
                 
                 <!-- Ukurans Tab -->
-                <!-- Ukurans Tab -->
                 @if($activeTab == 'ukurans')
                 <div class="tab-pane fade show active" id="ukurans" role="tabpanel">
                     <div class="mb-3">
@@ -369,6 +368,10 @@
                     </div>
                 </div>
                 @endif
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modals -->
 @include('admin.product-manager.modals.item-modals')

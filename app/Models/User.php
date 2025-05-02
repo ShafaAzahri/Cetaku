@@ -61,11 +61,6 @@ class User extends Authenticatable
      *
      * @return bool
      */
-    /**
- * Check if the user's token is valid.
- *
- * @return bool
- */
     public function isTokenValid()
     {
         try {

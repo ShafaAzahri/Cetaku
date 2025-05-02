@@ -35,11 +35,11 @@ Route::get('/debug/session', function () {
 });
 
 // Admin routes with middleware
-Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::prefix('admin')->name('admin.')->group(function () {
     // Dashboard route
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // Product Manager Routes - using the correct namespace
+    // Product Manager Routes
     Route::get('/product-manager', [ProductManagerController::class, 'index'])->name('product-manager');
     
     // Item Routes

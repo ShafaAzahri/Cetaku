@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash; // Tambahkan ini
-use Illuminate\Support\Str; // Tambahkan ini
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -48,7 +48,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle login request - Rewritten for better error handling and debugging
+     * Handle login request
      */
     public function login(Request $request)
     {
@@ -64,7 +64,7 @@ class AuthController extends Controller
         }
 
         try {
-            // Attempt direct database login first
+            // Attempt direct database login
             $user = User::where('email', $request->email)->first();
             
             if (!$user || !Hash::check($request->password, $user->password)) {
@@ -77,7 +77,18 @@ class AuthController extends Controller
                     ->withInput($request->except('password'));
             }
             
-            // Generate and save token directly
+            // Role check before login
+            if (!$user->role) {
+                Log::warning('Login failed - User has no role', [
+                    'user_id' => $user->id
+                ]);
+                
+                return redirect()->back()
+                    ->with('error', 'Akun Anda tidak memiliki peran yang valid. Hubungi administrator.')
+                    ->withInput($request->except('password'));
+            }
+            
+            // Generate a new API token
             $token = Str::random(60);
             $expiresAt = now()->addDays(30);
             
@@ -102,7 +113,7 @@ class AuthController extends Controller
                 'expires_at' => $expiresAt,
             ]);
             
-            Log::info('User logged in successfully', [
+            Log::info('User berhasil login', [
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'role' => $roleName

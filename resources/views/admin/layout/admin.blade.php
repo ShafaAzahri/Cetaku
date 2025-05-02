@@ -241,11 +241,27 @@
             
             console.log("DOM loaded in admin.blade.php");
             
+            // Cek sesi saat halaman dimuat
+            fetch('/debug/session')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.api_token) {
+                        console.error('Session token not found');
+                        // Redirect ke login jika tidak ada token
+                        window.location.href = '/login?session_expired=true';
+                    } else {
+                        console.log('Session validation OK');
+                    }
+                })
+                .catch(error => {
+                    console.error('Session check error:', error);
+                });
+            
             // Tampilkan nama user 
             const userNameElements = document.querySelectorAll('.user-name');
             userNameElements.forEach(el => {
                 if (el && typeof el.textContent !== 'undefined') {
-                    // User name is set by the server-side in the blade template
+                    // User name diatur dari server melalui blade template
                     console.log("User name displayed: " + el.textContent);
                 }
             });
@@ -292,7 +308,25 @@
             logoutButtons.forEach(button => {
                 button.addEventListener('click', function(e) {
                     console.log("Logout button clicked");
-                    // Logout is handled by the onclick attribute in the HTML
+                    
+                    // Periksa apakah tombol berada di dalam form
+                    if (!e.target.closest('form')) {
+                        e.preventDefault();
+                        
+                        // Buat dan kirim form logout secara programatis
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/logout';
+                        
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_token';
+                        csrfInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                        
+                        form.appendChild(csrfInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
                 });
             });
         });

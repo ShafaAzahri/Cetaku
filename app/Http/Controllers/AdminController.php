@@ -13,16 +13,27 @@ class AdminController extends Controller
      */
     public function dashboard(Request $request)
     {
-        Log::info('Admin dashboard accessed', [
+        // Cek akses terlebih dahulu
+        if (!session()->has('api_token') || !session()->has('user')) {
+            Log::warning('Akses Admin Dashboard ditolak: Token tidak ada');
+            return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
+        }
+        
+        // Cek peran pengguna
+        $user = session('user');
+        if (!isset($user['role']) || ($user['role'] !== 'admin' && $user['role'] !== 'super_admin')) {
+            Log::warning('Akses Admin Dashboard ditolak: Bukan admin', [
+                'role' => $user['role'] ?? 'tidak diketahui'
+            ]);
+            return redirect()->route('login')->with('error', 'Anda tidak memiliki akses ke halaman ini');
+        }
+
+        Log::info('Admin dashboard diakses', [
             'user' => session('user')
         ]);
-        
-        $user = session('user');
-        
-        // You can fetch additional data here if needed
         
         return view('admin.dashboard', compact('user'));
     }
     
-    // Add other admin methods here
+    // Method-method lain tetap sama
 }

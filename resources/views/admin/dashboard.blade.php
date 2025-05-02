@@ -128,6 +128,9 @@
                                 <div>
                                     <h5 class="card-title">Selamat Datang, {{ session('user')['nama'] }}!</h5>
                                     <p class="card-text text-muted">Anda login sebagai Administrator</p>
+                                    <a href="{{ route('admin.product-manager') }}" class="btn btn-primary mt-2">
+                                        <i class="fas fa-boxes me-1"></i> Kelola Produk
+                                    </a>
                                 </div>
                                 <div class="d-flex align-items-center">
                                     <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
