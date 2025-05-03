@@ -346,4 +346,95 @@
 
 @endsection
 
+@section('scripts')
+<!-- Data Container -->
+<script id="app-data" type="application/json">
+    {
+        "itemsTotal": {{ isset($items['total']) ? $items['total'] : (isset($itemsData) && is_array($itemsData) ? count($itemsData) : 0) }},
+        "token": "{{ session('api_token') }}",
+        "appUrl": "{{ config('app.url') }}",
+        "csrfToken": "{{ csrf_token() }}"
+    }
+</script>
 
+<!-- Main Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parse data from JSON script tag
+        let appData = {};
+        try {
+            const dataElement = document.getElementById('app-data');
+            if (dataElement) {
+                appData = JSON.parse(dataElement.textContent);
+            }
+        } catch (error) {
+            console.error('Error parsing app data:', error);
+        }
+
+        // Update counter element
+        const totalItemsEl = document.getElementById('totalItems');
+        if (totalItemsEl) {
+            totalItemsEl.textContent = appData.itemsTotal || '0';
+        }
+        
+        // Event listener for refresh button
+        const refreshBtn = document.getElementById('refreshData');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                clearCache(appData);
+            });
+        }
+    });
+
+    // Function to clear cache
+    function clearCache(appData) {
+        const token = appData.token;
+        const appUrl = appData.appUrl;
+        const csrfToken = appData.csrfToken;
+        
+        if (!token) {
+            alert('Token tidak ditemukan. Silakan login kembali.');
+            return;
+        }
+        
+        // Show loading spinner
+        const refreshBtn = document.getElementById('refreshData');
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memuat...';
+            refreshBtn.disabled = true;
+        }
+        
+        fetch(appUrl + '/api/view/items/clear-cache', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token,
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Cache berhasil dibersihkan');
+                // Refresh page to load new data
+                window.location.reload();
+            } else {
+                console.error('Gagal membersihkan cache:', data.message);
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh Data';
+                    refreshBtn.disabled = false;
+                }
+                alert('Gagal me-refresh data: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (refreshBtn) {
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh Data';
+                refreshBtn.disabled = false;
+            }
+            alert('Terjadi kesalahan saat me-refresh data.');
+        });
+    }
+</script>
+@endsection
