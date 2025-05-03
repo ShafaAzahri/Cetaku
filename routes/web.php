@@ -34,41 +34,23 @@ Route::get('/debug/session', function () {
     ]);
 });
 
-// Admin routes with middleware
-Route::prefix('admin')->name('admin.')->group(function () {
+// Route sederhana untuk test tanpa middleware
+Route::get('/test-product-manager', function() {
+    return view('admin.product-manager', [
+        'activeTab' => 'items',
+        'items' => [],
+        'itemsTotal' => 0
+    ]);
+})->name('test.product-manager');
+
+// Admin routes with clear middleware specification
+Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'admin'])->group(function () {
     // Dashboard route
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // Product Manager Routes
-    Route::get('/product-manager', [ProductManagerController::class, 'index'])->name('product-manager');
-    
-    // Item Routes
-    Route::post('/items', [ProductManagerController::class, 'storeItem'])->name('items.store');
-    Route::get('/items/{id}/edit', [ProductManagerController::class, 'editItem'])->name('items.edit');
-    Route::put('/items/{id}', [ProductManagerController::class, 'updateItem'])->name('items.update');
-    Route::delete('/items/{id}', [ProductManagerController::class, 'destroyItem'])->name('items.destroy');
-    
-    // Bahan Routes
-    Route::post('/bahans', [ProductManagerController::class, 'storeBahan'])->name('bahans.store');
-    Route::get('/bahans/{id}/edit', [ProductManagerController::class, 'editBahan'])->name('bahans.edit');
-    Route::put('/bahans/{id}', [ProductManagerController::class, 'updateBahan'])->name('bahans.update');
-    Route::delete('/bahans/{id}', [ProductManagerController::class, 'destroyBahan'])->name('bahans.destroy');
-    
-    // Ukuran Routes
-    Route::post('/ukurans', [ProductManagerController::class, 'storeUkuran'])->name('ukurans.store');
-    Route::get('/ukurans/{id}/edit', [ProductManagerController::class, 'editUkuran'])->name('ukurans.edit');
-    Route::put('/ukurans/{id}', [ProductManagerController::class, 'updateUkuran'])->name('ukurans.update');
-    Route::delete('/ukurans/{id}', [ProductManagerController::class, 'destroyUkuran'])->name('ukurans.destroy');
-    
-    // Jenis Routes
-    Route::post('/jenis', [ProductManagerController::class, 'storeJenis'])->name('jenis.store');
-    Route::get('/jenis/{id}/edit', [ProductManagerController::class, 'editJenis'])->name('jenis.edit');
-    Route::put('/jenis/{id}', [ProductManagerController::class, 'updateJenis'])->name('jenis.update');
-    Route::delete('/jenis/{id}', [ProductManagerController::class, 'destroyJenis'])->name('jenis.destroy');
-    
-    // Biaya Desain Routes
-    Route::post('/biaya-desain', [ProductManagerController::class, 'storeBiayaDesain'])->name('biaya-desain.store');
-    Route::get('/biaya-desain/{id}/edit', [ProductManagerController::class, 'editBiayaDesain'])->name('biaya-desain.edit');
-    Route::put('/biaya-desain/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desain.update');
-    Route::delete('/biaya-desain/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desain.destroy');
-});
+    // Product Manager Routes - UBAH MIDDLEWARE DI SINI
+    Route::get('/product-manager', [ProductManagerController::class, 'index'])
+         ->middleware(['auth.check']) // Gunakan hanya auth.check
+         ->name('product-manager');
+ });
+

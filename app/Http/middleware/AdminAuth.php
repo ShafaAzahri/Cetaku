@@ -13,14 +13,12 @@ class AdminAuth
      */
     public function handle(Request $request, Closure $next)
     {
-        // Log middleware execution for debugging
-        Log::info('AdminAuth middleware check', [
-            'has_api_token' => session()->has('api_token'),
-            'has_user' => session()->has('user'),
-            'user_data' => session('user'),
-            'uri' => $request->getRequestUri()
+        // Debug
+        Log::info('AdminAuth middleware running', [
+            'path' => $request->path(),
+            'has_token' => session()->has('api_token'),
+            'user' => session('user')
         ]);
-
         // Check if user is logged in
         if (!session()->has('api_token') || !session()->has('user')) {
             Log::warning('AdminAuth: No API token or user in session');
