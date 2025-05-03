@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Role;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -18,6 +17,7 @@ class AuthController extends Controller
      */
     public function showLoginForm()
     {
+        // Cek apakah sudah login
         if (session()->has('api_token')) {
             $user = session('user');
             if (isset($user['role'])) {
@@ -40,6 +40,7 @@ class AuthController extends Controller
      */
     public function showRegistrationForm()
     {
+        // Cek apakah sudah login
         if (session()->has('api_token')) {
             return $this->redirectBasedOnRole(session('user'));
         }
@@ -48,7 +49,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle login request
+     * Handle login request using API
      */
     public function login(Request $request)
     {
@@ -64,77 +65,103 @@ class AuthController extends Controller
         }
 
         try {
-            // Attempt direct database login
-            $user = User::where('email', $request->email)->first();
+            // Persiapkan data untuk dikirim ke API
+            $apiUrl = config('app.url') . '/api/auth/login';
+            $data = [
+                'email' => $request->email,
+                'password' => $request->password
+            ];
             
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                Log::warning('Login failed - Invalid credentials', [
-                    'email' => $request->email
-                ]);
-                
-                return redirect()->back()
-                    ->with('error', 'Email atau password salah')
-                    ->withInput($request->except('password'));
-            }
+            // Inisialisasi curl
+            $ch = curl_init($apiUrl);
             
-            // Role check before login
-            if (!$user->role) {
-                Log::warning('Login failed - User has no role', [
-                    'user_id' => $user->id
-                ]);
-                
-                return redirect()->back()
-                    ->with('error', 'Akun Anda tidak memiliki peran yang valid. Hubungi administrator.')
-                    ->withInput($request->except('password'));
-            }
-            
-            // Generate a new API token
-            $token = Str::random(60);
-            $expiresAt = now()->addDays(30);
-            
-            $user->api_token = $token;
-            $user->token_expires_at = $expiresAt;
-            $user->last_login_at = now();
-            $user->last_login_ip = $request->ip();
-            $user->save();
-            
-            // Get role information
-            $roleName = $user->role ? $user->role->nama_role : 'user';
-            
-            // Store session data
-            session([
-                'api_token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'nama' => $user->nama,
-                    'email' => $user->email,
-                    'role' => $roleName
-                ],
-                'expires_at' => $expiresAt,
+            // Siapkan opsi curl
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'X-CSRF-TOKEN: ' . csrf_token()
             ]);
             
-            Log::info('User berhasil login', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'role' => $roleName
+            // Eksekusi permintaan API
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            // Debug
+            Log::debug('API Login Response', [
+                'response' => $response,
+                'httpCode' => $httpCode,
+                'error' => $curlError
             ]);
             
-            // Redirect based on role
-            return $this->redirectBasedOnRole(['role' => $roleName]);
+            // Jika permintaan berhasil
+            if ($httpCode === 200 && $response) {
+                $responseData = json_decode($response, true);
+                
+                if (isset($responseData['success']) && $responseData['success']) {
+                    // Simpan token dan data pengguna dalam sesi
+                    session([
+                        'api_token' => $responseData['api_token'],
+                        'user' => $responseData['user'],
+                        'expires_at' => $responseData['expires_at'],
+                    ]);
+                    
+                    Log::info('Pengguna berhasil login melalui API', [
+                        'user_id' => $responseData['user']['id'],
+                        'email' => $responseData['user']['email']
+                    ]);
+                    
+                    // Redirect berdasarkan peran
+                    return redirect($responseData['redirect_url'] ?? $this->getRedirectPathByRole($responseData['user']['role']));
+                }
+            }
             
+            // Jika API gagal, coba fallback
+            Log::warning('API login gagal, mencoba metode fallback', [
+                'httpCode' => $httpCode,
+                'error' => $curlError
+            ]);
+            
+            if ($this->loginFallback($request)) {
+                Log::info('Login fallback berhasil');
+                return $this->redirectBasedOnRole(session('user'));
+            }
+            
+            // Jika masih gagal juga
+            $errorMessage = 'Email atau password salah';
+            
+            if ($response) {
+                $responseData = json_decode($response, true);
+                $errorMessage = $responseData['message'] ?? $errorMessage;
+            }
+            
+            return redirect()->back()
+                ->with('error', $errorMessage)
+                ->withInput($request->except('password'));
+                
         } catch (\Exception $e) {
             Log::error('Login error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             
+            // Jika error, coba fallback
+            if ($this->loginFallback($request)) {
+                Log::info('Login fallback berhasil setelah exception');
+                return $this->redirectBasedOnRole(session('user'));
+            }
+            
             return redirect()->back()
-                ->with('error', 'Terjadi kesalahan sistem. Silakan coba lagi (' . $e->getMessage() . ')')
+                ->with('error', 'Terjadi kesalahan sistem. Silakan coba lagi nanti.')
                 ->withInput($request->except('password'));
         }
     }
 
     /**
-     * Handle registration request
+     * Handle registration request using API
      */
     public function register(Request $request)
     {
@@ -151,15 +178,238 @@ class AuthController extends Controller
         }
 
         try {
-            // Create user directly
-            $userRole = \App\Models\Role::where('nama_role', 'user')->first();
-            if (!$userRole) {
-                $userRole = \App\Models\Role::create(['nama_role' => 'user']);
+            // Persiapkan data untuk dikirim ke API
+            $apiUrl = config('app.url') . '/api/auth/register';
+            $data = [
+                'nama' => $request->nama,
+                'email' => $request->email,
+                'password' => $request->password,
+                'password_confirmation' => $request->password_confirmation
+            ];
+            
+            // Inisialisasi curl
+            $ch = curl_init($apiUrl);
+            
+            // Siapkan opsi curl
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'X-CSRF-TOKEN: ' . csrf_token()
+            ]);
+            
+            // Eksekusi permintaan API
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            // Debug
+            Log::debug('API Register Response', [
+                'response' => $response,
+                'httpCode' => $httpCode,
+                'error' => $curlError
+            ]);
+            
+            // Jika permintaan berhasil
+            if (($httpCode === 201 || $httpCode === 200) && $response) {
+                $responseData = json_decode($response, true);
+                
+                if (isset($responseData['success']) && $responseData['success']) {
+                    // Simpan token dan data pengguna dalam sesi
+                    session([
+                        'api_token' => $responseData['api_token'],
+                        'user' => $responseData['user'],
+                        'expires_at' => $responseData['expires_at'],
+                    ]);
+                    
+                    Log::info('Pengguna berhasil mendaftar melalui API', [
+                        'user_id' => $responseData['user']['id'],
+                        'email' => $responseData['user']['email']
+                    ]);
+                    
+                    // Redirect berdasarkan peran
+                    return redirect($responseData['redirect_url'] ?? $this->getRedirectPathByRole($responseData['user']['role']));
+                }
             }
             
+            // Jika API gagal, coba fallback
+            Log::warning('API register gagal, mencoba metode fallback', [
+                'httpCode' => $httpCode,
+                'error' => $curlError
+            ]);
+            
+            if ($this->registerFallback($request)) {
+                Log::info('Register fallback berhasil');
+                return $this->redirectBasedOnRole(session('user'));
+            }
+            
+            // Jika masih gagal juga
+            $errorMessage = 'Gagal mendaftar. Silakan coba lagi.';
+            
+            if ($response) {
+                $responseData = json_decode($response, true);
+                $errorMessage = $responseData['message'] ?? $errorMessage;
+            }
+            
+            return redirect()->back()
+                ->with('error', $errorMessage)
+                ->withInput($request->except(['password', 'password_confirmation']));
+                
+        } catch (\Exception $e) {
+            Log::error('Register error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Jika error, coba fallback
+            if ($this->registerFallback($request)) {
+                Log::info('Register fallback berhasil setelah exception');
+                return $this->redirectBasedOnRole(session('user'));
+            }
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan sistem. Silakan coba lagi nanti.')
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+    }
+
+    /**
+     * Handle logout request using API
+     */
+    public function logout(Request $request)
+    {
+        try {
+            // Ambil token dari sesi
+            $token = session('api_token');
+            
+            if ($token) {
+                // Persiapkan untuk memanggil API logout
+                $apiUrl = config('app.url') . '/api/auth/logout';
+                
+                // Inisialisasi curl
+                $ch = curl_init($apiUrl);
+                
+                // Siapkan opsi curl
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Accept: application/json',
+                    'Authorization: Bearer ' . $token,
+                    'X-CSRF-TOKEN: ' . csrf_token()
+                ]);
+                
+                // Eksekusi permintaan API
+                curl_exec($ch);
+                curl_close($ch);
+            }
+            
+            // Hapus sesi terlepas dari respons API
+            session()->flush();
+            
+            return redirect()->route('login')
+                ->with('success', 'Berhasil logout');
+                
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage());
+            
+            // Tetap hapus sesi meskipun terjadi kesalahan
+            session()->flush();
+            
+            return redirect()->route('login')
+                ->with('success', 'Berhasil logout');
+        }
+    }
+    
+    /**
+     * Fallback method jika API tidak tersedia atau ada masalah koneksi
+     * Ini adalah metode login langsung dari database (tanpa API)
+     */
+    private function loginFallback(Request $request)
+    {
+        try {
+            $user = User::where('email', $request->email)->first();
+            
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                Log::warning('Login fallback gagal - Kredensial tidak valid', [
+                    'email' => $request->email
+                ]);
+                
+                return false;
+            }
+            
+            // Cek peran user
+            if (!$user->role) {
+                Log::warning('Login fallback gagal - User tidak memiliki peran', [
+                    'user_id' => $user->id
+                ]);
+                
+                return false;
+            }
+            
+            // Generate API token baru
             $token = Str::random(60);
             $expiresAt = now()->addDays(30);
             
+            $user->api_token = $token;
+            $user->token_expires_at = $expiresAt;
+            $user->last_login_at = now();
+            $user->last_login_ip = $request->ip();
+            $user->save();
+            
+            // Ambil nama peran
+            $roleName = $user->role ? $user->role->nama_role : 'user';
+            
+            // Simpan data sesi
+            session([
+                'api_token' => $token,
+                'user' => [
+                    'id' => $user->id,
+                    'nama' => $user->nama,
+                    'email' => $user->email,
+                    'role' => $roleName
+                ],
+                'expires_at' => $expiresAt,
+            ]);
+            
+            Log::info('User berhasil login menggunakan fallback', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'role' => $roleName
+            ]);
+            
+            return true;
+            
+        } catch (\Exception $e) {
+            Log::error('Login fallback error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return false;
+        }
+    }
+    
+    /**
+     * Fallback method jika API tidak tersedia atau ada masalah koneksi
+     * Ini adalah metode register langsung ke database (tanpa API)
+     */
+    private function registerFallback(Request $request)
+    {
+        try {
+            // Get user role ID (default: user)
+            $userRole = Role::where('nama_role', 'user')->first();
+            if (!$userRole) {
+                // If user role doesn't exist, create it
+                $userRole = Role::create(['nama_role' => 'user']);
+            }
+            
+            // Generate token for new user
+            $token = Str::random(60);
+            $expiresAt = now()->addDays(30);
+            
+            // Create user
             $user = User::create([
                 'nama' => $request->nama,
                 'email' => $request->email,
@@ -169,7 +419,7 @@ class AuthController extends Controller
                 'token_expires_at' => $expiresAt,
             ]);
             
-            // Store session data
+            // Simpan data sesi
             session([
                 'api_token' => $token,
                 'user' => [
@@ -181,49 +431,35 @@ class AuthController extends Controller
                 'expires_at' => $expiresAt,
             ]);
             
-            Log::info('User registered successfully', [
+            Log::info('User berhasil register menggunakan fallback', [
                 'user_id' => $user->id,
                 'email' => $user->email
             ]);
             
-            return redirect()->route('user.welcome');
+            return true;
             
         } catch (\Exception $e) {
-            Log::error('Register error: ' . $e->getMessage(), [
+            Log::error('Register fallback error: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return redirect()->back()
-                ->with('error', 'Terjadi kesalahan. Silakan coba lagi (' . $e->getMessage() . ')')
-                ->withInput($request->except(['password', 'password_confirmation']));
+            return false;
         }
     }
-
+    
     /**
-     * Handle logout
+     * Get redirect path based on role
      */
-    public function logout(Request $request)
+    private function getRedirectPathByRole($role)
     {
-        try {
-            // Directly update database
-            if (session()->has('api_token') && session()->has('user')) {
-                $userId = session('user')['id'] ?? null;
-                if ($userId) {
-                    User::where('id', $userId)->update([
-                        'api_token' => null,
-                        'token_expires_at' => null
-                    ]);
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
+        switch ($role) {
+            case 'super_admin':
+                return '/superadmin/dashboard';
+            case 'admin':
+                return '/admin/dashboard';
+            default:
+                return '/user/welcome';
         }
-
-        // Clear session
-        session()->flush();
-        
-        return redirect()->route('login')
-            ->with('success', 'Berhasil logout');
     }
     
     /**

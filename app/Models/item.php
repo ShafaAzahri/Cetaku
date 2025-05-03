@@ -7,13 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
     /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-    
-    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -22,8 +15,15 @@ class Item extends Model
         'nama_item',
         'deskripsi',
         'harga_dasar',
-        'gambar'  // Tambahkan ini
+        'gambar'
     ];
+    
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
     
     /**
      * The attributes that should be cast.
