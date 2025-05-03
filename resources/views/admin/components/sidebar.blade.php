@@ -50,7 +50,7 @@
             <form action="{{ route('logout') }}" method="POST" id="logout-form" style="display: none;">
                 @csrf
             </form>
-            <a href="#" class="nav-link logout-button" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <a href="#" class="nav-link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="fas fa-sign-out-alt"></i>
                 <span class="nav-text">Logout</span>
             </a>

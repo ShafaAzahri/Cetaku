@@ -24,7 +24,7 @@ Route::get('/password/reset', function () {
     return view('auth.login');
 })->name('password.request');
 
-// Debug route for checking session data
+// Debug route untuk memeriksa data sesi
 Route::get('/debug/session', function () {
     Log::info('Session debug', ['session' => session()->all()]);
     return response()->json([
@@ -34,8 +34,8 @@ Route::get('/debug/session', function () {
     ]);
 });
 
-// Admin routes with middleware
-Route::prefix('admin')->name('admin.')->group(function () {
+// Admin routes dengan middleware
+Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'admin'])->group(function () {
     // Dashboard route
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
@@ -71,4 +71,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/biaya-desain/{id}/edit', [ProductManagerController::class, 'editBiayaDesain'])->name('biaya-desain.edit');
     Route::put('/biaya-desain/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desain.update');
     Route::delete('/biaya-desain/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desain.destroy');
+});
+
+// User routes
+Route::prefix('user')->name('user.')->middleware(['auth.check'])->group(function () {
+    Route::get('/welcome', function () {
+        return view('welcome');
+    })->name('welcome');
+});
+
+// Superadmin routes
+Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'role:super_admin'])->group(function () {
+    Route::get('/dashboard', function () {
+        return view('superadmin.dashboard');
+    })->name('dashboard');
 });

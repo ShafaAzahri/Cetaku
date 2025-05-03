@@ -8,7 +8,7 @@ use App\Http\Controllers\API\BahanController;
 use App\Http\Controllers\API\UkuranController;
 use App\Http\Controllers\API\JenisController;
 use App\Http\Controllers\API\BiayaDesainController;
-
+use App\Http\Controllers\Admin\ItemViewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,10 +27,7 @@ Route::prefix('auth')->group(function() {
     Route::post('/logout', [AuthApiController::class, 'logout']);
 });
 
-// Tambahkan kode berikut ke routes/api.php
-
-use App\Http\Controllers\API\ItemApiController;
-
+// Admin routes yang memerlukan autentikasi
 Route::middleware(['auth:api'])->prefix('admin')->group(function () {
     // Items Routes
     Route::prefix('items')->group(function () {
@@ -83,5 +80,16 @@ Route::middleware(['auth:api'])->prefix('admin')->group(function () {
         Route::get('/{id}', [BiayaDesainController::class, 'show']);
         Route::put('/{id}', [BiayaDesainController::class, 'update']);
         Route::delete('/{id}', [BiayaDesainController::class, 'destroy']);
+    });
+});
+
+// Route untuk view controller (untuk mengambil data dari API)
+Route::prefix('view')->middleware(['auth:api'])->group(function () {
+    // Item View Routes
+    Route::prefix('items')->group(function() {
+        Route::get('/', [ItemViewController::class, 'getItems']);
+        Route::get('/dropdown', [ItemViewController::class, 'getItemsDropdown']);
+        Route::get('/{id}', [ItemViewController::class, 'getItem']);
+        Route::post('/clear-cache', [ItemViewController::class, 'clearCache']);
     });
 });

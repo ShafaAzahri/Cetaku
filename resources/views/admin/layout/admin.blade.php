@@ -15,203 +15,11 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8f9fa;
-        }
-        
-        /* Sidebar */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 250px;
-            background: #001f3f;
-            color: #fff;
-            z-index: 1000;
-            transition: all 0.3s;
-            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
-            overflow-y: auto;
-        }
-        
-        .sidebar.collapsed {
-            width: 70px;
-        }
-        
-        .sidebar .brand-logo {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            background: rgba(0, 0, 0, 0.2);
-        }
-        
-        .sidebar .brand-logo i {
-            margin-right: 15px;
-            font-size: 24px;
-        }
-        
-        .sidebar .brand-text {
-            transition: opacity 0.3s;
-        }
-        
-        .sidebar.collapsed .brand-text {
-            opacity: 0;
-            display: none;
-        }
-        
-        .sidebar .nav-list {
-            padding: 0;
-            margin: 0;
-            list-style: none;
-        }
-        
-        .sidebar .nav-item {
-            position: relative;
-            margin-bottom: 5px;
-        }
-        
-        .sidebar .nav-link {
-            display: flex;
-            align-items: center;
-            color: #fff;
-            padding: 12px 20px;
-            transition: 0.3s;
-            border-radius: 0;
-            text-decoration: none;
-        }
-        
-        .sidebar .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .sidebar .nav-link.active {
-            background: #007bff;
-            color: #fff;
-        }
-        
-        .sidebar .nav-link i {
-            min-width: 24px;
-            margin-right: 15px;
-            font-size: 16px;
-        }
-        
-        .sidebar .nav-text {
-            transition: opacity 0.3s;
-        }
-        
-        .sidebar.collapsed .nav-text {
-            opacity: 0;
-            display: none;
-        }
-        
-        .sidebar.mobile-visible {
-            transform: translateX(0) !important;
-        }
-        /* Main Content */
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            transition: all 0.3s;
-            min-height: 100vh;
-        }
-        
-        .main-content.expanded {
-            margin-left: 70px;
-        }
-        
-        /* Navbar */
-        .navbar {
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            padding: 10px 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        
-        .navbar .toggle-sidebar {
-            cursor: pointer;
-            padding: 5px;
-            color: #6c757d;
-            transition: 0.3s;
-        }
-        
-        .navbar .toggle-sidebar:hover {
-            color: #007bff;
-        }
-        
-        .navbar .search-form {
-            flex-grow: 1;
-            max-width: 500px;
-            margin: 0 20px;
-        }
-        
-        .navbar .search-input {
-            width: 100%;
-            padding: 8px 15px;
-            border-radius: 50px;
-            border: 1px solid #e0e0e0;
-            font-size: 14px;
-        }
-        
-        .navbar .user-profile {
-            display: flex;
-            align-items: center;
-        }
-        
-        .navbar .avatar {
-            width: 36px;
-            height: 36px;
-            overflow: hidden;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
-        
-        .navbar .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        /* Responsive */
-        @media (max-width: 991.98px) {
-            .sidebar {
-                transform: translateX(-100%);
-                box-shadow: none;
-            }
-            
-            .main-content {
-                margin-left: 0;
-            }
-            
-            .main-content.expanded {
-                margin-left: 0;
-            }
-            
-            .overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: 999;
-            }
-            
-            .overlay.active {
-                display: block;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
     @yield('styles')
 </head>
 <body>
-    <!-- Sidebar -->
+    <!-- Sidebar Component -->
     @include('admin.components.sidebar')
     
     <!-- Overlay for mobile sidebar -->
@@ -219,7 +27,7 @@
     
     <!-- Main Content -->
     <div class="main-content" id="main-content">
-        <!-- Top Navbar -->
+        <!-- Navbar Component -->
         @include('admin.components.navbar')
         
         <!-- Page Content -->
@@ -257,15 +65,7 @@
                     console.error('Session check error:', error);
                 });
             
-            // Tampilkan nama user 
-            const userNameElements = document.querySelectorAll('.user-name');
-            userNameElements.forEach(el => {
-                if (el && typeof el.textContent !== 'undefined') {
-                    // User name diatur dari server melalui blade template
-                    console.log("User name displayed: " + el.textContent);
-                }
-            });
-            
+            // Fungsi sidebar toggle
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const toggleBtn = document.getElementById('toggle-sidebar');
@@ -301,33 +101,6 @@
                     sidebar.classList.remove('mobile-visible');
                     overlay.classList.remove('active');
                 }
-            });
-            
-            // Handle logout
-            const logoutButtons = document.querySelectorAll('.logout-button');
-            logoutButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    console.log("Logout button clicked");
-                    
-                    // Periksa apakah tombol berada di dalam form
-                    if (!e.target.closest('form')) {
-                        e.preventDefault();
-                        
-                        // Buat dan kirim form logout secara programatis
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        form.action = '/logout';
-                        
-                        const csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = '_token';
-                        csrfInput.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                        
-                        form.appendChild(csrfInput);
-                        document.body.appendChild(form);
-                        form.submit();
-                    }
-                });
             });
         });
     </script>
