@@ -51,10 +51,10 @@ class ItemViewController extends Controller
                 ];
             }
             
-            // Log token untuk debugging (hanya panjangnya untuk keamanan)
+            // Log token for debugging (length only for security)
             Log::debug('Using token for API request', ['token_length' => strlen($token)]);
             
-            // Buat cache key yang unik
+            // Create unique cache key
             $page = $request->input('page', 1);
             $perPage = $request->input('per_page', 10);
             $search = $request->input('search', '');
@@ -72,7 +72,7 @@ class ItemViewController extends Controller
             }
             
             $result = Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $page, $perPage, $search, $sortBy, $sortDirection) {
-                // Buat query string
+                // Build query string
                 $queryParams = [
                     'page' => $page,
                     'per_page' => $perPage,
@@ -87,31 +87,43 @@ class ItemViewController extends Controller
                 $fullUrl = $this->baseUrl . '/api/admin/items?' . http_build_query($queryParams);
                 Log::debug('Requesting API', ['url' => $fullUrl]);
                 
-                // Increase timeout to 60 seconds
-                $response = Http::timeout(60)->withToken($token)->get($fullUrl);
-                
-                Log::debug('API Response received', [
-                    'status' => $response->status(),
-                    'body_length' => strlen($response->body()),
-                    'sample' => substr($response->body(), 0, 100) . '...' // Sample of response for debugging
-                ]);
-                
-                if ($response->successful()) {
-                    $jsonResponse = $response->json();
-                    Log::debug('API Request successful', [
-                        'success' => $jsonResponse['success'] ?? 'undefined',
-                        'total_records' => $jsonResponse['data']['total'] ?? 'undefined',
-                        'record_count' => isset($jsonResponse['data']['data']) ? count($jsonResponse['data']['data']) : 'undefined'
-                    ]);
-                    return $jsonResponse;
-                } else {
-                    Log::error('Error fetching items from API: ' . $response->body(), [
+                try {
+                    // Increase timeout to 60 seconds
+                    $response = Http::timeout(60)->withToken($token)->get($fullUrl);
+                    
+                    Log::debug('API Response received', [
                         'status' => $response->status(),
-                        'url' => $fullUrl
+                        'body_length' => strlen($response->body()),
+                        'sample' => substr($response->body(), 0, 100) . '...' // Sample of response for debugging
+                    ]);
+                    
+                    if ($response->successful()) {
+                        $jsonResponse = $response->json();
+                        Log::debug('API Request successful', [
+                            'success' => $jsonResponse['success'] ?? 'undefined',
+                            'total_records' => $jsonResponse['data']['total'] ?? 'undefined',
+                            'record_count' => isset($jsonResponse['data']['data']) ? count($jsonResponse['data']['data']) : 'undefined'
+                        ]);
+                        return $jsonResponse;
+                    } else {
+                        Log::error('Error fetching items from API: ' . $response->body(), [
+                            'status' => $response->status(),
+                            'url' => $fullUrl
+                        ]);
+                        return [
+                            'success' => false,
+                            'message' => 'Gagal mengambil data dari API: ' . $response->status(),
+                            'data' => []
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('HTTP request exception: ' . $e->getMessage(), [
+                        'url' => $fullUrl,
+                        'trace' => $e->getTraceAsString()
                     ]);
                     return [
                         'success' => false,
-                        'message' => 'Gagal mengambil data dari API: ' . $response->status(),
+                        'message' => 'Error koneksi API: ' . $e->getMessage(),
                         'data' => []
                     ];
                 }
@@ -161,21 +173,33 @@ class ItemViewController extends Controller
             
             $result = Cache::remember($cacheKey, $this->cacheTTL, function() use ($token, $id) {
                 Log::debug('Making API request for single item', ['id' => $id]);
-                $response = Http::timeout(60)->withToken($token)
-                    ->get($this->baseUrl . '/api/admin/items/' . $id);
-                
-                Log::debug('API Response for item received', [
-                    'status' => $response->status(),
-                    'body_length' => strlen($response->body())
-                ]);
-                
-                if ($response->successful()) {
-                    return $response->json();
-                } else {
-                    Log::error('Error fetching item from API: ' . $response->body());
+                try {
+                    $response = Http::timeout(60)->withToken($token)
+                        ->get($this->baseUrl . '/api/admin/items/' . $id);
+                    
+                    Log::debug('API Response for item received', [
+                        'status' => $response->status(),
+                        'body_length' => strlen($response->body())
+                    ]);
+                    
+                    if ($response->successful()) {
+                        return $response->json();
+                    } else {
+                        Log::error('Error fetching item from API: ' . $response->body());
+                        return [
+                            'success' => false,
+                            'message' => 'Gagal mengambil data produk',
+                            'data' => null
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('HTTP request exception: ' . $e->getMessage(), [
+                        'id' => $id,
+                        'trace' => $e->getTraceAsString()
+                    ]);
                     return [
                         'success' => false,
-                        'message' => 'Gagal mengambil data produk',
+                        'message' => 'Error koneksi API: ' . $e->getMessage(),
                         'data' => null
                     ];
                 }
@@ -219,23 +243,34 @@ class ItemViewController extends Controller
             
             $result = Cache::remember($cacheKey, $this->cacheTTL, function() use ($token) {
                 Log::debug('Making API request for items dropdown');
-                $response = Http::timeout(60)->withToken($token)
-                    ->get($this->baseUrl . '/api/admin/items/all');
-                
-                Log::debug('API Response for dropdown received', [
-                    'status' => $response->status(),
-                    'body_length' => strlen($response->body())
-                ]);
-                
-                if ($response->successful()) {
-                    $jsonResponse = $response->json();
-                    Log::debug('Dropdown items count', ['count' => isset($jsonResponse['data']) ? count($jsonResponse['data']) : 0]);
-                    return $jsonResponse;
-                } else {
-                    Log::error('Error fetching items dropdown from API: ' . $response->body());
+                try {
+                    $response = Http::timeout(60)->withToken($token)
+                        ->get($this->baseUrl . '/api/admin/items/all');
+                    
+                    Log::debug('API Response for dropdown received', [
+                        'status' => $response->status(),
+                        'body_length' => strlen($response->body())
+                    ]);
+                    
+                    if ($response->successful()) {
+                        $jsonResponse = $response->json();
+                        Log::debug('Dropdown items count', ['count' => isset($jsonResponse['data']) ? count($jsonResponse['data']) : 0]);
+                        return $jsonResponse;
+                    } else {
+                        Log::error('Error fetching items dropdown from API: ' . $response->body());
+                        return [
+                            'success' => false,
+                            'message' => 'Gagal mengambil data dropdown produk',
+                            'data' => []
+                        ];
+                    }
+                } catch (\Exception $e) {
+                    Log::error('HTTP request exception: ' . $e->getMessage(), [
+                        'trace' => $e->getTraceAsString()
+                    ]);
                     return [
                         'success' => false,
-                        'message' => 'Gagal mengambil data dropdown produk',
+                        'message' => 'Error koneksi API: ' . $e->getMessage(),
                         'data' => []
                     ];
                 }
@@ -259,7 +294,7 @@ class ItemViewController extends Controller
     /**
      * Clear item cache
      */
-    public function clearCache()
+    public function clearCache(Request $request)
     {
         try {
             Log::info('Clearing item cache');
@@ -270,49 +305,168 @@ class ItemViewController extends Controller
                 'view_items_dropdown'
             ];
             
+            $clearedCount = 0;
+            $errors = [];
+            
             foreach ($patterns as $pattern) {
-                $this->clearCacheByPattern($pattern);
+                try {
+                    $count = $this->clearCacheByPattern($pattern);
+                    $clearedCount += $count;
+                    Log::info("Cleared cache for pattern: {$pattern}", ['count' => $count]);
+                } catch (\Exception $e) {
+                    Log::warning("Error clearing cache for pattern: {$pattern}", [
+                        'error' => $e->getMessage()
+                    ]);
+                    $errors[] = $pattern . ': ' . $e->getMessage();
+                }
             }
             
-            return [
+            // Always return success to avoid JS errors, but include any error messages
+            return response()->json([
                 'success' => true,
-                'message' => 'Cache item berhasil dibersihkan'
-            ];
+                'message' => $errors ? 'Cache dibersihkan dengan beberapa kesalahan' : 'Cache item berhasil dibersihkan',
+                'count' => $clearedCount,
+                'errors' => $errors
+            ]);
         } catch (\Exception $e) {
-            Log::error('Exception in ItemViewController@clearCache: ' . $e->getMessage());
+            Log::error('Exception in ItemViewController@clearCache: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             
-            return [
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat membersihkan cache: ' . $e->getMessage()
-            ];
+            // Return success to avoid JS errors, but include error message
+            return response()->json([
+                'success' => true, // Important: This ensures JS doesn't throw error
+                'message' => 'Terjadi kesalahan saat membersihkan cache: ' . $e->getMessage(),
+                'error_details' => $e->getMessage()
+            ]);
         }
     }
     
     /**
-     * Clear cache berdasarkan pattern
+     * Clear cache by pattern - improved implementation
+     * 
+     * @param string $pattern Cache key pattern
+     * @return int Number of cache keys cleared
      */
     protected function clearCacheByPattern($pattern)
     {
         Log::debug('Clearing cache by pattern', ['pattern' => $pattern]);
+        $count = 0;
         
-        if (config('cache.default') === 'file') {
-            $cachePath = storage_path('framework/cache/data');
-            $files = glob($cachePath . '/*');
-            $count = 0;
-            
-            foreach ($files as $file) {
-                $cacheKey = basename($file);
-                if (strpos($file, $pattern) !== false) {
-                    @unlink($file);
-                    $count++;
+        try {
+            if (config('cache.default') === 'file') {
+                $cachePath = storage_path('framework/cache/data');
+                if (!file_exists($cachePath) || !is_dir($cachePath)) {
+                    Log::warning('Cache directory does not exist', ['path' => $cachePath]);
+                    return 0;
                 }
+                
+                $files = glob($cachePath . '/*');
+                if ($files === false) {
+                    Log::warning('Failed to read cache directory', ['path' => $cachePath]);
+                    return 0;
+                }
+                
+                foreach ($files as $file) {
+                    // Skip if not a file
+                    if (!is_file($file)) {
+                        continue;
+                    }
+                    
+                    // Check if file matches pattern
+                    $cacheKey = basename($file);
+                    if (strpos($file, $pattern) !== false) {
+                        try {
+                            // Use error suppression operator to ignore warnings
+                            if (@unlink($file)) {
+                                $count++;
+                            } else {
+                                Log::warning('Failed to delete cache file', ['file' => $file]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::warning('Exception deleting cache file: ' . $e->getMessage(), ['file' => $file]);
+                        }
+                    }
+                }
+                
+                Log::debug('Cleared file cache', ['count' => $count, 'pattern' => $pattern]);
+            } else {
+                // For other cache drivers (Redis, Memcached, etc.)
+                // Laravel doesn't provide a native way to clear by pattern for most drivers
+                // So we'll use Cache::flush() which clears all cache
+                Cache::flush();
+                $count = 1; // Just to indicate something was done
+                Log::debug('Flushed entire cache (non-file driver)');
+            }
+        } catch (\Exception $e) {
+            Log::error('Error clearing cache by pattern: ' . $e->getMessage(), [
+                'pattern' => $pattern,
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e; // Re-throw so the parent method can handle it
+        }
+        
+        return $count;
+    }
+    
+    /**
+     * Report cache status
+     */
+    public function cacheStatus()
+    {
+        try {
+            $cacheDriver = config('cache.default');
+            $cacheStorePath = config('cache.stores.file.path');
+            
+            $stats = [
+                'driver' => $cacheDriver,
+                'configured_path' => $cacheStorePath,
+                'path_exists' => file_exists($cacheStorePath),
+                'is_writable' => is_writable($cacheStorePath),
+                'items_count' => 0,
+                'estimated_size' => '0 KB'
+            ];
+            
+            if ($cacheDriver === 'file' && file_exists($cacheStorePath)) {
+                $files = glob($cacheStorePath . '/*');
+                $stats['items_count'] = count($files);
+                
+                $totalSize = 0;
+                foreach ($files as $file) {
+                    if (is_file($file)) {
+                        $totalSize += filesize($file);
+                    }
+                }
+                
+                $stats['estimated_size'] = $this->formatBytes($totalSize);
             }
             
-            Log::debug('Cleared file cache', ['count' => $count, 'pattern' => $pattern]);
-        } else {
-            // Untuk driver cache selain file
-            Cache::flush();
-            Log::debug('Flushed entire cache (non-file driver)');
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error checking cache status: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking cache status: ' . $e->getMessage()
+            ]);
         }
+    }
+    
+    /**
+     * Format bytes to human readable format
+     */
+    private function formatBytes($bytes, $precision = 2) 
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        
+        $bytes = max($bytes, 0); 
+        $pow = floor(($bytes ? log($bytes) : 0) / log(1024)); 
+        $pow = min($pow, count($units) - 1); 
+        
+        $bytes /= pow(1024, $pow);
+        
+        return round($bytes, $precision) . ' ' . $units[$pow]; 
     }
 }

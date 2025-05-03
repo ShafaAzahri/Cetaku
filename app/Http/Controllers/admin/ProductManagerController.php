@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use App\Http\Controllers\Admin\ItemViewController;
-use Illuminate\Support\Facades\Http; // Tambahkan import ini
 
 class ProductManagerController extends Controller
 {
@@ -33,12 +33,14 @@ class ProductManagerController extends Controller
         
         // Check access before continuing
         if (!session()->has('api_token') || !session()->has('user')) {
+            Log::warning('ProductManager access denied: No token or user in session');
             return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
         }
         
         // Check user role
         $user = session('user');
         if (!isset($user['role']) || ($user['role'] !== 'admin' && $user['role'] !== 'super_admin')) {
+            Log::warning('ProductManager access denied: Invalid role', ['role' => $user['role'] ?? 'undefined']);
             return redirect()->route('login')->with('error', 'Anda tidak memiliki akses ke halaman ini');
         }
         
@@ -51,40 +53,45 @@ class ProductManagerController extends Controller
         
         try {
             // Selalu muat dropdown items untuk modals
+            Log::debug('Requesting items dropdown');
             $dropdownResponse = $this->itemViewController->getItemsDropdown();
             
-            // Jika response adalah instance dari JsonResponse, dapatkan original content
-            if (method_exists($dropdownResponse, 'getOriginalContent')) {
-                $dropdownData = $dropdownResponse->getOriginalContent();
-            } else {
-                $dropdownData = $dropdownResponse;
-            }
+            Log::debug('Dropdown response type', ['type' => gettype($dropdownResponse)]);
             
-            if (isset($dropdownData['success']) && $dropdownData['success']) {
-                $data['itemsDropdown'] = $dropdownData['data'] ?? [];
+            if (isset($dropdownResponse['success']) && $dropdownResponse['success']) {
+                $data['itemsDropdown'] = $dropdownResponse['data'] ?? [];
+                Log::debug('Dropdown items loaded successfully', ['count' => count($data['itemsDropdown'])]);
             } else {
                 Log::warning('Failed to load items dropdown', [
-                    'response' => $dropdownData
+                    'success' => $dropdownResponse['success'] ?? false,
+                    'message' => $dropdownResponse['message'] ?? 'Unknown error'
                 ]);
                 $data['itemsDropdown'] = [];
             }
             
             // Hanya muat data untuk tab items
             if ($activeTab == 'items') {
+                Log::debug('Loading items data for active tab');
                 $itemsResponse = $this->itemViewController->getItems($request);
                 
-                // Jika response adalah instance dari JsonResponse, dapatkan original content
-                if (method_exists($itemsResponse, 'getOriginalContent')) {
-                    $itemsData = $itemsResponse->getOriginalContent();
-                } else {
-                    $itemsData = $itemsResponse;
-                }
+                Log::debug('Items response', [
+                    'type' => gettype($itemsResponse),
+                    'success' => $itemsResponse['success'] ?? false,
+                    'has_data' => isset($itemsResponse['data']),
+                    'data_sample' => isset($itemsResponse['data']) ? json_encode(array_slice((array)$itemsResponse['data'], 0, 3)) : 'none'
+                ]);
                 
-                if (isset($itemsData['success']) && $itemsData['success']) {
-                    $data['items'] = $itemsData['data'];
+                if (isset($itemsResponse['success']) && $itemsResponse['success']) {
+                    $data['items'] = $itemsResponse['data'];
+                    Log::debug('Items data loaded successfully', [
+                        'total' => $itemsResponse['data']['total'] ?? 'undefined',
+                        'current_page' => $itemsResponse['data']['current_page'] ?? 'undefined',
+                        'count' => isset($itemsResponse['data']['data']) ? count($itemsResponse['data']['data']) : 0
+                    ]);
                 } else {
                     Log::warning('Failed to load items', [
-                        'response' => $itemsData
+                        'success' => $itemsResponse['success'] ?? false,
+                        'message' => $itemsResponse['message'] ?? 'Unknown error'
                     ]);
                     $data['items'] = [];
                 }
@@ -117,6 +124,7 @@ class ProductManagerController extends Controller
             $token = session('api_token');
             
             if (!$token) {
+                Log::error('StoreItem failed: No token in session');
                 return redirect()->route('login')->with('error', 'Session expired. Please login again.');
             }
             
@@ -127,9 +135,17 @@ class ProductManagerController extends Controller
                 'deskripsi' => $request->deskripsi,
             ];
             
+            Log::debug('Storing new item', [
+                'nama_item' => $request->nama_item,
+                'has_image' => $request->hasFile('gambar')
+            ]);
+            
             // Handle file upload if provided
             if ($request->hasFile('gambar')) {
-                $client = Http::withToken($token)->asMultipart();
+                Log::debug('Processing image upload');
+                $client = Http::withToken($token)
+                    ->timeout(60) // Increase timeout to 60 seconds
+                    ->asMultipart();
                 $image = $request->file('gambar');
                 
                 $response = $client->attach(
@@ -138,24 +154,31 @@ class ProductManagerController extends Controller
                     $image->getClientOriginalName()
                 )->post(config('app.url') . '/api/admin/items', $formData);
             } else {
-                $response = Http::withToken($token)->post(config('app.url') . '/api/admin/items', $formData);
+                $response = Http::withToken($token)
+                    ->timeout(60) // Increase timeout to 60 seconds
+                    ->post(config('app.url') . '/api/admin/items', $formData);
             }
             
             if ($response->successful()) {
+                Log::info('Item stored successfully');
                 // Clear cache after successful operation
                 $this->itemViewController->clearCache();
                 
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Produk berhasil ditambahkan');
             } else {
-                Log::error('API Error storeItem: ' . $response->body());
+                Log::error('API Error storeItem: ' . $response->body(), [
+                    'status' => $response->status()
+                ]);
                 return redirect()->back()
                     ->with('error', 'Gagal menambahkan produk: ' . ($response->json()['message'] ?? 'Unknown error'))
                     ->withInput();
             }
             
         } catch (\Exception $e) {
-            Log::error('Error in storeItem: ' . $e->getMessage());
+            Log::error('Exception in storeItem: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menyimpan produk: ' . $e->getMessage())
                 ->withInput();
@@ -178,6 +201,7 @@ class ProductManagerController extends Controller
             $token = session('api_token');
             
             if (!$token) {
+                Log::error('UpdateItem failed: No token in session');
                 return redirect()->route('login')->with('error', 'Session expired. Please login again.');
             }
             
@@ -188,9 +212,18 @@ class ProductManagerController extends Controller
                 'deskripsi' => $request->deskripsi,
             ];
             
+            Log::debug('Updating item', [
+                'id' => $id,
+                'nama_item' => $request->nama_item,
+                'has_image' => $request->hasFile('gambar')
+            ]);
+            
             // Handle file upload if provided
             if ($request->hasFile('gambar')) {
-                $client = Http::withToken($token)->asMultipart();
+                Log::debug('Processing image upload for update');
+                $client = Http::withToken($token)
+                    ->timeout(60) // Increase timeout to 60 seconds
+                    ->asMultipart();
                 $image = $request->file('gambar');
                 
                 $response = $client->attach(
@@ -199,24 +232,33 @@ class ProductManagerController extends Controller
                     $image->getClientOriginalName()
                 )->put(config('app.url') . '/api/admin/items/' . $id, $formData);
             } else {
-                $response = Http::withToken($token)->put(config('app.url') . '/api/admin/items/' . $id, $formData);
+                $response = Http::withToken($token)
+                    ->timeout(60) // Increase timeout to 60 seconds
+                    ->put(config('app.url') . '/api/admin/items/' . $id, $formData);
             }
             
             if ($response->successful()) {
+                Log::info('Item updated successfully', ['id' => $id]);
                 // Clear cache after successful operation
                 $this->itemViewController->clearCache();
                 
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Produk berhasil diperbarui');
             } else {
-                Log::error('API Error updateItem: ' . $response->body());
+                Log::error('API Error updateItem: ' . $response->body(), [
+                    'status' => $response->status(),
+                    'id' => $id
+                ]);
                 return redirect()->back()
                     ->with('error', 'Gagal memperbarui produk: ' . ($response->json()['message'] ?? 'Unknown error'))
                     ->withInput();
             }
             
         } catch (\Exception $e) {
-            Log::error('Error in updateItem: ' . $e->getMessage());
+            Log::error('Exception in updateItem: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat memperbarui produk: ' . $e->getMessage())
                 ->withInput();
@@ -232,25 +274,36 @@ class ProductManagerController extends Controller
             $token = session('api_token');
             
             if (!$token) {
+                Log::error('DestroyItem failed: No token in session');
                 return redirect()->route('login')->with('error', 'Session expired. Please login again.');
             }
             
-            $response = Http::withToken($token)->delete(config('app.url') . '/api/admin/items/' . $id);
+            Log::debug('Deleting item', ['id' => $id]);
+            $response = Http::withToken($token)
+                ->timeout(60) // Increase timeout to 60 seconds
+                ->delete(config('app.url') . '/api/admin/items/' . $id);
             
             if ($response->successful()) {
+                Log::info('Item deleted successfully', ['id' => $id]);
                 // Clear cache after successful operation
                 $this->itemViewController->clearCache();
                 
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Produk berhasil dihapus');
             } else {
-                Log::error('API Error destroyItem: ' . $response->body());
+                Log::error('API Error destroyItem: ' . $response->body(), [
+                    'status' => $response->status(),
+                    'id' => $id
+                ]);
                 return redirect()->back()
                     ->with('error', 'Gagal menghapus produk: ' . ($response->json()['message'] ?? 'Unknown error'));
             }
             
         } catch (\Exception $e) {
-            Log::error('Error in destroyItem: ' . $e->getMessage());
+            Log::error('Exception in destroyItem: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menghapus produk: ' . $e->getMessage());
         }
@@ -265,31 +318,32 @@ class ProductManagerController extends Controller
             $token = session('api_token');
             
             if (!$token) {
+                Log::error('EditItem failed: No token in session');
                 return redirect()->route('login')->with('error', 'Session expired. Please login again.');
             }
             
-            // Get item data
+            Log::debug('Fetching item for edit form', ['id' => $id]);
             $itemResponse = $this->itemViewController->getItem($id);
             
-            // Jika response adalah instance dari JsonResponse, dapatkan original content
-            if (method_exists($itemResponse, 'getOriginalContent')) {
-                $itemData = $itemResponse->getOriginalContent();
-            } else {
-                $itemData = $itemResponse;
-            }
-            
-            if (isset($itemData['success']) && $itemData['success']) {
+            if (isset($itemResponse['success']) && $itemResponse['success']) {
+                Log::debug('Item fetched successfully for edit', ['id' => $id]);
                 return view('admin.product-manager.edit-item', [
-                    'item' => $itemData['data']
+                    'item' => $itemResponse['data']
                 ]);
             } else {
-                Log::error('API Error editItem: ' . json_encode($itemData));
+                Log::error('Failed to fetch item for edit', [
+                    'id' => $id,
+                    'message' => $itemResponse['message'] ?? 'Unknown error'
+                ]);
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                    ->with('error', 'Gagal mengambil data produk: ' . ($itemData['message'] ?? 'Unknown error'));
+                    ->with('error', 'Gagal mengambil data produk: ' . ($itemResponse['message'] ?? 'Unknown error'));
             }
             
         } catch (\Exception $e) {
-            Log::error('Error in editItem: ' . $e->getMessage());
+            Log::error('Exception in editItem: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
             return redirect()->route('admin.product-manager', ['tab' => 'items'])
                 ->with('error', 'Terjadi kesalahan saat mengambil data produk: ' . $e->getMessage());
         }
