@@ -5,21 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
-use App\Http\Controllers\Admin\ItemViewController;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Item;
+use App\Models\Bahan;
+use App\Models\Ukuran;
+use App\Models\Jenis;
+use App\Models\BiayaDesain;
+use App\Models\ItemBahan;
+use App\Models\ItemUkuran;
+use App\Models\ItemJenis;
 
 class ProductManagerController extends Controller
 {
-    protected $itemViewController;
-    
-    /**
-     * Constructor
-     */
-    public function __construct(ItemViewController $itemViewController)
-    {
-        $this->itemViewController = $itemViewController;
-    }
-    
     /**
      * Display product manager page dengan fokus pada Item
      */
@@ -52,50 +49,145 @@ class ProductManagerController extends Controller
         ];
         
         try {
-            // Selalu muat dropdown items untuk modals
-            Log::debug('Requesting items dropdown');
-            $dropdownResponse = $this->itemViewController->getItemsDropdown();
+            // Selalu muat dropdown items untuk modals (langsung dari database)
+            $data['itemsDropdown'] = Item::orderBy('nama_item')->get()->toArray();
             
-            Log::debug('Dropdown response type', ['type' => gettype($dropdownResponse)]);
-            
-            if (isset($dropdownResponse['success']) && $dropdownResponse['success']) {
-                $data['itemsDropdown'] = $dropdownResponse['data'] ?? [];
-                Log::debug('Dropdown items loaded successfully', ['count' => count($data['itemsDropdown'])]);
-            } else {
-                Log::warning('Failed to load items dropdown', [
-                    'success' => $dropdownResponse['success'] ?? false,
-                    'message' => $dropdownResponse['message'] ?? 'Unknown error'
-                ]);
-                $data['itemsDropdown'] = [];
+            // Hanya muat data berdasarkan tab aktif
+            switch ($activeTab) {
+                case 'items':
+                    // Query database langsung
+                    $query = Item::query();
+                    
+                    // Search by name
+                    if ($request->has('search')) {
+                        $search = $request->input('search');
+                        $query->where('nama_item', 'LIKE', "%{$search}%");
+                    }
+                    
+                    // Sort
+                    $sortField = $request->input('sort_by', 'id');
+                    $sortDirection = $request->input('sort_direction', 'desc');
+                    $query->orderBy($sortField, $sortDirection);
+                    
+                    // Pagination
+                    $perPage = $request->input('per_page', 10);
+                    $data['items'] = $query->paginate($perPage);
+                    
+                    // Count total items for dashboard stats
+                    $data['itemsTotal'] = Item::count();
+                    break;
+                    
+                case 'bahans':
+                    // Query database langsung
+                    $query = Bahan::query();
+                    
+                    // Search by name
+                    if ($request->has('search')) {
+                        $search = $request->input('search');
+                        $query->where('nama_bahan', 'LIKE', "%{$search}%");
+                    }
+                    
+                    // Sort
+                    $sortField = $request->input('sort_by', 'id');
+                    $sortDirection = $request->input('sort_direction', 'desc');
+                    $query->orderBy($sortField, $sortDirection);
+                    
+                    // Pagination
+                    $perPage = $request->input('per_page', 10);
+                    $bahans = $query->paginate($perPage);
+                    
+                    // Load associated items
+                    $bahans->each(function ($bahan) {
+                        $bahan->load('items');
+                    });
+                    
+                    $data['bahans'] = $bahans;
+                    $data['bahansTotal'] = Bahan::count();
+                    break;
+                    
+                case 'ukurans':
+                    // Query database langsung
+                    $query = Ukuran::query();
+                    
+                    // Search by size
+                    if ($request->has('search')) {
+                        $search = $request->input('search');
+                        $query->where('size', 'LIKE', "%{$search}%");
+                    }
+                    
+                    // Sort
+                    $sortField = $request->input('sort_by', 'id');
+                    $sortDirection = $request->input('sort_direction', 'desc');
+                    $query->orderBy($sortField, $sortDirection);
+                    
+                    // Pagination
+                    $perPage = $request->input('per_page', 10);
+                    $ukurans = $query->paginate($perPage);
+                    
+                    // Load associated items
+                    $ukurans->each(function ($ukuran) {
+                        $ukuran->load('items');
+                    });
+                    
+                    $data['ukurans'] = $ukurans;
+                    $data['ukuransTotal'] = Ukuran::count();
+                    break;
+                    
+                case 'jenis':
+                    // Query database langsung
+                    $query = Jenis::query();
+                    
+                    // Search by category
+                    if ($request->has('search')) {
+                        $search = $request->input('search');
+                        $query->where('kategori', 'LIKE', "%{$search}%");
+                    }
+                    
+                    // Sort
+                    $sortField = $request->input('sort_by', 'id');
+                    $sortDirection = $request->input('sort_direction', 'desc');
+                    $query->orderBy($sortField, $sortDirection);
+                    
+                    // Pagination
+                    $perPage = $request->input('per_page', 10);
+                    $jenis = $query->paginate($perPage);
+                    
+                    // Load associated items
+                    $jenis->each(function ($jenisItem) {
+                        $jenisItem->load('items');
+                    });
+                    
+                    $data['jenis'] = $jenis;
+                    $data['jenisTotal'] = Jenis::count();
+                    break;
+                    
+                case 'biaya-desain':
+                    // Query database langsung
+                    $query = BiayaDesain::query();
+                    
+                    // Search by description
+                    if ($request->has('search')) {
+                        $search = $request->input('search');
+                        $query->where('deskripsi', 'LIKE', "%{$search}%");
+                    }
+                    
+                    // Sort
+                    $sortField = $request->input('sort_by', 'id');
+                    $sortDirection = $request->input('sort_direction', 'desc');
+                    $query->orderBy($sortField, $sortDirection);
+                    
+                    // Pagination
+                    $perPage = $request->input('per_page', 10);
+                    $data['biayaDesains'] = $query->paginate($perPage);
+                    $data['biayaDesainsTotal'] = BiayaDesain::count();
+                    break;
             }
             
-            // Hanya muat data untuk tab items
-            if ($activeTab == 'items') {
-                Log::debug('Loading items data for active tab');
-                $itemsResponse = $this->itemViewController->getItems($request);
-                
-                Log::debug('Items response', [
-                    'type' => gettype($itemsResponse),
-                    'success' => $itemsResponse['success'] ?? false,
-                    'has_data' => isset($itemsResponse['data']),
-                    'data_sample' => isset($itemsResponse['data']) ? json_encode(array_slice((array)$itemsResponse['data'], 0, 3)) : 'none'
-                ]);
-                
-                if (isset($itemsResponse['success']) && $itemsResponse['success']) {
-                    $data['items'] = $itemsResponse['data'];
-                    Log::debug('Items data loaded successfully', [
-                        'total' => $itemsResponse['data']['total'] ?? 'undefined',
-                        'current_page' => $itemsResponse['data']['current_page'] ?? 'undefined',
-                        'count' => isset($itemsResponse['data']['data']) ? count($itemsResponse['data']['data']) : 0
-                    ]);
-                } else {
-                    Log::warning('Failed to load items', [
-                        'success' => $itemsResponse['success'] ?? false,
-                        'message' => $itemsResponse['message'] ?? 'Unknown error'
-                    ]);
-                    $data['items'] = [];
-                }
-            }
+            // Set total counts for stats
+            $data['itemsTotal'] = $data['itemsTotal'] ?? Item::count();
+            $data['bahansTotal'] = $data['bahansTotal'] ?? Bahan::count();
+            $data['ukuransTotal'] = $data['ukuransTotal'] ?? Ukuran::count();
+            $data['jenisTotal'] = $data['jenisTotal'] ?? Jenis::count();
             
             return view('admin.product-manager', $data);
             
@@ -121,59 +213,27 @@ class ProductManagerController extends Controller
         ]);
         
         try {
-            $token = session('api_token');
-            
-            if (!$token) {
-                Log::error('StoreItem failed: No token in session');
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
-            
-            // Prepare form data
-            $formData = [
+            // Prepare item data
+            $itemData = [
                 'nama_item' => $request->nama_item,
                 'harga_dasar' => $request->harga_dasar,
                 'deskripsi' => $request->deskripsi,
             ];
             
-            Log::debug('Storing new item', [
-                'nama_item' => $request->nama_item,
-                'has_image' => $request->hasFile('gambar')
-            ]);
-            
             // Handle file upload if provided
             if ($request->hasFile('gambar')) {
-                Log::debug('Processing image upload');
-                $client = Http::withToken($token)
-                    ->timeout(60) // Increase timeout to 60 seconds
-                    ->asMultipart();
-                $image = $request->file('gambar');
-                
-                $response = $client->attach(
-                    'gambar', 
-                    file_get_contents($image->getRealPath()),
-                    $image->getClientOriginalName()
-                )->post(config('app.url') . '/api/admin/items', $formData);
-            } else {
-                $response = Http::withToken($token)
-                    ->timeout(60) // Increase timeout to 60 seconds
-                    ->post(config('app.url') . '/api/admin/items', $formData);
+                $gambar = $request->file('gambar');
+                $path = $gambar->store('product-images', 'public');
+                $itemData['gambar'] = $path;
             }
             
-            if ($response->successful()) {
-                Log::info('Item stored successfully');
-                // Clear cache after successful operation
-                $this->itemViewController->clearCache();
-                
-                return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                    ->with('success', 'Produk berhasil ditambahkan');
-            } else {
-                Log::error('API Error storeItem: ' . $response->body(), [
-                    'status' => $response->status()
-                ]);
-                return redirect()->back()
-                    ->with('error', 'Gagal menambahkan produk: ' . ($response->json()['message'] ?? 'Unknown error'))
-                    ->withInput();
-            }
+            // Create item directly in database
+            $item = Item::create($itemData);
+            
+            Log::info('Item created successfully', ['item_id' => $item->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('success', 'Produk berhasil ditambahkan');
             
         } catch (\Exception $e) {
             Log::error('Exception in storeItem: ' . $e->getMessage(), [
@@ -182,6 +242,29 @@ class ProductManagerController extends Controller
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menyimpan produk: ' . $e->getMessage())
                 ->withInput();
+        }
+    }
+    
+    /**
+     * Show edit form for item
+     */
+    public function editItem($id)
+    {
+        try {
+            // Find the item directly from database
+            $item = Item::with(['bahans', 'ukurans', 'jenis'])->findOrFail($id);
+            
+            return view('admin.product-manager.edit-item', [
+                'item' => $item
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in editItem: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('error', 'Terjadi kesalahan saat mengambil data produk: ' . $e->getMessage());
         }
     }
     
@@ -198,61 +281,32 @@ class ProductManagerController extends Controller
         ]);
         
         try {
-            $token = session('api_token');
+            // Find the item
+            $item = Item::findOrFail($id);
             
-            if (!$token) {
-                Log::error('UpdateItem failed: No token in session');
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
-            
-            // Prepare form data
-            $formData = [
-                'nama_item' => $request->nama_item,
-                'harga_dasar' => $request->harga_dasar,
-                'deskripsi' => $request->deskripsi,
-            ];
-            
-            Log::debug('Updating item', [
-                'id' => $id,
-                'nama_item' => $request->nama_item,
-                'has_image' => $request->hasFile('gambar')
-            ]);
+            // Update item data
+            $item->nama_item = $request->nama_item;
+            $item->harga_dasar = $request->harga_dasar;
+            $item->deskripsi = $request->deskripsi;
             
             // Handle file upload if provided
             if ($request->hasFile('gambar')) {
-                Log::debug('Processing image upload for update');
-                $client = Http::withToken($token)
-                    ->timeout(60) // Increase timeout to 60 seconds
-                    ->asMultipart();
-                $image = $request->file('gambar');
+                // Delete old image if exists
+                if ($item->gambar) {
+                    Storage::disk('public')->delete($item->gambar);
+                }
                 
-                $response = $client->attach(
-                    'gambar', 
-                    file_get_contents($image->getRealPath()),
-                    $image->getClientOriginalName()
-                )->put(config('app.url') . '/api/admin/items/' . $id, $formData);
-            } else {
-                $response = Http::withToken($token)
-                    ->timeout(60) // Increase timeout to 60 seconds
-                    ->put(config('app.url') . '/api/admin/items/' . $id, $formData);
+                $gambar = $request->file('gambar');
+                $path = $gambar->store('product-images', 'public');
+                $item->gambar = $path;
             }
             
-            if ($response->successful()) {
-                Log::info('Item updated successfully', ['id' => $id]);
-                // Clear cache after successful operation
-                $this->itemViewController->clearCache();
-                
-                return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                    ->with('success', 'Produk berhasil diperbarui');
-            } else {
-                Log::error('API Error updateItem: ' . $response->body(), [
-                    'status' => $response->status(),
-                    'id' => $id
-                ]);
-                return redirect()->back()
-                    ->with('error', 'Gagal memperbarui produk: ' . ($response->json()['message'] ?? 'Unknown error'))
-                    ->withInput();
-            }
+            $item->save();
+            
+            Log::info('Item updated successfully', ['item_id' => $item->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('success', 'Produk berhasil diperbarui');
             
         } catch (\Exception $e) {
             Log::error('Exception in updateItem: ' . $e->getMessage(), [
@@ -271,33 +325,26 @@ class ProductManagerController extends Controller
     public function destroyItem($id)
     {
         try {
-            $token = session('api_token');
+            // Find the item
+            $item = Item::findOrFail($id);
             
-            if (!$token) {
-                Log::error('DestroyItem failed: No token in session');
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
+            // Delete related records in pivot tables
+            ItemBahan::where('item_id', $id)->delete();
+            ItemUkuran::where('item_id', $id)->delete();
+            ItemJenis::where('item_id', $id)->delete();
+            
+            // Delete image if exists
+            if ($item->gambar) {
+                Storage::disk('public')->delete($item->gambar);
             }
             
-            Log::debug('Deleting item', ['id' => $id]);
-            $response = Http::withToken($token)
-                ->timeout(60) // Increase timeout to 60 seconds
-                ->delete(config('app.url') . '/api/admin/items/' . $id);
+            // Delete the item
+            $item->delete();
             
-            if ($response->successful()) {
-                Log::info('Item deleted successfully', ['id' => $id]);
-                // Clear cache after successful operation
-                $this->itemViewController->clearCache();
-                
-                return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                    ->with('success', 'Produk berhasil dihapus');
-            } else {
-                Log::error('API Error destroyItem: ' . $response->body(), [
-                    'status' => $response->status(),
-                    'id' => $id
-                ]);
-                return redirect()->back()
-                    ->with('error', 'Gagal menghapus produk: ' . ($response->json()['message'] ?? 'Unknown error'));
-            }
+            Log::info('Item deleted successfully', ['item_id' => $id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('success', 'Produk berhasil dihapus');
             
         } catch (\Exception $e) {
             Log::error('Exception in destroyItem: ' . $e->getMessage(), [
@@ -310,42 +357,551 @@ class ProductManagerController extends Controller
     }
     
     /**
-     * Show edit form for item
+     * Store a newly created material (bahan).
      */
-    public function editItem($id)
+    public function storeBahan(Request $request)
     {
+        $request->validate([
+            'nama_bahan' => 'required|string|max:255',
+            'biaya_tambahan' => 'required|numeric|min:0',
+            'item_id' => 'required|exists:items,id',
+        ]);
+        
         try {
-            $token = session('api_token');
+            // Create bahan
+            $bahan = Bahan::create([
+                'nama_bahan' => $request->nama_bahan,
+                'biaya_tambahan' => $request->biaya_tambahan,
+                'is_available' => $request->has('is_available') ? $request->is_available : true,
+            ]);
             
-            if (!$token) {
-                Log::error('EditItem failed: No token in session');
-                return redirect()->route('login')->with('error', 'Session expired. Please login again.');
-            }
+            // Create association with item
+            ItemBahan::create([
+                'item_id' => $request->item_id,
+                'bahan_id' => $bahan->id
+            ]);
             
-            Log::debug('Fetching item for edit form', ['id' => $id]);
-            $itemResponse = $this->itemViewController->getItem($id);
+            Log::info('Bahan created successfully', ['bahan_id' => $bahan->id]);
             
-            if (isset($itemResponse['success']) && $itemResponse['success']) {
-                Log::debug('Item fetched successfully for edit', ['id' => $id]);
-                return view('admin.product-manager.edit-item', [
-                    'item' => $itemResponse['data']
-                ]);
-            } else {
-                Log::error('Failed to fetch item for edit', [
-                    'id' => $id,
-                    'message' => $itemResponse['message'] ?? 'Unknown error'
-                ]);
-                return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                    ->with('error', 'Gagal mengambil data produk: ' . ($itemResponse['message'] ?? 'Unknown error'));
-            }
+            return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
+                ->with('success', 'Bahan berhasil ditambahkan');
             
         } catch (\Exception $e) {
-            Log::error('Exception in editItem: ' . $e->getMessage(), [
+            Log::error('Exception in storeBahan: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menyimpan bahan: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Show edit form for bahan
+     */
+    public function editBahan($id)
+    {
+        try {
+            // Find the bahan directly from database
+            $bahan = Bahan::with('items')->findOrFail($id);
+            
+            // Get items for dropdown
+            $items = Item::orderBy('nama_item')->get();
+            
+            return view('admin.product-manager.edit-bahan', [
+                'bahan' => $bahan,
+                'items' => $items
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in editBahan: ' . $e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'id' => $id
             ]);
-            return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                ->with('error', 'Terjadi kesalahan saat mengambil data produk: ' . $e->getMessage());
+            return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
+                ->with('error', 'Terjadi kesalahan saat mengambil data bahan: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Update an existing bahan.
+     */
+    public function updateBahan(Request $request, $id)
+    {
+        $request->validate([
+            'nama_bahan' => 'required|string|max:255',
+            'biaya_tambahan' => 'required|numeric|min:0',
+            'item_id' => 'required|exists:items,id',
+        ]);
+        
+        try {
+            // Find the bahan
+            $bahan = Bahan::findOrFail($id);
+            
+            // Update bahan data
+            $bahan->nama_bahan = $request->nama_bahan;
+            $bahan->biaya_tambahan = $request->biaya_tambahan;
+            
+            if ($request->has('is_available')) {
+                $bahan->is_available = $request->is_available;
+            }
+            
+            $bahan->save();
+            
+            // Update item association
+            // First remove all existing associations
+            ItemBahan::where('bahan_id', $bahan->id)->delete();
+            
+            // Create new association
+            ItemBahan::create([
+                'item_id' => $request->item_id,
+                'bahan_id' => $bahan->id
+            ]);
+            
+            Log::info('Bahan updated successfully', ['bahan_id' => $bahan->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
+                ->with('success', 'Bahan berhasil diperbarui');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in updateBahan: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memperbarui bahan: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Delete a bahan.
+     */
+    public function destroyBahan($id)
+    {
+        try {
+            // Find the bahan
+            $bahan = Bahan::findOrFail($id);
+            
+            // Delete associations in pivot table
+            ItemBahan::where('bahan_id', $id)->delete();
+            
+            // Delete the bahan
+            $bahan->delete();
+            
+            Log::info('Bahan deleted successfully', ['bahan_id' => $id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'bahans'])
+                ->with('success', 'Bahan berhasil dihapus');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in destroyBahan: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menghapus bahan: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Store a newly created ukuran.
+     */
+    public function storeUkuran(Request $request)
+    {
+        $request->validate([
+            'size' => 'required|string|max:100',
+            'faktor_harga' => 'required|numeric|min:0.1',
+            'item_id' => 'required|exists:items,id',
+        ]);
+        
+        try {
+            // Create ukuran
+            $ukuran = Ukuran::create([
+                'size' => $request->size,
+                'faktor_harga' => $request->faktor_harga,
+            ]);
+            
+            // Create association with item
+            ItemUkuran::create([
+                'item_id' => $request->item_id,
+                'ukuran_id' => $ukuran->id
+            ]);
+            
+            Log::info('Ukuran created successfully', ['ukuran_id' => $ukuran->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
+                ->with('success', 'Ukuran berhasil ditambahkan');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in storeUkuran: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menyimpan ukuran: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Show edit form for ukuran
+     */
+    public function editUkuran($id)
+    {
+        try {
+            // Find the ukuran directly from database
+            $ukuran = Ukuran::with('items')->findOrFail($id);
+            
+            // Get items for dropdown
+            $items = Item::orderBy('nama_item')->get();
+            
+            return view('admin.product-manager.edit-ukuran', [
+                'ukuran' => $ukuran,
+                'items' => $items
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in editUkuran: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
+                ->with('error', 'Terjadi kesalahan saat mengambil data ukuran: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Update an existing ukuran.
+     */
+    public function updateUkuran(Request $request, $id)
+    {
+        $request->validate([
+            'size' => 'required|string|max:100',
+            'faktor_harga' => 'required|numeric|min:0.1',
+            'item_id' => 'required|exists:items,id',
+        ]);
+        
+        try {
+            // Find the ukuran
+            $ukuran = Ukuran::findOrFail($id);
+            
+            // Update ukuran data
+            $ukuran->size = $request->size;
+            $ukuran->faktor_harga = $request->faktor_harga;
+            $ukuran->save();
+            
+            // Update item association
+            // First remove all existing associations
+            ItemUkuran::where('ukuran_id', $ukuran->id)->delete();
+            
+            // Create new association
+            ItemUkuran::create([
+                'item_id' => $request->item_id,
+                'ukuran_id' => $ukuran->id
+            ]);
+            
+            Log::info('Ukuran updated successfully', ['ukuran_id' => $ukuran->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
+                ->with('success', 'Ukuran berhasil diperbarui');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in updateUkuran: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memperbarui ukuran: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Delete a ukuran.
+     */
+    public function destroyUkuran($id)
+    {
+        try {
+            // Find the ukuran
+            $ukuran = Ukuran::findOrFail($id);
+            
+            // Delete associations in pivot table
+            ItemUkuran::where('ukuran_id', $id)->delete();
+            
+            // Delete the ukuran
+            $ukuran->delete();
+            
+            Log::info('Ukuran deleted successfully', ['ukuran_id' => $id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'ukurans'])
+                ->with('success', 'Ukuran berhasil dihapus');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in destroyUkuran: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menghapus ukuran: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Store a newly created jenis.
+     */
+    public function storeJenis(Request $request)
+    {
+        $request->validate([
+            'kategori' => 'required|string|max:255',
+            'biaya_tambahan' => 'required|numeric|min:0',
+            'item_id' => 'required|exists:items,id',
+        ]);
+        
+        try {
+            // Create jenis
+            $jenis = Jenis::create([
+                'kategori' => $request->kategori,
+                'biaya_tambahan' => $request->biaya_tambahan,
+            ]);
+            
+            // Create association with item
+            ItemJenis::create([
+                'item_id' => $request->item_id,
+                'jenis_id' => $jenis->id
+            ]);
+            
+            Log::info('Jenis created successfully', ['jenis_id' => $jenis->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
+                ->with('success', 'Jenis berhasil ditambahkan');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in storeJenis: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menyimpan jenis: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Show edit form for jenis
+     */
+    public function editJenis($id)
+    {
+        try {
+            // Find the jenis directly from database
+            $jenis = Jenis::with('items')->findOrFail($id);
+            
+            // Get items for dropdown
+            $items = Item::orderBy('nama_item')->get();
+            
+            return view('admin.product-manager.edit-jenis', [
+                'jenis' => $jenis,
+                'items' => $items
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in editJenis: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
+                ->with('error', 'Terjadi kesalahan saat mengambil data jenis: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Update an existing jenis.
+     */
+    public function updateJenis(Request $request, $id)
+    {
+        $request->validate([
+            'kategori' => 'required|string|max:255',
+            'biaya_tambahan' => 'required|numeric|min:0',
+            'item_id' => 'required|exists:items,id',
+        ]);
+        
+        try {
+            // Find the jenis
+            $jenis = Jenis::findOrFail($id);
+            
+            // Update jenis data
+            $jenis->kategori = $request->kategori;
+            $jenis->biaya_tambahan = $request->biaya_tambahan;
+            $jenis->save();
+            
+            // Update item association
+            // First remove all existing associations
+            ItemJenis::where('jenis_id', $jenis->id)->delete();
+            
+            // Create new association
+            ItemJenis::create([
+                'item_id' => $request->item_id,
+                'jenis_id' => $jenis->id
+            ]);
+            
+            Log::info('Jenis updated successfully', ['jenis_id' => $jenis->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
+                ->with('success', 'Jenis berhasil diperbarui');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in updateJenis: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memperbarui jenis: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Delete a jenis.
+     */
+    public function destroyJenis($id)
+    {
+        try {
+            // Find the jenis
+            $jenis = Jenis::findOrFail($id);
+            
+            // Delete associations in pivot table
+            ItemJenis::where('jenis_id', $id)->delete();
+            
+            // Delete the jenis
+            $jenis->delete();
+            
+            Log::info('Jenis deleted successfully', ['jenis_id' => $id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
+                ->with('success', 'Jenis berhasil dihapus');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in destroyJenis: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menghapus jenis: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Store a newly created biaya desain.
+     */
+    public function storeBiayaDesain(Request $request)
+    {
+        $request->validate([
+            'biaya' => 'required|numeric|min:0',
+            'deskripsi' => 'nullable|string',
+        ]);
+        
+        try {
+            // Create biaya desain
+            $biayaDesain = BiayaDesain::create([
+                'biaya' => $request->biaya,
+                'deskripsi' => $request->deskripsi,
+            ]);
+            
+            Log::info('BiayaDesain created successfully', ['biaya_desain_id' => $biayaDesain->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
+                ->with('success', 'Biaya Desain berhasil ditambahkan');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in storeBiayaDesain: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menyimpan biaya desain: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Show edit form for biaya desain
+     */
+    public function editBiayaDesain($id)
+    {
+        try {
+            // Find the biaya desain directly from database
+            $biayaDesain = BiayaDesain::findOrFail($id);
+            
+            return view('admin.product-manager.edit-biaya-desain', [
+                'biayaDesain' => $biayaDesain
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in editBiayaDesain: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
+                ->with('error', 'Terjadi kesalahan saat mengambil data biaya desain: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Update an existing biaya desain.
+     */
+    public function updateBiayaDesain(Request $request, $id)
+    {
+        $request->validate([
+            'biaya' => 'required|numeric|min:0',
+            'deskripsi' => 'nullable|string',
+        ]);
+        
+        try {
+            // Find the biaya desain
+            $biayaDesain = BiayaDesain::findOrFail($id);
+            
+            // Update biaya desain data
+            $biayaDesain->biaya = $request->biaya;
+            $biayaDesain->deskripsi = $request->deskripsi;
+            $biayaDesain->save();
+            
+            Log::info('BiayaDesain updated successfully', ['biaya_desain_id' => $biayaDesain->id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
+                ->with('success', 'Biaya Desain berhasil diperbarui');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in updateBiayaDesain: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memperbarui biaya desain: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+    
+    /**
+     * Delete a biaya desain.
+     */
+    public function destroyBiayaDesain($id)
+    {
+        try {
+            // Find the biaya desain
+            $biayaDesain = BiayaDesain::findOrFail($id);
+            
+            // Delete the biaya desain
+            $biayaDesain->delete();
+            
+            Log::info('BiayaDesain deleted successfully', ['biaya_desain_id' => $id]);
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
+                ->with('success', 'Biaya Desain berhasil dihapus');
+            
+        } catch (\Exception $e) {
+            Log::error('Exception in destroyBiayaDesain: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'id' => $id
+            ]);
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menghapus biaya desain: ' . $e->getMessage());
         }
     }
 }

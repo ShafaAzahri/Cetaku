@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Http\Controllers\Admin\ItemViewController;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -12,9 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(ItemViewController::class, function ($app) {
-            return new ItemViewController();
-        });
+        // Hapus registrasi ItemViewController
+        // $this->app->singleton(ItemViewController::class, function ($app) {
+        //     return new ItemViewController();
+        // });
     }
 
     /**

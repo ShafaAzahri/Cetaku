@@ -82,14 +82,3 @@ Route::middleware(['auth:api'])->prefix('admin')->group(function () {
         Route::delete('/{id}', [BiayaDesainController::class, 'destroy']);
     });
 });
-
-// Route untuk view controller (untuk mengambil data dari API)
-Route::prefix('view')->middleware(['auth:api'])->group(function () {
-    // Item View Routes
-    Route::prefix('items')->group(function() {
-        Route::get('/', [ItemViewController::class, 'getItems']);
-        Route::get('/dropdown', [ItemViewController::class, 'getItemsDropdown']);
-        Route::get('/{id}', [ItemViewController::class, 'getItem']);
-        Route::post('/clear-cache', [ItemViewController::class, 'clearCache']);
-    });
-});
