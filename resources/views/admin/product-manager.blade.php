@@ -359,82 +359,215 @@
 
 <!-- Main Script -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Parse data from JSON script tag
-        let appData = {};
-        try {
-            const dataElement = document.getElementById('app-data');
-            if (dataElement) {
-                appData = JSON.parse(dataElement.textContent);
-            }
-        } catch (error) {
-            console.error('Error parsing app data:', error);
+   document.addEventListener('DOMContentLoaded', function() {
+    // Parse data from JSON script tag
+    let appData = {};
+    try {
+        const dataElement = document.getElementById('app-data');
+        if (dataElement) {
+            appData = JSON.parse(dataElement.textContent);
         }
+    } catch (error) {
+        console.error('Error parsing app data:', error);
+    }
 
-        // Update counter element
-        const totalItemsEl = document.getElementById('totalItems');
-        if (totalItemsEl) {
-            totalItemsEl.textContent = appData.itemsTotal || '0';
-        }
-        
-        // Event listener for refresh button
-        const refreshBtn = document.getElementById('refreshData');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', function() {
-                clearCache(appData);
-            });
-        }
-    });
-
-    // Function to clear cache
-    function clearCache(appData) {
-        const token = appData.token;
-        const appUrl = appData.appUrl;
-        const csrfToken = appData.csrfToken;
-        
-        if (!token) {
-            alert('Token tidak ditemukan. Silakan login kembali.');
-            return;
-        }
-        
-        // Show loading spinner
-        const refreshBtn = document.getElementById('refreshData');
-        if (refreshBtn) {
-            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memuat...';
-            refreshBtn.disabled = true;
-        }
-        
-        fetch(appUrl + '/api/view/items/clear-cache', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token,
-                'X-CSRF-TOKEN': csrfToken
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Cache berhasil dibersihkan');
-                // Refresh page to load new data
-                window.location.reload();
-            } else {
-                console.error('Gagal membersihkan cache:', data.message);
-                if (refreshBtn) {
-                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh Data';
-                    refreshBtn.disabled = false;
-                }
-                alert('Gagal me-refresh data: ' + (data.message || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (refreshBtn) {
-                refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh Data';
-                refreshBtn.disabled = false;
-            }
-            alert('Terjadi kesalahan saat me-refresh data.');
+    // Update counter elements
+    updateCounters(appData);
+    
+    // Event listener for refresh button
+    const refreshBtn = document.getElementById('refreshData');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            refreshData(appData);
         });
     }
+    
+    // Add event listeners for modal buttons
+    setupModalEventListeners();
+});
+
+/**
+ * Update the counters displaying item counts
+ */
+function updateCounters(appData) {
+    const totalItemsEl = document.getElementById('totalItems');
+    if (totalItemsEl) {
+        totalItemsEl.textContent = appData.itemsTotal || '0';
+    }
+    
+    const totalBahansEl = document.getElementById('totalBahans');
+    if (totalBahansEl) {
+        totalBahansEl.textContent = appData.bahansTotal || '0';
+    }
+    
+    const totalUkuransEl = document.getElementById('totalUkurans');
+    if (totalUkuransEl) {
+        totalUkuransEl.textContent = appData.ukuransTotal || '0';
+    }
+}
+
+/**
+ * Function to refresh data with improved error handling
+ */
+function refreshData(appData) {
+    const token = appData.token;
+    const appUrl = appData.appUrl;
+    const csrfToken = appData.csrfToken;
+    
+    if (!token) {
+        showAlert('error', 'Token tidak ditemukan. Silakan login kembali.');
+        return;
+    }
+    
+    // Show loading spinner
+    const refreshBtn = document.getElementById('refreshData');
+    if (refreshBtn) {
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memuat...';
+        refreshBtn.disabled = true;
+    }
+    
+    // Make the API call with proper error handling
+    fetch(appUrl + '/api/view/items/clear-cache', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+            'X-CSRF-TOKEN': csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Server responded with status: ' + response.status);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('Cache berhasil dibersihkan');
+            showAlert('success', 'Data berhasil diperbarui');
+            // Refresh page to load new data
+            window.location.reload();
+        } else {
+            console.error('Gagal membersihkan cache:', data.message);
+            throw new Error(data.message || 'Unknown error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saat refresh data:', error);
+        if (refreshBtn) {
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Refresh Data';
+            refreshBtn.disabled = false;
+        }
+        showAlert('error', 'Gagal me-refresh data: ' + error.message);
+    });
+}
+
+/**
+ * Show an alert message to the user
+ */
+function showAlert(type, message) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    alertDiv.role = 'alert';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // Find the container and prepend the alert
+    const container = document.querySelector('.content');
+    if (container) {
+        const firstChild = container.firstChild;
+        container.insertBefore(alertDiv, firstChild);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alertDiv);
+            bsAlert.close();
+        }, 5000);
+    } else {
+        // Fallback to alert if container not found
+        alert(message);
+    }
+}
+
+/**
+ * Setup event listeners for modal buttons and forms
+ */
+function setupModalEventListeners() {
+    // Handle form submissions with AJAX
+    const itemForm = document.querySelector('#addItemModal form');
+    if (itemForm) {
+        itemForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, 'Produk berhasil ditambahkan');
+        });
+    }
+    
+    // Similar for other modals...
+    const bahanForm = document.querySelector('#addBahanModal form');
+    if (bahanForm) {
+        bahanForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, 'Bahan berhasil ditambahkan');
+        });
+    }
+    
+    const ukuranForm = document.querySelector('#addUkuranModal form');
+    if (ukuranForm) {
+        ukuranForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitForm(this, 'Ukuran berhasil ditambahkan');
+        });
+    }
+}
+
+/**
+ * Submit a form with AJAX
+ */
+function submitForm(form, successMessage) {
+    const formData = new FormData(form);
+    const url = form.getAttribute('action');
+    const method = form.getAttribute('method') || 'POST';
+    
+    // Get token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(url, {
+        method: method,
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': csrfToken
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || 'Form submission failed');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Show success message
+        showAlert('success', successMessage);
+        
+        // Close modal
+        const modalElement = form.closest('.modal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        modal.hide();
+        
+        // Refresh page after a short delay
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    })
+    .catch(error => {
+        console.error('Error submitting form:', error);
+        showAlert('error', 'Gagal menyimpan data: ' + error.message);
+    });
+}
 </script>
 @endsection
