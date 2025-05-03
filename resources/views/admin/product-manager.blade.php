@@ -165,7 +165,7 @@
                     <div class="mb-3">
                         <label for="gambar" class="form-label">Gambar</label>
                         <input type="file" class="form-control" id="gambar" name="gambar" accept="image/*">
-                        <small class="form-text text-muted">Upload gambar produk (opsional)</small>
+                        <div class="form-text">Upload gambar produk (opsional). Ukuran maksimal 2MB.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -208,7 +208,7 @@
                         <label for="edit_gambar" class="form-label">Gambar</label>
                         <input type="file" class="form-control" id="edit_gambar" name="gambar" accept="image/*">
                         <div id="current_image" class="mt-2"></div>
-                        <small class="form-text text-muted">Upload gambar baru untuk mengganti gambar lama (opsional)</small>
+                        <div class="form-text">Upload gambar baru untuk mengganti gambar lama (opsional). Ukuran maksimal 2MB.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -223,8 +223,8 @@
 
 @section('scripts')
 <script>
-    // Script untuk mengisi form edit
     document.addEventListener('DOMContentLoaded', function() {
+        // Script untuk mengisi form edit
         const editItemModal = document.getElementById('editItemModal');
         if (editItemModal) {
             editItemModal.addEventListener('show.bs.modal', function(event) {
@@ -236,8 +236,8 @@
                 const gambar = button.getAttribute('data-gambar');
                 
                 // Set action URL dengan URL lengkap
-                const baseUrl = "{{ url('admin/items') }}";
-                document.getElementById('editItemForm').setAttribute('action', `${baseUrl}/${id}`);
+                const form = document.getElementById('editItemForm');
+                form.setAttribute('action', `{{ url('admin/items') }}/${id}`);
                 
                 // Set nilai input
                 document.getElementById('edit_nama_item').value = nama;
@@ -249,11 +249,62 @@
                 if (gambar) {
                     const storageUrl = "{{ asset('storage') }}";
                     currentImageDiv.innerHTML = `
-                        <img src="${storageUrl}/${gambar}" class="img-thumbnail" style="max-height: 100px" alt="${nama}">
-                        <p class="small text-muted mt-1">Gambar saat ini</p>
+                        <div class="text-center">
+                            <img src="${storageUrl}/${gambar}" class="img-thumbnail" style="max-height: 150px" alt="${nama}">
+                            <p class="small text-muted mt-1">Gambar saat ini</p>
+                        </div>
                     `;
                 } else {
                     currentImageDiv.innerHTML = '<p class="text-muted">Tidak ada gambar</p>';
+                }
+            });
+        }
+        
+        // Preview gambar saat upload
+        const gambarInput = document.getElementById('gambar');
+        if (gambarInput) {
+            gambarInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const previewDiv = document.createElement('div');
+                        previewDiv.classList.add('mt-2', 'text-center');
+                        previewDiv.innerHTML = `
+                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px">
+                            <p class="small text-muted mt-1">Preview gambar</p>
+                        `;
+                        
+                        const previewContainer = gambarInput.parentElement;
+                        const existingPreview = previewContainer.querySelector('.text-center');
+                        if (existingPreview) {
+                            previewContainer.removeChild(existingPreview);
+                        }
+                        previewContainer.appendChild(previewDiv);
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+        
+        // Preview gambar saat upload di form edit
+        const editGambarInput = document.getElementById('edit_gambar');
+        if (editGambarInput) {
+            editGambarInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const previewDiv = document.createElement('div');
+                        previewDiv.classList.add('mt-2', 'text-center');
+                        previewDiv.innerHTML = `
+                            <img src="${e.target.result}" class="img-thumbnail" style="max-height: 150px">
+                            <p class="small text-muted mt-1">Preview gambar baru</p>
+                        `;
+                        
+                        const currentImageDiv = document.getElementById('current_image');
+                        currentImageDiv.innerHTML = '';
+                        currentImageDiv.appendChild(previewDiv);
+                    }
+                    reader.readAsDataURL(this.files[0]);
                 }
             });
         }
