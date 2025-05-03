@@ -20,7 +20,6 @@ Route::prefix('auth')->group(function() {
 });
 
 // Route untuk Item API
-// Catatan: Sementara tanpa middleware auth:api untuk memudahkan testing
 Route::prefix('items')->group(function() {
     Route::get('/', [ItemApiController::class, 'index']);
     Route::get('/{id}', [ItemApiController::class, 'show']);

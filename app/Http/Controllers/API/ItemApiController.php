@@ -11,7 +11,54 @@ use Illuminate\Support\Facades\Storage;
 
 class ItemApiController extends Controller
 {
-    // ...kode lainnya tetap sama...
+    /**
+     * Menampilkan daftar semua item
+     */
+    public function index()
+    {
+        try {
+            $items = Item::all();
+            
+            return response()->json([
+                'success' => true,
+                'items' => $items
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Gagal mengambil data item: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data item'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Menampilkan detail item berdasarkan ID
+     */
+    public function show($id)
+    {
+        try {
+            $item = Item::find($id);
+            
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item tidak ditemukan'
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'item' => $item
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Gagal mengambil detail item: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil detail item'
+            ], 500);
+        }
+    }
     
     /**
      * Menyimpan item baru
@@ -22,7 +69,7 @@ class ItemApiController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_dasar' => 'required|numeric|min:0',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
         
         if ($validator->fails()) {
@@ -43,6 +90,8 @@ class ItemApiController extends Controller
             if ($request->hasFile('gambar')) {
                 $gambar = $request->file('gambar');
                 $gambarName = 'product-images/' . time() . '_' . $gambar->getClientOriginalName();
+                
+                // Simpan gambar ke storage publik
                 $gambar->storeAs('public', $gambarName);
                 $item->gambar = $gambarName;
             }
@@ -72,7 +121,7 @@ class ItemApiController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_dasar' => 'required|numeric|min:0',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
         
         if ($validator->fails()) {
@@ -106,6 +155,8 @@ class ItemApiController extends Controller
                 
                 $gambar = $request->file('gambar');
                 $gambarName = 'product-images/' . time() . '_' . $gambar->getClientOriginalName();
+                
+                // Simpan gambar ke storage publik
                 $gambar->storeAs('public', $gambarName);
                 $item->gambar = $gambarName;
             }

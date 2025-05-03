@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage; // Tambahkan ini
+use Illuminate\Support\Str;
 
 class ProductManagerController extends Controller
 {
@@ -66,9 +67,6 @@ class ProductManagerController extends Controller
         }
     }
     
-    /**
-     * Simpan item baru
-     */
     public function storeItem(Request $request)
     {
         $validatedData = $request->validate([
@@ -79,23 +77,35 @@ class ProductManagerController extends Controller
         ]);
         
         try {
-            // Coba simpan via API dengan file gambar
-            $response = null;
+            // Create a new multipart form request
+            $formData = [
+                'nama_item' => $request->nama_item,
+                'deskripsi' => $request->deskripsi,
+                'harga_dasar' => $request->harga_dasar,
+            ];
             
+            // Only add the image if it exists
             if ($request->hasFile('gambar')) {
                 $response = Http::withToken($this->apiToken)
-                    ->attach('gambar', file_get_contents($request->file('gambar')), $request->file('gambar')->getClientOriginalName())
-                    ->post($this->apiUrl . '/items', [
-                        'nama_item' => $request->nama_item,
-                        'deskripsi' => $request->deskripsi,
-                        'harga_dasar' => $request->harga_dasar,
-                    ]);
+                    ->attach(
+                        'gambar',                                   // field name
+                        file_get_contents($request->file('gambar')->path()), // file contents
+                        $request->file('gambar')->getClientOriginalName(),  // filename
+                        ['Content-Type' => $request->file('gambar')->getMimeType()] // headers
+                    )
+                    ->post($this->apiUrl . '/items', $formData);
             } else {
                 $response = Http::withToken($this->apiToken)
-                    ->post($this->apiUrl . '/items', $validatedData);
+                    ->post($this->apiUrl . '/items', $formData);
             }
             
-            if ($response && $response->successful()) {
+            // Debug response
+            Log::debug('API response', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            
+            if ($response->successful()) {
                 return redirect()->route('admin.product-manager', ['tab' => 'items'])
                     ->with('success', 'Item berhasil ditambahkan');
             } else {
@@ -114,7 +124,8 @@ class ProductManagerController extends Controller
                 // Upload gambar jika ada
                 if ($request->hasFile('gambar')) {
                     $gambar = $request->file('gambar');
-                    $gambarName = 'product-images/' . time() . '_' . $gambar->getClientOriginalName();
+                    $extension = $gambar->getClientOriginalExtension();
+                    $gambarName = 'product-images/' . Str::slug($request->nama_item) . '_' . time() . '.' . $extension;
                     $gambar->storeAs('public', $gambarName);
                     $item->gambar = $gambarName;
                 }
@@ -211,7 +222,8 @@ class ProductManagerController extends Controller
                     }
                     
                     $gambar = $request->file('gambar');
-                    $gambarName = 'product-images/' . time() . '_' . $gambar->getClientOriginalName();
+                    $extension = $gambar->getClientOriginalExtension();
+                    $gambarName = 'product-images/' . Str::slug($request->nama_item) . '_' . time() . '.' . $extension;
                     $gambar->storeAs('public', $gambarName);
                     $item->gambar = $gambarName;
                 }
@@ -263,4 +275,57 @@ class ProductManagerController extends Controller
             }
         }
     }
+
+    public function destroyItem($id)
+{
+    try {
+        Log::debug('Attempting to delete item via API', [
+            'url' => $this->apiUrl . '/items/' . $id
+        ]);
+        
+        $response = Http::timeout(5)->withToken($this->apiToken)
+            ->delete($this->apiUrl . '/items/' . $id);
+        
+        if ($response->successful()) {
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('success', 'Item berhasil dihapus');
+        } else {
+            // Fallback to direct database deletion
+            $item = Item::find($id);
+            
+            if (!$item) {
+                return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                    ->with('error', 'Item tidak ditemukan');
+            }
+            
+            // Delete image if exists
+            if ($item->gambar) {
+                \Illuminate\Support\Facades\Storage::delete('public/' . $item->gambar);
+            }
+            
+            $item->delete();
+            
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('success', 'Item berhasil dihapus (via fallback)');
+        }
+    } catch (\Exception $e) {
+        // Handle any exceptions
+        $item = Item::find($id);
+        
+        if (!$item) {
+            return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                ->with('error', 'Item tidak ditemukan');
+        }
+        
+        // Delete image if exists
+        if ($item->gambar) {
+            \Illuminate\Support\Facades\Storage::delete('public/' . $item->gambar);
+        }
+        
+        $item->delete();
+        
+        return redirect()->route('admin.product-manager', ['tab' => 'items'])
+            ->with('success', 'Item berhasil dihapus (via fallback)');
+    }
+}
 }
