@@ -168,6 +168,9 @@ class AuthController extends Controller
     /**
      * Handle logout request using direct API controller
      */
+    /**
+     * Handle logout request using direct API controller
+     */
     public function logout(Request $request)
     {
         try {
@@ -186,8 +189,8 @@ class AuthController extends Controller
             // Clear session regardless of API response
             session()->flush();
             
-            return redirect()->route('login')
-                ->with('success', 'Successfully logged out');
+            return redirect()->route('welcome')
+                ->with('success', 'Berhasil logout. Sampai jumpa kembali!');
                 
         } catch (\Exception $e) {
             Log::error('Logout error: ' . $e->getMessage());
@@ -195,8 +198,8 @@ class AuthController extends Controller
             // Still clear session even if there's an error
             session()->flush();
             
-            return redirect()->route('login')
-                ->with('success', 'Successfully logged out');
+            return redirect()->route('welcome')
+                ->with('success', 'Berhasil Logout jir');
         }
     }
     

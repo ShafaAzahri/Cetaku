@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\BahanController;
 
@@ -14,10 +15,8 @@ use App\Http\Controllers\Admin\BahanController;
 |--------------------------------------------------------------------------
 */
 
-// Route halaman utama
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+// Route halaman utama (welcome page) - Juga difungsikan sebagai landing page website
+Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Route autentikasi
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');

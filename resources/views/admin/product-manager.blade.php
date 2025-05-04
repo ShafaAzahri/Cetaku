@@ -2,6 +2,111 @@
 
 @section('title', 'Product Manager')
 
+@section('styles')
+<style>
+    /* Improved Tabs Styling */
+    .product-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 15px;
+    }
+    
+    .product-tab {
+        flex: 1;
+        text-align: center;
+        min-width: 150px;
+        transition: all 0.3s;
+    }
+    
+    .product-tab .btn {
+        width: 100%;
+        border-radius: 8px;
+        padding: 12px;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .product-tab .btn.btn-primary {
+        background-color: #4361ee;
+        border-color: #4361ee;
+    }
+    
+    .product-tab .btn:not(.btn-primary) {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        border-color: #e9ecef;
+    }
+    
+    .product-tab .btn:hover:not(.btn-primary) {
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+    }
+    
+    /* Table Improvements */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        padding: 12px 15px;
+    }
+    
+    .table tbody tr {
+        transition: background-color 0.2s;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table tbody td {
+        vertical-align: middle;
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    /* Action Buttons */
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        margin-right: 5px;
+        transition: all 0.2s;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+    
+    /* Image thumbnails */
+    .img-product-thumbnail {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #e9ecef;
+    }
+</style>
+@endsection
+
 @section('content')
 <div class="container-fluid">
     @if(session('success'))
@@ -18,326 +123,322 @@
     </div>
     @endif
 
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <!-- Tabs -->
-                    <div class="mb-4">
-                        <div class="row">
-                            <div class="col-md-2">
-                                <a href="{{ route('admin.product-manager', ['tab' => 'items']) }}" 
-                                   class="btn {{ $activeTab == 'items' ? 'btn-primary' : 'btn-light' }} w-100 py-3">
-                                    <i class="fas fa-boxes me-2"></i> Items
-                                </a>
-                            </div>
-                            <div class="col-md-2">
-                                <a href="{{ route('admin.product-manager', ['tab' => 'bahan']) }}" 
-                                   class="btn {{ $activeTab == 'bahan' ? 'btn-primary' : 'btn-light' }} w-100 py-3">
-                                    <i class="fas fa-layer-group me-2"></i> Bahan
-                                </a>
-                            </div>
-                            <div class="col-md-2">
-                                <a href="{{ route('admin.product-manager', ['tab' => 'ukuran']) }}" 
-                                   class="btn {{ $activeTab == 'ukuran' ? 'btn-primary' : 'btn-light' }} w-100 py-3">
-                                    <i class="fas fa-rulers me-2"></i> Ukuran
-                                </a>
-                            </div>
-                            <div class="col-md-2">
-                                <a href="{{ route('admin.product-manager', ['tab' => 'jenis']) }}" 
-                                   class="btn {{ $activeTab == 'jenis' ? 'btn-primary' : 'btn-light' }} w-100 py-3">
-                                    <i class="fas fa-tag me-2"></i> Jenis
-                                </a>
-                            </div>
-                            <div class="col-md-2">
-                                <a href="{{ route('admin.product-manager', ['tab' => 'biaya-desain']) }}" 
-                                   class="btn {{ $activeTab == 'biaya-desain' ? 'btn-primary' : 'btn-light' }} w-100 py-3">
-                                    <i class="fas fa-paint-brush me-2"></i> Biaya Desain
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Tab Content -->
-                    @if($activeTab == 'items')
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Daftar Item</h5>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                                <i class="fas fa-plus me-1"></i> Tambah Item
-                            </button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Gambar</th>
-                                        <th>Nama Item</th>
-                                        <th>Deskripsi</th>
-                                        <th>Harga Dasar</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($items as $item)
-                                    <tr>
-                                        <td>{{ $item['id'] }}</td>
-                                        <td>
-                                        @if(isset($item['gambar']) && $item['gambar'])
-                                            <img src="{{ asset('storage/' . $item['gambar']) }}" class="img-thumbnail" width="80" height="80" alt="{{ $item['nama_item'] }}">
-                                        @else
-                                            <img src="{{ asset('images/no-image.png') }}" class="img-thumbnail" width="80" height="80" alt="No Image">
-                                        @endif
-                                        </td>
-                                        <td>{{ $item['nama_item'] }}</td>
-                                        <td>{{ $item['deskripsi'] ?? '-' }}</td>
-                                        <td>Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info me-1" title="Edit" 
-                                                    data-bs-toggle="modal" data-bs-target="#editItemModal"
-                                                    data-id="{{ $item['id'] }}"
-                                                    data-nama="{{ $item['nama_item'] }}"
-                                                    data-deskripsi="{{ $item['deskripsi'] }}"
-                                                    data-harga="{{ $item['harga_dasar'] }}"
-                                                    data-gambar="{{ $item['gambar'] ?? '' }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <form action="{{ route('admin.items.destroy', $item['id']) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" 
-                                                        onclick="return confirm('Apakah Anda yakin ingin menghapus item ini?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center">Tidak ada data item</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    @elseif($activeTab == 'bahan')
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Daftar Bahan</h5>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBahanModal">
-                                <i class="fas fa-plus me-1"></i> Tambah Bahan
-                            </button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Nama Bahan</th>
-                                        <th>Biaya Tambahan</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($bahans ?? [] as $bahan)
-                                    <tr>
-                                        <td>{{ $bahan['id'] }}</td>
-                                        <td>{{ $bahan['nama_bahan'] }}</td>
-                                        <td>Rp {{ number_format($bahan['biaya_tambahan'], 0, ',', '.') }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info me-1" title="Edit" 
-                                                    data-bs-toggle="modal" data-bs-target="#editBahanModal"
-                                                    data-id="{{ $bahan['id'] }}"
-                                                    data-nama="{{ $bahan['nama_bahan'] }}"
-                                                    data-biaya="{{ $bahan['biaya_tambahan'] }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <form action="{{ route('admin.bahans.destroy', $bahan['id']) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" 
-                                                        onclick="return confirm('Apakah Anda yakin ingin menghapus bahan ini?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center">Tidak ada data bahan</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    @elseif($activeTab == 'ukuran')
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Daftar Ukuran</h5>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUkuranModal">
-                                <i class="fas fa-plus me-1"></i> Tambah Ukuran
-                            </button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Size</th>
-                                        <th>Faktor Harga</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($ukurans ?? [] as $ukuran)
-                                    <tr>
-                                        <td>{{ $ukuran['id'] }}</td>
-                                        <td>{{ $ukuran['size'] }}</td>
-                                        <td>{{ $ukuran['faktor_harga'] }}x</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info me-1" title="Edit" 
-                                                    data-bs-toggle="modal" data-bs-target="#editUkuranModal"
-                                                    data-id="{{ $ukuran['id'] }}"
-                                                    data-size="{{ $ukuran['size'] }}"
-                                                    data-faktor="{{ $ukuran['faktor_harga'] }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <form action="{{ route('admin.ukurans.destroy', $ukuran['id']) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" 
-                                                        onclick="return confirm('Apakah Anda yakin ingin menghapus ukuran ini?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center">Tidak ada data ukuran</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    @elseif($activeTab == 'jenis')
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Daftar Jenis</h5>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJenisModal">
-                                <i class="fas fa-plus me-1"></i> Tambah Jenis
-                            </button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Kategori</th>
-                                        <th>Biaya Tambahan</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($jenis_list ?? [] as $jenis)
-                                    <tr>
-                                        <td>{{ $jenis['id'] }}</td>
-                                        <td>{{ $jenis['kategori'] }}</td>
-                                        <td>Rp {{ number_format($jenis['biaya_tambahan'], 0, ',', '.') }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info me-1" title="Edit" 
-                                                    data-bs-toggle="modal" data-bs-target="#editJenisModal"
-                                                    data-id="{{ $jenis['id'] }}"
-                                                    data-kategori="{{ $jenis['kategori'] }}"
-                                                    data-biaya="{{ $jenis['biaya_tambahan'] }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <form action="{{ route('admin.jenis.destroy', $jenis['id']) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" 
-                                                        onclick="return confirm('Apakah Anda yakin ingin menghapus jenis ini?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center">Tidak ada data jenis</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    @elseif($activeTab == 'biaya-desain')
-                    <div>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="mb-0">Daftar Biaya Desain</h5>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBiayaDesainModal">
-                                <i class="fas fa-plus me-1"></i> Tambah Biaya Desain
-                            </button>
-                        </div>
-                        
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Biaya</th>
-                                        <th>Deskripsi</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($biaya_desains ?? [] as $biaya)
-                                    <tr>
-                                        <td>{{ $biaya['id'] }}</td>
-                                        <td>Rp {{ number_format($biaya['biaya'], 0, ',', '.') }}</td>
-                                        <td>{{ $biaya['deskripsi'] ?? '-' }}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info me-1" title="Edit" 
-                                                    data-bs-toggle="modal" data-bs-target="#editBiayaDesainModal"
-                                                    data-id="{{ $biaya['id'] }}"
-                                                    data-biaya="{{ $biaya['biaya'] }}"
-                                                    data-deskripsi="{{ $biaya['deskripsi'] }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <form action="{{ route('admin.biaya-desains.destroy', $biaya['id']) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Hapus" 
-                                                        onclick="return confirm('Apakah Anda yakin ingin menghapus biaya desain ini?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="4" class="text-center">Tidak ada data biaya desain</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    @endif
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="mb-4">Manajemen Produk</h4>
+            
+            <!-- Improved Tabs -->
+            <div class="product-tabs">
+                <div class="product-tab">
+                    <a href="{{ route('admin.product-manager', ['tab' => 'items']) }}" 
+                       class="btn {{ $activeTab == 'items' ? 'btn-primary' : '' }}">
+                        <i class="fas fa-boxes me-2"></i> Items
+                    </a>
+                </div>
+                <div class="product-tab">
+                    <a href="{{ route('admin.product-manager', ['tab' => 'bahan']) }}" 
+                       class="btn {{ $activeTab == 'bahan' ? 'btn-primary' : '' }}">
+                        <i class="fas fa-layer-group me-2"></i> Bahan
+                    </a>
+                </div>
+                <div class="product-tab">
+                    <a href="{{ route('admin.product-manager', ['tab' => 'ukuran']) }}" 
+                       class="btn {{ $activeTab == 'ukuran' ? 'btn-primary' : '' }}">
+                        <i class="fas fa-rulers me-2"></i> Ukuran
+                    </a>
+                </div>
+                <div class="product-tab">
+                    <a href="{{ route('admin.product-manager', ['tab' => 'jenis']) }}" 
+                       class="btn {{ $activeTab == 'jenis' ? 'btn-primary' : '' }}">
+                        <i class="fas fa-tag me-2"></i> Jenis
+                    </a>
+                </div>
+                <div class="product-tab">
+                    <a href="{{ route('admin.product-manager', ['tab' => 'biaya-desain']) }}" 
+                       class="btn {{ $activeTab == 'biaya-desain' ? 'btn-primary' : '' }}">
+                        <i class="fas fa-paint-brush me-2"></i> Biaya Desain
+                    </a>
                 </div>
             </div>
+            
+            <!-- Tab Content -->
+            @if($activeTab == 'items')
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Item</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
+                        <i class="fas fa-plus me-1"></i> Tambah Item
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Gambar</th>
+                                <th>Nama Item</th>
+                                <th>Deskripsi</th>
+                                <th>Harga Dasar</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($items as $key => $item)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>
+                                @if(isset($item['gambar']) && $item['gambar'])
+                                    <img src="{{ asset('storage/' . $item['gambar']) }}" class="img-product-thumbnail" alt="{{ $item['nama_item'] }}">
+                                @else
+                                    <img src="{{ asset('images/no-image.png') }}" class="img-product-thumbnail" alt="No Image">
+                                @endif
+                                </td>
+                                <td>{{ $item['nama_item'] }}</td>
+                                <td>{{ $item['deskripsi'] ?? '-' }}</td>
+                                <td>Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-action" title="Edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editItemModal"
+                                            data-id="{{ $item['id'] }}"
+                                            data-nama="{{ $item['nama_item'] }}"
+                                            data-deskripsi="{{ $item['deskripsi'] }}"
+                                            data-harga="{{ $item['harga_dasar'] }}"
+                                            data-gambar="{{ $item['gambar'] ?? '' }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('admin.items.destroy', $item['id']) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-action" title="Hapus" 
+                                                onclick="return confirm('Apakah Anda yakin ingin menghapus item ini?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center">Tidak ada data item</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            @elseif($activeTab == 'bahan')
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Bahan</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBahanModal">
+                        <i class="fas fa-plus me-1"></i> Tambah Bahan
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Bahan</th>
+                                <th>Biaya Tambahan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($bahans ?? [] as $key => $bahan)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $bahan['nama_bahan'] }}</td>
+                                <td>Rp {{ number_format($bahan['biaya_tambahan'], 0, ',', '.') }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-action" title="Edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editBahanModal"
+                                            data-id="{{ $bahan['id'] }}"
+                                            data-nama="{{ $bahan['nama_bahan'] }}"
+                                            data-biaya="{{ $bahan['biaya_tambahan'] }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('admin.bahans.destroy', $bahan['id']) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-action" title="Hapus" 
+                                                onclick="return confirm('Apakah Anda yakin ingin menghapus bahan ini?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center">Tidak ada data bahan</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            @elseif($activeTab == 'ukuran')
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Ukuran</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUkuranModal">
+                        <i class="fas fa-plus me-1"></i> Tambah Ukuran
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Size</th>
+                                <th>Faktor Harga</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($ukurans ?? [] as $key => $ukuran)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $ukuran['size'] }}</td>
+                                <td>{{ $ukuran['faktor_harga'] }}x</td>
+                                <td>
+                                    <button class="btn btn-info btn-action" title="Edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editUkuranModal"
+                                            data-id="{{ $ukuran['id'] }}"
+                                            data-size="{{ $ukuran['size'] }}"
+                                            data-faktor="{{ $ukuran['faktor_harga'] }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('admin.ukurans.destroy', $ukuran['id']) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-action" title="Hapus" 
+                                                onclick="return confirm('Apakah Anda yakin ingin menghapus ukuran ini?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center">Tidak ada data ukuran</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            @elseif($activeTab == 'jenis')
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Jenis</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJenisModal">
+                        <i class="fas fa-plus me-1"></i> Tambah Jenis
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Kategori</th>
+                                <th>Biaya Tambahan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($jenis_list ?? [] as $key => $jenis)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>{{ $jenis['kategori'] }}</td>
+                                <td>Rp {{ number_format($jenis['biaya_tambahan'], 0, ',', '.') }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-action" title="Edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editJenisModal"
+                                            data-id="{{ $jenis['id'] }}"
+                                            data-kategori="{{ $jenis['kategori'] }}"
+                                            data-biaya="{{ $jenis['biaya_tambahan'] }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('admin.jenis.destroy', $jenis['id']) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-action" title="Hapus" 
+                                                onclick="return confirm('Apakah Anda yakin ingin menghapus jenis ini?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center">Tidak ada data jenis</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            @elseif($activeTab == 'biaya-desain')
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Biaya Desain</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBiayaDesainModal">
+                        <i class="fas fa-plus me-1"></i> Tambah Biaya Desain
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Biaya</th>
+                                <th>Deskripsi</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($biaya_desains ?? [] as $key => $biaya)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>Rp {{ number_format($biaya['biaya'], 0, ',', '.') }}</td>
+                                <td>{{ $biaya['deskripsi'] ?? '-' }}</td>
+                                <td>
+                                    <button class="btn btn-info btn-action" title="Edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editBiayaDesainModal"
+                                            data-id="{{ $biaya['id'] }}"
+                                            data-biaya="{{ $biaya['biaya'] }}"
+                                            data-deskripsi="{{ $biaya['deskripsi'] }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('admin.biaya-desains.destroy', $biaya['id']) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-action" title="Hapus" 
+                                                onclick="return confirm('Apakah Anda yakin ingin menghapus biaya desain ini?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="text-center">Tidak ada data biaya desain</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -548,6 +649,19 @@
         // Setup image preview untuk add dan edit item
         setupImagePreview('gambar', null);
         setupImagePreview('edit_gambar', 'current_image');
+        
+        // Menghapus tombol di bagian bawah halaman jika ada
+        document.querySelectorAll('button').forEach(button => {
+            if ((button.textContent.trim() === 'Batal' || button.textContent.trim() === 'Simpan') && 
+                 button.closest('form') === null && 
+                 !button.closest('.modal-footer')) {
+                const container = button.parentElement;
+                if (container) {
+                    container.style.display = 'none';
+                }
+            }
+        });
     });
 </script>
 @endsection
+```
