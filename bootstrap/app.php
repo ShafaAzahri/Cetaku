@@ -16,7 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.check' => \App\Http\Middleware\AuthCheck::class,
             'role' => \App\Http\Middleware\RoleCheck::class,
-            'admin' => \App\Http\Middleware\AdminAuth::class,
             'api.admin' => \App\Http\Middleware\ApiAdminAuth::class, // Tambahkan ini
         ]);
     })

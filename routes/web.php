@@ -3,11 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\UserController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\Admin\ProductManagerController;
-use App\Http\Controllers\Admin\BahanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +13,7 @@ use App\Http\Controllers\Admin\BahanController;
 |--------------------------------------------------------------------------
 */
 
-// Route halaman utama (welcome page) - Juga difungsikan sebagai landing page website
+// Route halaman utama (welcome page) - Menangani semua pengunjung
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Route autentikasi
@@ -26,10 +24,14 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.su
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 
-// Route untuk user biasa
-Route::group(['prefix' => 'user', 'middleware' => ['auth.check', 'role:user'], 'as' => 'user.'], function() {
-    Route::get('/welcome', [UserController::class, 'welcome'])->name('welcome');
+// Route untuk user yang sudah login (jika diperlukan fitur khusus user)
+Route::middleware(['auth.check', 'role:user'])->group(function() {
+    // Redirects user/welcome ke halaman utama
+    Route::get('/user/welcome', function() {
+        return redirect()->route('welcome');
+    })->name('user.welcome');
 });
+
 
 // Product Manager Routes di Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
@@ -66,6 +68,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
 });
 
 // Route untuk super admin
-Route::group(['prefix' => 'superadmin', 'middleware' => ['auth.check', 'role:super_admin'], 'as' => 'superadmin.'], function() {
+Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'role:super_admin'])->group(function() {
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
 });

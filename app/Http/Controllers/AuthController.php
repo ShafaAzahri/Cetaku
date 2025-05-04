@@ -234,7 +234,7 @@ class AuthController extends Controller
             case 'admin':
                 return '/admin/dashboard';
             default:
-                return '/user/welcome';
+                return '/';
         }
     }
     
@@ -251,7 +251,7 @@ class AuthController extends Controller
             case 'admin':
                 return redirect()->route('admin.dashboard');
             default:
-                return redirect()->route('user.welcome');
+                return redirect()->route('welcome');
         }
     }
 }
