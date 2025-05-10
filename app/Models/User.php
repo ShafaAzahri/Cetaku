@@ -126,6 +126,11 @@ class User extends Authenticatable
     {
         return $this->hasRole('user');
     }
+
+    public function alamats()
+    {
+        return $this->hasMany(Alamat::class);
+    }
     
     /**
      * Check if user is an admin

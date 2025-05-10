@@ -90,6 +90,10 @@ Route::middleware('api.admin')->group(function() {
     Route::get('/operator/list', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getOperators']);
     Route::get('/mesin/list', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getMesins']);
     Route::get('/pesanan/statistik', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getStatistics']);
+    Route::post('/pesanan/{id}/konfirmasi-pengambilan', [PesananApiController::class, 'confirmPickup']);
+    Route::post('/pesanan/{id}/konfirmasi-pengiriman', [PesananApiController::class, 'confirmShipment']);
+    Route::post('/pesanan/{id}/konfirmasi-penerimaan', [PesananApiController::class, 'confirmReceived']);
+    Route::get('/pesanan/{id}/produk/{detailId}', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getProductDetail']);
     
     // ProsesPesananApiController
     Route::get('/proses', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'index']);
