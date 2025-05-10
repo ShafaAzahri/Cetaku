@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\Admin\ProductManagerController;
+use App\Http\Controllers\Admin\PesananController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,8 +22,12 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
 Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
+
+// Logout route memerlukan autentikasi
+Route::middleware(['auth.check'])->group(function() {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
+});
 
 // Route untuk user yang sudah login (jika diperlukan fitur khusus user)
 Route::middleware(['auth.check', 'role:user'])->group(function() {
@@ -65,6 +70,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::post('/biaya-desains', [ProductManagerController::class, 'storeBiayaDesain'])->name('biaya-desains.store');
     Route::put('/biaya-desains/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desains.update');
     Route::delete('/biaya-desains/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desains.destroy');
+});
+
+// Route untuk Pesanan - semua route ini berada di dalam group admin middleware
+Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
+    // Pesanan routes
+    Route::get('/pesanan', [App\Http\Controllers\Admin\PesananController::class, 'index'])->name('pesanan.index');
+    Route::get('/pesanan/{id}', [App\Http\Controllers\Admin\PesananController::class, 'show'])->name('pesanan.show');
+    Route::post('/pesanan/{id}/status', [App\Http\Controllers\Admin\PesananController::class, 'updateStatus'])->name('pesanan.update-status');
+    Route::get('/pesanan/{id}/print', [App\Http\Controllers\Admin\PesananController::class, 'printInvoice'])->name('pesanan.print');
+    Route::post('/pesanan/{id}/upload', [App\Http\Controllers\Admin\PesananController::class, 'uploadDesain'])->name('pesanan.upload');
+    Route::post('/pesanan/{id}/cancel', [App\Http\Controllers\Admin\PesananController::class, 'cancel'])->name('pesanan.cancel');
+    Route::post('/pesanan/{id}/complete', [App\Http\Controllers\Admin\PesananController::class, 'complete'])->name('pesanan.complete');
+    Route::post('/pesanan/{id}/confirm-pickup', [App\Http\Controllers\Admin\PesananController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
+    Route::post('/pesanan/{id}/update-tracking', [App\Http\Controllers\Admin\PesananController::class, 'updateTracking'])->name('pesanan.update-tracking');
+    Route::post('/pesanan/{id}/confirm-shipment', [App\Http\Controllers\Admin\PesananController::class, 'confirmShipment'])->name('pesanan.confirm-shipment');
+    Route::post('/pesanan/{id}/notification', [App\Http\Controllers\Admin\PesananController::class, 'sendNotification'])->name('pesanan.send-notification');
+    Route::get('/pesanan/{id}/history', [App\Http\Controllers\Admin\PesananController::class, 'history'])->name('pesanan.history');
+    Route::get('/pesanan-dashboard', [App\Http\Controllers\Admin\PesananController::class, 'dashboard'])->name('pesanan.dashboard');
+    
+    // API untuk AJAX requests pada halaman pesanan
+    Route::get('/api/pesanan', [App\Http\Controllers\Admin\PesananController::class, 'getDataForAjax'])->name('api.pesanan');
 });
 
 // Route untuk super admin

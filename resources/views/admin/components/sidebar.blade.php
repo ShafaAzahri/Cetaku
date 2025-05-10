@@ -17,7 +17,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{ route('admin.pesanan.index') }}" class="nav-link {{ request()->routeIs('admin.pesanan.*') ? 'active' : '' }}">
                 <i class="fas fa-shopping-cart"></i>
                 <span class="nav-text">Pesanan</span>
             </a>

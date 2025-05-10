@@ -4,22 +4,24 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\API\AuthApiController;
+use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
 {
+    protected $apiBaseUrl;
+
+    public function __construct()
+    {
+        $this->apiBaseUrl = rtrim(env('API_URL', config('app.url')), '/');
+    }
+
     /**
      * Show the login form
      */
     public function showLoginForm()
     {
-        // Check if already logged in
-        if (session()->has('api_token')) {
-            $user = session('user');
-            if (isset($user['role'])) {
-                return $this->redirectBasedOnRole($user);
-            }
+        if (session()->has('api_token') && isset(session('user')['role'])) {
+            return $this->redirectBasedOnRole(session('user'));
         }
 
         return view('auth.login');
@@ -30,7 +32,6 @@ class AuthController extends Controller
      */
     public function showRegistrationForm()
     {
-        // Check if already logged in
         if (session()->has('api_token')) {
             return $this->redirectBasedOnRole(session('user'));
         }
@@ -39,7 +40,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Handle login request using direct API controller
+     * Handle login request
      */
     public function login(Request $request)
     {
@@ -55,54 +56,30 @@ class AuthController extends Controller
         }
 
         try {
-            Log::debug('Attempting to login via API controller', [
-                'email' => $request->email
+            $response = Http::post($this->apiBaseUrl . '/login', [
+                'email' => $request->email,
+                'password' => $request->password,
             ]);
             
-            // Create instance of API controller and call login method
-            $apiController = new AuthApiController();
-            $response = $apiController->login($request);
+            $data = $response->json();
             
-            // Get data from JSON response
-            $data = $response->getData(true);
-            
-            if ($data['success'] ?? false) {
-                // Store token and user data in session
-                session([
-                    'api_token' => $data['api_token'],
-                    'user' => $data['user'],
-                    'expires_at' => $data['expires_at'],
-                ]);
-                
-                Log::info('User successfully logged in via API controller', [
-                    'user_id' => $data['user']['id'],
-                    'email' => $data['user']['email']
-                ]);
-                
-                // Redirect based on role
+            if ($response->successful() && ($data['success'] ?? false)) {
+                $this->storeUserSession($data);
                 return redirect($data['redirect_url'] ?? $this->getRedirectPathByRole($data['user']['role']));
-            } else {
-                throw new \Exception('API error: ' . ($data['message'] ?? 'Unknown error'));
-            }
-        } catch (\Exception $e) {
-            Log::error('Login error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // If error, try fallback
-            if ($this->loginFallback($request)) {
-                Log::info('Login fallback successful after exception');
-                return $this->redirectBasedOnRole(session('user'));
             }
             
             return redirect()->back()
-                ->with('error', 'Error: ' . $e->getMessage())
+                ->with('error', $data['message'] ?? 'Authentication failed')
+                ->withInput($request->except('password'));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Server error. Please try again later.')
                 ->withInput($request->except('password'));
         }
     }
 
     /**
-     * Handle registration request using direct API controller
+     * Handle registration request
      */
     public function register(Request $request)
     {
@@ -119,108 +96,57 @@ class AuthController extends Controller
         }
 
         try {
-            Log::debug('Attempting to register via API controller', [
-                'email' => $request->email
+            $response = Http::post($this->apiBaseUrl . '/register', [
+                'nama' => $request->nama,
+                'email' => $request->email,
+                'password' => $request->password,
+                'password_confirmation' => $request->password_confirmation,
             ]);
             
-            // Create instance of API controller and call register method
-            $apiController = new AuthApiController();
-            $response = $apiController->register($request);
+            $data = $response->json();
             
-            // Get data from JSON response
-            $data = $response->getData(true);
-            
-            if (($data['success'] ?? false)) {
-                // Store token and user data in session
-                session([
-                    'api_token' => $data['api_token'],
-                    'user' => $data['user'],
-                    'expires_at' => $data['expires_at'],
-                ]);
-                
-                Log::info('User successfully registered via API controller', [
-                    'user_id' => $data['user']['id'],
-                    'email' => $data['user']['email']
-                ]);
-                
-                // Redirect based on role
+            if ($response->successful() && ($data['success'] ?? false)) {
+                $this->storeUserSession($data);
                 return redirect($data['redirect_url'] ?? $this->getRedirectPathByRole($data['user']['role']));
-            } else {
-                throw new \Exception('API error: ' . ($data['message'] ?? 'Unknown error'));
-            }
-        } catch (\Exception $e) {
-            Log::error('Register error: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // If error, try fallback
-            if ($this->registerFallback($request)) {
-                Log::info('Register fallback successful after exception');
-                return $this->redirectBasedOnRole(session('user'));
             }
             
             return redirect()->back()
-                ->with('error', 'Error: ' . $e->getMessage())
+                ->with('error', $data['message'] ?? 'Registration failed')
+                ->withInput($request->except(['password', 'password_confirmation']));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Server error. Please try again later.')
                 ->withInput($request->except(['password', 'password_confirmation']));
         }
     }
 
     /**
-     * Handle logout request using direct API controller
+     * Handle logout request
      */
-    /**
-     * Handle logout request using direct API controller
-     */
-    public function logout(Request $request)
+    public function logout()
     {
-        try {
-            // Get token from session
-            $token = session('api_token');
-            
-            if ($token) {
-                // Setup request with token
-                $request->headers->set('Authorization', 'Bearer ' . $token);
-                
-                // Create instance of API controller and call logout method
-                $apiController = new AuthApiController();
-                $response = $apiController->logout($request);
-            }
-            
-            // Clear session regardless of API response
-            session()->flush();
-            
-            return redirect()->route('welcome')
-                ->with('success', 'Berhasil logout. Sampai jumpa kembali!');
-                
-        } catch (\Exception $e) {
-            Log::error('Logout error: ' . $e->getMessage());
-            
-            // Still clear session even if there's an error
-            session()->flush();
-            
-            return redirect()->route('welcome')
-                ->with('success', 'Berhasil Logout jir');
+        $token = session('api_token');
+        
+        if ($token) {
+            Http::withToken($token)->post($this->apiBaseUrl . '/auth/logout');
         }
-    }
-    
-    // Keep fallback methods as they are - they're still useful for backup
-    
-    /**
-     * Fallback method if API is unavailable or connection issues
-     * This is direct login from database (without API)
-     */
-    private function loginFallback(Request $request)
-    {
-        // Existing implementation
+        
+        session()->flush();
+        
+        return redirect()->route('welcome')
+            ->with('success', 'Berhasil logout. Sampai jumpa kembali!');
     }
     
     /**
-     * Fallback method if API is unavailable or connection issues
-     * This is direct registration to database (without API)
+     * Store user session data
      */
-    private function registerFallback(Request $request)
+    private function storeUserSession($data)
     {
-        // Existing implementation
+        session([
+            'api_token' => $data['api_token'],
+            'user' => $data['user'],
+            'expires_at' => $data['expires_at'],
+        ]);
     }
     
     /**
@@ -228,30 +154,27 @@ class AuthController extends Controller
      */
     private function getRedirectPathByRole($role)
     {
-        switch ($role) {
-            case 'super_admin':
-                return '/superadmin/dashboard';
-            case 'admin':
-                return '/admin/dashboard';
-            default:
-                return '/';
-        }
+        $paths = [
+            'super_admin' => '/superadmin/dashboard',
+            'admin' => '/admin/dashboard',
+        ];
+        
+        return $paths[$role] ?? '/';
     }
     
     /**
-     * Helper method to redirect based on role
+     * Redirect based on role
      */
     private function redirectBasedOnRole($user)
     {
-        $role = $user['role'] ?? null;
+        $routes = [
+            'super_admin' => 'superadmin.dashboard',
+            'admin' => 'admin.dashboard',
+        ];
         
-        switch ($role) {
-            case 'super_admin':
-                return redirect()->route('superadmin.dashboard');
-            case 'admin':
-                return redirect()->route('admin.dashboard');
-            default:
-                return redirect()->route('welcome');
-        }
+        $role = $user['role'] ?? null;
+        $route = $routes[$role] ?? 'welcome';
+        
+        return redirect()->route($route);
     }
 }

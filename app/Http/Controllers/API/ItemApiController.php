@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+
 class ItemApiController extends Controller
 {
     /**
@@ -46,10 +47,37 @@ class ItemApiController extends Controller
         // Upload gambar jika ada
         if ($request->hasFile('gambar')) {
             Log::debug('API: Gambar ditemukan, memproses upload');
-            $gambar = $request->file('gambar');
-            $gambarName = 'product-images/' . Str::slug($request->nama_item) . '_' . time() . '.' . $gambar->getClientOriginalExtension();
-            $gambar->storeAs('public', $gambarName);
-            $item->gambar = $gambarName;
+            try {
+                $gambar = $request->file('gambar');
+                
+                // Buat direktori jika belum ada
+                $dirPath = 'public/product-images';
+                if (!Storage::exists($dirPath)) {
+                    Storage::makeDirectory($dirPath);
+                    Log::debug('API: Membuat direktori', ['path' => $dirPath]);
+                }
+                
+                $gambarName = 'product-images/' . Str::slug($request->nama_item) . '_' . time() . '.' . $gambar->getClientOriginalExtension();
+                
+                // Coba menyimpan file
+                if ($gambar->storeAs('public', $gambarName)) {
+                    $item->gambar = $gambarName;
+                    Log::debug('API: Gambar berhasil disimpan', ['path' => $gambarName]);
+                    
+                    // Debug info
+                    $fullPath = storage_path('app/public/' . $gambarName);
+                    Log::debug('API: Info file gambar', [
+                        'full_path' => $fullPath,
+                        'exists' => file_exists($fullPath),
+                        'size' => file_exists($fullPath) ? filesize($fullPath) : 0,
+                        'permissions' => file_exists($fullPath) ? substr(sprintf('%o', fileperms($fullPath)), -4) : 'N/A'
+                    ]);
+                } else {
+                    Log::error('API: Gagal menyimpan gambar');
+                }
+            } catch (\Exception $e) {
+                Log::error('API: Error saat upload gambar: ' . $e->getMessage());
+            }
         }
         
         $item->save();

@@ -9,10 +9,11 @@ use App\Http\Controllers\API\JenisApiController;
 use App\Http\Controllers\API\UkuranApiController;
 use App\Http\Controllers\API\BiayaDesainApiController;
 
+Route::post('/login', [AuthApiController::class, 'login']);
+Route::post('/register', [AuthApiController::class, 'register']);
+
 // Route autentikasi publik (tidak memerlukan autentikasi)
 Route::prefix('auth')->group(function() {
-    Route::post('/login', [AuthApiController::class, 'login']);
-    Route::post('/register', [AuthApiController::class, 'register']);
     Route::get('/user', [AuthApiController::class, 'getUserByToken']);
     Route::post('/logout', [AuthApiController::class, 'logout']);
 });
