@@ -4,7 +4,6 @@
 
 @section('styles')
 <style>
-    
     .status-badge {
         font-size: 0.85rem;
         padding: 0.35em 0.65em;
@@ -52,30 +51,54 @@
         </div>
     </div>
 
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
     <div class="card">
         <div class="card-header">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="input-group search-box">
-                        <input type="text" class="form-control" placeholder="Cari ID Pesanan atau Pelanggan..." id="searchInput">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-secondary" type="button" id="searchBtn">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 text-right">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-default" data-status="all">Semua</button>
-                        <button type="button" class="btn btn-warning" data-status="Pemesanan">Pemesanan</button>
-                        <button type="button" class="btn btn-info" data-status="Proses">Proses</button>
-                        <button type="button" class="btn btn-primary" data-status="Pengambilan">Pengambilan</button>
-                        <button type="button" class="btn btn-success" data-status="Selesai">Selesai</button>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="input-group search-box">
+                    <input type="text" class="form-control" placeholder="Cari ID Pesanan atau Pelanggan..." id="searchInput" value="{{ request('search') }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
                     </div>
                 </div>
             </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <select class="form-control" id="perpage-select">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 per halaman</option>
+                        <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25 per halaman</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 per halaman</option>
+                        <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 per halaman</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default filter-btn" data-status="all">Semua</button>
+                    <button type="button" class="btn btn-warning filter-btn" data-status="Pemesanan">Pemesanan</button>
+                    <button type="button" class="btn btn-info filter-btn" data-status="Sedang Diproses">Proses</button>
+                    <button type="button" class="btn btn-primary filter-btn" data-status="Menunggu Pengambilan">Pengambilan</button>
+                    <button type="button" class="btn btn-success filter-btn" data-status="Selesai">Selesai</button>
+                </div>
+            </div>
         </div>
+    </div>
         <div class="card-body table-responsive p-0">
             <table class="table table-hover text-nowrap" id="pesananTable">
                 <thead>
@@ -92,399 +115,109 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>01</td>
-                        <td>2025-04-05</td>
-                        <td>0001</td>
-                        <td>Ahmad Fauzi</td>
-                        <td><span class="status-badge status-pemesanan">Pemesanan</span></td>
-                        <td><a href="javascript:void(0)" class="text-primary" onclick="lihatProduk('Kaos Lengan Panjang', 1)">Kaos Lengan Panjang</a></td>
-                        <td>Rp 250.000</td>
+                    @forelse($pesanan as $key => $p)
+                    <tr class="pesanan-row" data-status="{{ $p['status'] }}">
+                        <td>{{ $key + 1 }}</td>
+                        <td>{{ $p['tanggal'] }}</td>
+                        <td>{{ $p['id'] }}</td>
+                        <td>{{ $p['pelanggan'] }}</td>
+                        <td>
+                            <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $p['status'])) }}">
+                                {{ $p['status'] }}
+                            </span>
+                        </td>
+                        <td>{{ $p['produk'] }}</td>
+                        <td>Rp {{ number_format($p['total'], 0, ',', '.') }}</td>
                         <td>
                             <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-success" onclick="prosesOrder('0001')">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-info" onclick="printInvoice('0001')">
+                                @if($p['status'] == 'Pemesanan')
+                                    <button type="button" class="btn btn-sm btn-success proses-btn" data-id="{{ $p['id'] }}">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                @elseif($p['status'] == 'Sedang Diproses')
+                                    <button type="button" class="btn btn-sm btn-primary selesai-btn" data-id="{{ $p['id'] }}">
+                                        <i class="fas fa-check-double"></i>
+                                    </button>
+                                @elseif($p['status'] == 'Menunggu Pengambilan')
+                                    <button type="button" class="btn btn-sm btn-success ambil-btn" data-id="{{ $p['id'] }}">
+                                        <i class="fas fa-handshake"></i>
+                                    </button>
+                                @elseif($p['status'] == 'Sedang Dikirim')
+                                    <button type="button" class="btn btn-sm btn-info tracking-btn" data-id="{{ $p['id'] }}">
+                                        <i class="fas fa-truck"></i>
+                                    </button>
+                                @endif
+                                <button type="button" class="btn btn-sm btn-info print-btn" data-id="{{ $p['id'] }}">
                                     <i class="fas fa-print"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-danger" onclick="batalkanOrder('0001')">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                                @if($p['status'] != 'Selesai' && $p['status'] != 'Dibatalkan')
+                                    <button type="button" class="btn btn-sm btn-danger batal-btn" data-id="{{ $p['id'] }}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                @endif
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="lihatDetail('0001')">
+                            <a href="{{ route('admin.pesanan.show', $p['id']) }}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-eye"></i> Lihat Pesanan
-                            </button>
+                            </a>
                         </td>
                     </tr>
+                    @empty
                     <tr>
-                        <td>02</td>
-                        <td>2025-04-05</td>
-                        <td>0002</td>
-                        <td>Budi Santoso</td>
-                        <td><span class="status-badge status-proses">Sedang Diproses</span></td>
-                        <td><a href="javascript:void(0)" class="text-primary" onclick="lihatProduk('Hoodie Premium', 2)">Hoodie Premium</a></td>
-                        <td>Rp 450.000</td>
-                        <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-success" onclick="selesaikanOrder('0002')">
-                                    <i class="fas fa-check-double"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-info" onclick="printInvoice('0002')">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-warning" onclick="uploadDesain('0002')">
-                                    <i class="fas fa-upload"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="lihatDetail('0002')">
-                                <i class="fas fa-eye"></i> Lihat Pesanan
-                            </button>
-                        </td>
+                        <td colspan="9" class="text-center">Tidak ada data pesanan</td>
                     </tr>
-                    <tr>
-                        <td>03</td>
-                        <td>2025-04-05</td>
-                        <td>0003</td>
-                        <td>Citra Dewi</td>
-                        <td><span class="status-badge status-pengambilan">Menunggu Pengambilan</span></td>
-                        <td><a href="javascript:void(0)" class="text-primary" onclick="lihatProduk('Jersey Custom', 3)">Jersey Custom</a></td>
-                        <td>Rp 175.000</td>
-                        <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-success" onclick="konfirmasiPengambilan('0003')">
-                                    <i class="fas fa-handshake"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-info" onclick="printInvoice('0003')">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-primary" onclick="kirimNotifikasi('0003')">
-                                    <i class="fas fa-bell"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="lihatDetail('0003')">
-                                <i class="fas fa-eye"></i> Lihat Pesanan
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>04</td>
-                        <td>2025-04-05</td>
-                        <td>0004</td>
-                        <td>Deni Purnama</td>
-                        <td><span class="status-badge status-dikirim">Sedang Dikirim</span></td>
-                        <td><a href="javascript:void(0)" class="text-primary" onclick="lihatProduk('Topi Sablon', 4)">Topi Sablon</a></td>
-                        <td>Rp 320.000</td>
-                        <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-success" onclick="konfirmasiPengiriman('0004')">
-                                    <i class="fas fa-truck-loading"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-info" onclick="printInvoice('0004')">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-warning" onclick="updateTracking('0004')">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="lihatDetail('0004')">
-                                <i class="fas fa-eye"></i> Lihat Pesanan
-                            </button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>05</td>
-                        <td>2025-04-05</td>
-                        <td>0005</td>
-                        <td>Eko Sulistyo</td>
-                        <td><span class="status-badge status-selesai">Selesai</span></td>
-                        <td><a href="javascript:void(0)" class="text-primary" onclick="lihatProduk('Kaos Polo', 5)">Kaos Polo</a></td>
-                        <td>Rp 180.000</td>
-                        <td>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-info" onclick="printInvoice('0005')">
-                                    <i class="fas fa-print"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="lihatRiwayat('0005')">
-                                    <i class="fas fa-history"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="lihatDetail('0005')">
-                                <i class="fas fa-eye"></i> Lihat Pesanan
-                            </button>
-                        </td>
-                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
         <div class="card-footer clearfix">
-            <ul class="pagination pagination-sm m-0 float-right">
-                <li class="page-item"><a class="page-link" href="#">&laquo;</a></li>
-                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                <li class="page-item"><a class="page-link" href="#">&raquo;</a></li>
-            </ul>
-        </div>
-    </div>
-</div>
+            @if(isset($pagination) && $pagination['last_page'] > 1)
+            <div class="float-right">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm">
+                        {{-- Previous Page Link --}}
+                        @if($pagination['current_page'] == 1)
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;</span>
+                            </li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url()->current() }}?page={{ $pagination['current_page']-1 }}&perpage={{ $perPage }}&status={{ request('status', 'all') }}&search={{ request('search', '') }}" rel="prev">&laquo;</a>
+                            </li>
+                        @endif
 
-<!-- Modal Detail Pesanan -->
-<div class="modal fade" id="detailPesananModal" tabindex="-1" aria-labelledby="detailPesananModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="detailPesananModalLabel">Detail Pesanan #0001</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-bold">ID Pemesanan</label>
-                            <input type="text" class="form-control" id="detail-pesanan-id" value="0001" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-bold">ID Pelanggan</label>
-                            <input type="text" class="form-control" id="detail-pelanggan-id" value="A1" readonly>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-group mb-3">
-                    <label class="form-label fw-bold">Alamat</label>
-                    <input type="text" class="form-control" id="detail-alamat" value="Bandungan" readonly>
-                </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-bold">Metode Pengambilan</label>
-                            <input type="text" class="form-control" id="detail-metode" value="Ambil di Tempat" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label class="form-label fw-bold">Estimasi Selesai</label>
-                            <input type="text" class="form-control" id="detail-estimasi" value="2025-04-10" readonly>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card mb-3">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0">Detail Produk</h6>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0" id="detail-produk-table">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Produk</th>
-                                        <th>Bahan</th>
-                                        <th>Ukuran</th>
-                                        <th>Jumlah</th>
-                                        <th>Harga Satuan</th>
-                                        <th>Subtotal</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr data-id="1">
-                                        <td>Kaos Lengan Panjang</td>
-                                        <td>Katun</td>
-                                        <td>XL</td>
-                                        <td>3</td>
-                                        <td>Rp 50.000</td>
-                                        <td>Rp 150.000</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" onclick="lihatDetailProduk(1)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr data-id="2">
-                                        <td>Stiker</td>
-                                        <td>Vinyl</td>
-                                        <td>10x10 cm</td>
-                                        <td>5</td>
-                                        <td>Rp 20.000</td>
-                                        <td>Rp 100.000</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" onclick="lihatDetailProduk(2)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr data-id="3">
-                                        <td>Topi Sablon</td>
-                                        <td>Canvas</td>
-                                        <td>All Size</td>
-                                        <td>1</td>
-                                        <td>Rp 35.000</td>
-                                        <td>Rp 35.000</td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" onclick="lihatDetailProduk(3)">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot class="table-light">
-                                    <tr>
-                                        <th colspan="5" class="text-end">Total</th>
-                                        <th id="detail-total-harga">Rp 285.000</th>
-                                        <th></th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <div class="form-group mb-0">
-                            <label class="form-label fw-bold">Jasa Tambahan</label>
-                            <div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="jasaEdit" disabled checked>
-                                    <label class="form-check-label" for="jasaEdit">
-                                        Dengan Jasa Edit
-                                    </label>
-                                </div>
-                                <!-- Jika ada jasa tambahan lain bisa ditambahkan di sini -->
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-0">
-                            <label class="form-label fw-bold">Status Pesanan</label>
-                            <div>
-                                <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fs-6">Pemesanan</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card mb-0">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0">Catatan</h6>
-                    </div>
-                    <div class="card-body">
-                        <textarea class="form-control" id="detail-catatan" rows="2" readonly>Tolong dikirim secepatnya.</textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="prosesPrintBtn">
-                    <i class="fas fa-print me-1"></i> Proses Print
-                </button>
-                <button type="button" class="btn btn-success" id="updateStatusBtn">
-                    <i class="fas fa-check me-1"></i> Update Status
-                </button>
-                <button type="button" class="btn btn-danger" id="batalkanPesananBtn">
-                    <i class="fas fa-times me-1"></i> Batalkan Pesanan
-                </button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
+                        {{-- Pagination Elements --}}
+                        @for($i = 1; $i <= $pagination['last_page']; $i++)
+                            @if($i == $pagination['current_page'])
+                                <li class="page-item active">
+                                    <span class="page-link">{{ $i }}</span>
+                                </li>
+                            @else
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url()->current() }}?page={{ $i }}&perpage={{ $perPage }}&status={{ request('status', 'all') }}&search={{ request('search', '') }}">{{ $i }}</a>
+                                </li>
+                            @endif
+                        @endfor
 
-<!-- Modal Detail Produk -->
-<div class="modal fade" id="detailProdukModal" tabindex="-1" aria-labelledby="detailProdukModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="detailProdukModalLabel">Detail Produk: <span id="produk-nama">Kaos Lengan Panjang</span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        {{-- Next Page Link --}}
+                        @if($pagination['current_page'] < $pagination['last_page'])
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url()->current() }}?page={{ $pagination['current_page']+1 }}&perpage={{ $perPage }}&status={{ request('status', 'all') }}&search={{ request('search', '') }}" rel="next">&raquo;</a>
+                            </li>
+                        @else
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;</span>
+                            </li>
+                        @endif
+                    </ul>
+                </nav>
             </div>
-            <div class="modal-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">ID Produk</label>
-                            <input type="text" class="form-control" id="produk-id" value="1" readonly>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Nama Produk</label>
-                            <input type="text" class="form-control" id="produk-detail-nama" value="Kaos Lengan Panjang" readonly>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Jenis Produk</label>
-                            <input type="text" class="form-control" id="produk-jenis" value="Lengan Panjang" readonly>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Bahan</label>
-                            <input type="text" class="form-control" id="produk-bahan" value="Katun" readonly>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Ukuran</label>
-                            <input type="text" class="form-control" id="produk-ukuran" value="XL" readonly>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Harga Dasar</label>
-                            <input type="text" class="form-control" id="produk-harga" value="Rp 50.000" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Gambar Produk</label>
-                            <div class="text-center p-3 bg-light" style="border: 1px solid #ddd; border-radius: 5px;">
-                                <img src="https://via.placeholder.com/300x300" alt="Gambar Produk" class="img-fluid" id="produk-gambar">
-                            </div>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label class="form-label fw-bold">Catatan</label>
-                            <textarea class="form-control" id="produk-catatan" rows="3" readonly>Tidak ada catatan khusus.</textarea>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mt-4">
-                    <h5>Detail Desain</h5>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="form-label fw-bold">Desain Pelanggan</label>
-                                <div class="text-center p-3 bg-light" style="border: 1px solid #ddd; border-radius: 5px;">
-                                    <img src="https://via.placeholder.com/300x150" alt="Desain Pelanggan" class="img-fluid" id="desain-pelanggan">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-3">
-                                <label class="form-label fw-bold">Desain Final</label>
-                                <div class="text-center p-3 bg-light" style="border: 1px solid #ddd; border-radius: 5px;">
-                                    <img src="https://via.placeholder.com/300x150" alt="Desain Final" class="img-fluid" id="desain-final">
-                                </div>
-                                <div class="mt-2">
-                                    <button type="button" class="btn btn-sm btn-primary btn-block" onclick="uploadDesainFinal()">
-                                        <i class="fas fa-upload me-1"></i> Upload Desain Final
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            
+            <div class="float-left text-muted">
+                Menampilkan {{ $pesanan->count() }} dari {{ $pagination['total'] }} pesanan
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                <button type="button" class="btn btn-primary" onclick="goToProductPage()">Lihat di Katalog</button>
-            </div>
+            @endif
         </div>
     </div>
 </div>
@@ -497,64 +230,30 @@
                 <h5 class="modal-title" id="updateStatusModalLabel">Update Status Pesanan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label fw-bold">Status Baru</label>
-                    <select class="form-select" id="new-status">
-                        <option value="Pemesanan">Pemesanan</option>
-                        <option value="Sedang Diproses">Sedang Diproses</option>
-                        <option value="Menunggu Pengambilan">Menunggu Pengambilan</option>
-                        <option value="Sedang Dikirim">Sedang Dikirim</option>
-                        <option value="Selesai">Selesai</option>
-                        <option value="Dibatalkan">Dibatalkan</option>
-                    </select>
+            <form id="updateStatusForm">
+                <div class="modal-body">
+                    <input type="hidden" id="pesanan_id" name="pesanan_id">
+                    <div class="form-group">
+                        <label class="form-label fw-bold">Status Baru</label>
+                        <select class="form-select" id="new-status" name="status">
+                            <option value="Pemesanan">Pemesanan</option>
+                            <option value="Sedang Diproses">Sedang Diproses</option>
+                            <option value="Menunggu Pengambilan">Menunggu Pengambilan</option>
+                            <option value="Sedang Dikirim">Sedang Dikirim</option>
+                            <option value="Selesai">Selesai</option>
+                            <option value="Dibatalkan">Dibatalkan</option>
+                        </select>
+                    </div>
+                    <div class="form-group mt-3">
+                        <label class="form-label fw-bold">Catatan (Opsional)</label>
+                        <textarea class="form-control" id="status-catatan" name="catatan" rows="3" placeholder="Tambahkan catatan untuk perubahan status"></textarea>
+                    </div>
                 </div>
-                <div class="form-group mt-3">
-                    <label class="form-label fw-bold">Catatan (Opsional)</label>
-                    <textarea class="form-control" id="status-catatan" rows="3" placeholder="Tambahkan catatan untuk perubahan status"></textarea>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="saveStatusBtn">Simpan Perubahan</button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="saveStatusBtn">Simpan Perubahan</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Upload Desain -->
-<div class="modal fade" id="uploadDesainModal" tabindex="-1" aria-labelledby="uploadDesainModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadDesainModalLabel">Upload Desain</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="uploadDesainForm">
-                    <div class="form-group mb-3">
-                        <label for="desainFile" class="form-label fw-bold">Pilih File Desain</label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="desainFile" accept="image/*">
-                            <label class="input-group-text" for="desainFile">Browse</label>
-                        </div>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="desainPreview" class="form-label fw-bold">Preview</label>
-                        <div class="text-center p-3 bg-light" id="previewContainer" style="border: 1px solid #ddd; border-radius: 5px; min-height: 150px; display: none;">
-                            <img id="desainPreview" class="img-fluid" alt="Preview">
-                        </div>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="catatanDesain" class="form-label fw-bold">Catatan (Opsional)</label>
-                        <textarea class="form-control" id="catatanDesain" rows="3"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="submitDesain">Upload</button>
-            </div>
+            </form>
         </div>
     </div>
 </div>
@@ -563,203 +262,169 @@
 @section('scripts')
 <script>
     // Data global untuk pesanan yang sedang aktif
-let activePesananId = null;
-let activeProdukId = null;
+    let activePesananId = null;
 
-// Fungsi untuk melihat detail pesanan
-function lihatDetail(id) {
-    activePesananId = id;
-    
-    // Update detail UI
-    $('#detailPesananModalLabel').text('Detail Pesanan #' + id);
-    $('#detail-pesanan-id').val(id);
-    
-    // Di sini dalam implementasi lengkap, Anda akan melakukan AJAX request
-    // untuk mendapatkan data pesanan berdasarkan ID
-    // Untuk contoh ini, kita gunakan data statis
-    
-    // Tampilkan modal
-    $('#detailPesananModal').modal('show');
-}
-
-// Fungsi untuk melihat detail produk
-function lihatDetailProduk(id) {
-    activeProdukId = id;
-    
-    // Atur judul modal dan ID produk
-    $('#produk-id').val(id);
-    
-    // Set data produk berdasarkan ID
-    switch(id) {
-        case 1:
-            $('#produk-nama').text('Kaos Lengan Panjang');
-            $('#produk-detail-nama').val('Kaos Lengan Panjang');
-            $('#produk-jenis').val('Lengan Panjang');
-            $('#produk-bahan').val('Katun');
-            $('#produk-ukuran').val('XL');
-            $('#produk-harga').val('Rp 50.000');
-            $('#produk-catatan').val('Tidak ada catatan khusus.');
-            $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Kaos+Lengan+Panjang');
-            $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+1');
-            $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+1');
-            break;
-        case 2:
-            $('#produk-nama').text('Stiker');
-            $('#produk-detail-nama').val('Stiker');
-            $('#produk-jenis').val('Stiker');
-            $('#produk-bahan').val('Vinyl');
-            $('#produk-ukuran').val('10x10 cm');
-            $('#produk-harga').val('Rp 20.000');
-            $('#produk-catatan').val('Stiker cutting untuk outdoor.');
-            $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Stiker');
-            $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+2');
-            $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+2');
-            break;
-        case 3:
-            $('#produk-nama').text('Topi Sablon');
-            $('#produk-detail-nama').val('Topi Sablon');
-            $('#produk-jenis').val('Topi');
-            $('#produk-bahan').val('Canvas');
-            $('#produk-ukuran').val('All Size');
-            $('#produk-harga').val('Rp 35.000');
-            $('#produk-catatan').val('Topi snapback dengan sablon custom');
-            $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Topi+Sablon');
-            $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+3');
-            $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+3');
-            break;
+    // Fungsi untuk membuka modal status
+    function openUpdateStatusModal(id, status) {
+        activePesananId = id;
+        $('#pesanan_id').val(id);
+        $('#new-status').val(status);
+        $('#updateStatusModal').modal('show');
     }
-    
-    // Tampilkan modal
-    $('#detailProdukModal').modal('show');
-}
 
-// Fungsi untuk membuka modal update status
-function openUpdateStatusModal() {
-    $('#updateStatusModal').modal('show');
-}
-
-// Fungsi untuk upload desain final
-function uploadDesainFinal() {
-    // Reset form upload
-    $('#uploadDesainForm')[0].reset();
-    $('#previewContainer').hide();
-    
-    // Tampilkan modal upload
-    $('#uploadDesainModal').modal('show');
-}
-
-// Fungsi untuk pergi ke halaman produk di katalog
-function goToProductPage() {
-    if (activeProdukId) {
-        alert("Membuka halaman produk ID #" + activeProdukId + " di katalog");
-        // window.location.href = '/admin/product-manager/product/' + activeProdukId;
-    }
-}
-
-// Event listeners saat dokumen selesai dimuat
-$(document).ready(function() {
-    // Preview upload file
-    $('#desainFile').change(function() {
-        const file = this.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                $('#desainPreview').attr('src', e.target.result);
-                $('#previewContainer').show();
+    $(document).ready(function() {
+        // Event handler untuk tombol proses
+        $('.proses-btn').click(function() {
+            let id = $(this).data('id');
+            openUpdateStatusModal(id, 'Sedang Diproses');
+        });
+        
+        // Event handler untuk tombol selesai
+        $('.selesai-btn').click(function() {
+            let id = $(this).data('id');
+            openUpdateStatusModal(id, 'Selesai');
+        });
+        
+        // Event handler untuk tombol konfirmasi pengambilan
+        $('.ambil-btn').click(function() {
+            let id = $(this).data('id');
+            openUpdateStatusModal(id, 'Selesai');
+        });
+        
+        // Event handler untuk tombol tracking
+        $('.tracking-btn').click(function() {
+            let id = $(this).data('id');
+            alert("Update tracking untuk pesanan #" + id);
+        });
+        
+        // Event handler untuk tombol print
+        $('.print-btn').click(function() {
+            let id = $(this).data('id');
+            window.open("{{ url('admin/pesanan') }}/" + id + "/print", "_blank");
+        });
+        
+        // Event handler untuk tombol batal
+        $('.batal-btn').click(function() {
+            let id = $(this).data('id');
+            if (confirm("Apakah Anda yakin ingin membatalkan pesanan #" + id + "?")) {
+                openUpdateStatusModal(id, 'Dibatalkan');
             }
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    // Submit upload desain
-    $('#submitDesain').click(function() {
-        const file = $('#desainFile')[0].files[0];
-        if (!file) {
-            alert("Silakan pilih file desain terlebih dahulu!");
-            return;
-        }
+        });
         
-        // Simulasi upload (dalam implementasi nyata akan menggunakan AJAX FormData)
-        alert("Desain berhasil diupload!");
-        $('#uploadDesainModal').modal('hide');
-        
-        // Update gambar desain final di modal produk
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            $('#desain-final').attr('src', e.target.result);
-        }
-        reader.readAsDataURL(file);
-    });
-    
-    // Tombol proses print di modal detail pesanan
-    $('#prosesPrintBtn').click(function() {
-        if (activePesananId) {
-            if (confirm("Proses print untuk pesanan #" + activePesananId + "?")) {
-                alert("Pesanan #" + activePesananId + " sedang diproses untuk dicetak!");
-                $('#detailPesananModal').modal('hide');
-                
-                // Update status di UI tabel pesanan
-                // Implementasi sesuai kebutuhan
-            }
-        }
-    });
-    
-    // Tombol update status
-    $('#updateStatusBtn').click(function() {
-        openUpdateStatusModal();
-    });
-    
-    // Tombol simpan status baru
-    $('#saveStatusBtn').click(function() {
-        const newStatus = $('#new-status').val();
-        const statusNote = $('#status-catatan').val();
-        
-        if (activePesananId && newStatus) {
-            alert("Status pesanan #" + activePesananId + " diubah menjadi: " + newStatus);
-            $('#updateStatusModal').modal('hide');
+        // Filter pesanan berdasarkan status
+        $('.filter-btn').click(function() {
+            const status = $(this).data('status');
             
-            // Update badge status di modal detail pesanan
-            const badgeClass = getBadgeClassForStatus(newStatus);
-            const badgeHtml = `<span class="badge ${badgeClass} py-2 px-3">${newStatus}</span>`;
-            $('#detail-status-badge').html(badgeHtml);
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
             
-            // Update status di UI tabel pesanan
-            // Implementasi sesuai kebutuhan
-        }
-    });
-    
-    // Tombol batalkan pesanan
-    $('#batalkanPesananBtn').click(function() {
-        if (activePesananId) {
-            if (confirm("PERHATIAN! Apakah Anda yakin ingin MEMBATALKAN pesanan #" + activePesananId + "?\nTindakan ini tidak dapat dibatalkan!")) {
-                alert("Pesanan #" + activePesananId + " telah dibatalkan!");
-                $('#detailPesananModal').modal('hide');
-                
-                // Update status di UI tabel pesanan
-                // Implementasi sesuai kebutuhan
+            if (status === 'all') {
+                $('.pesanan-row').show();
+            } else {
+                $('.pesanan-row').hide();
+                $('.pesanan-row[data-status="' + status + '"]').show();
             }
-        }
+        });
+        
+        // Search function
+        $('#searchBtn').click(function() {
+            const searchValue = $('#searchInput').val().toLowerCase();
+            
+            if (searchValue.length > 0) {
+                $('.pesanan-row').hide();
+                $('.pesanan-row').each(function() {
+                    const id = $(this).find('td:eq(2)').text().toLowerCase();
+                    const customer = $(this).find('td:eq(3)').text().toLowerCase();
+                    
+                    if (id.includes(searchValue) || customer.includes(searchValue)) {
+                        $(this).show();
+                    }
+                });
+            } else {
+                $('.pesanan-row').show();
+            }
+        });
+        
+        // Handle Enter key in search input
+        $('#searchInput').keypress(function(e) {
+            if (e.which === 13) {
+                $('#searchBtn').click();
+            }
+        });
+        
+        // Form submission untuk update status
+        $('#updateStatusForm').submit(function(e) {
+            e.preventDefault();
+            
+            const id = $('#pesanan_id').val();
+            const status = $('#new-status').val();
+            const catatan = $('#status-catatan').val();
+            
+            $.ajax({
+                url: "{{ url('admin/pesanan') }}/" + id + "/status",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    status: status,
+                    catatan: catatan
+                },
+                success: function(response) {
+                    if (response.success) {
+                        $('#updateStatusModal').modal('hide');
+                        alert(response.message);
+                        window.location.reload();
+                    } else {
+                        alert("Error: " + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert("Terjadi kesalahan saat mengubah status: " + xhr.responseText);
+                }
+            });
+        });
     });
+
+    // Tambahkan event listener untuk perpage-select
+$('#perpage-select').change(function() {
+    const perpage = $(this).val();
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('perpage', perpage);
+    currentUrl.searchParams.set('page', 1); // Reset ke halaman pertama
+    window.location.href = currentUrl.toString();
 });
 
-// Fungsi helper untuk mendapatkan kelas badge berdasarkan status
-function getBadgeClassForStatus(status) {
-    switch(status) {
-        case 'Pemesanan':
-            return 'bg-warning text-dark';
-        case 'Sedang Diproses':
-            return 'bg-info text-dark';
-        case 'Menunggu Pengambilan':
-            return 'bg-primary';
-        case 'Sedang Dikirim':
-            return 'bg-info';
-        case 'Selesai':
-            return 'bg-success';
-        case 'Dibatalkan':
-            return 'bg-danger';
-        default:
-            return 'bg-secondary';
+// Modifikasi event listener untuk filter-btn
+$('.filter-btn').click(function() {
+    const status = $(this).data('status');
+    
+    $('.filter-btn').removeClass('active');
+    $(this).addClass('active');
+    
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('status', status);
+    currentUrl.searchParams.set('page', 1); // Reset ke halaman pertama
+    window.location.href = currentUrl.toString();
+});
+
+// Modifikasi event listener untuk searchBtn
+$('#searchBtn').click(function() {
+    const searchValue = $('#searchInput').val();
+    
+    const currentUrl = new URL(window.location.href);
+    if (searchValue.length > 0) {
+        currentUrl.searchParams.set('search', searchValue);
+    } else {
+        currentUrl.searchParams.delete('search');
     }
-}
+    currentUrl.searchParams.set('page', 1); // Reset ke halaman pertama
+    window.location.href = currentUrl.toString();
+});
+
+// Handle Enter key in search input
+$('#searchInput').keypress(function(e) {
+    if (e.which === 13) {
+        $('#searchBtn').click();
+    }
+});
 </script>
-@endsection 
+@endsection

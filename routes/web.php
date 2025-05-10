@@ -3,10 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\PesananController;
+use App\Http\Controllers\Admin\ProsesPesananController;
+use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\WelcomeController;
-use App\Http\Controllers\Admin\ProductManagerController;
-use App\Http\Controllers\Admin\PesananController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,7 +15,7 @@ use App\Http\Controllers\Admin\PesananController;
 |--------------------------------------------------------------------------
 */
 
-// Route halaman utama (welcome page) - Menangani semua pengunjung
+// Route halaman utama (welcome page)
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
 // Route autentikasi
@@ -29,7 +30,7 @@ Route::middleware(['auth.check'])->group(function() {
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 });
 
-// Route untuk user yang sudah login (jika diperlukan fitur khusus user)
+// Route untuk user yang sudah login
 Route::middleware(['auth.check', 'role:user'])->group(function() {
     // Redirects user/welcome ke halaman utama
     Route::get('/user/welcome', function() {
@@ -37,8 +38,7 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
     })->name('user.welcome');
 });
 
-
-// Product Manager Routes di Admin
+// Route untuk Admin dan Super Admin
 Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
     // Dashboard route
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
@@ -70,30 +70,43 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::post('/biaya-desains', [ProductManagerController::class, 'storeBiayaDesain'])->name('biaya-desains.store');
     Route::put('/biaya-desains/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desains.update');
     Route::delete('/biaya-desains/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desains.destroy');
-});
-
-// Route untuk Pesanan - semua route ini berada di dalam group admin middleware
-Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
-    // Pesanan routes
-    Route::get('/pesanan', [App\Http\Controllers\Admin\PesananController::class, 'index'])->name('pesanan.index');
-    Route::get('/pesanan/{id}', [App\Http\Controllers\Admin\PesananController::class, 'show'])->name('pesanan.show');
-    Route::post('/pesanan/{id}/status', [App\Http\Controllers\Admin\PesananController::class, 'updateStatus'])->name('pesanan.update-status');
-    Route::get('/pesanan/{id}/print', [App\Http\Controllers\Admin\PesananController::class, 'printInvoice'])->name('pesanan.print');
-    Route::post('/pesanan/{id}/upload', [App\Http\Controllers\Admin\PesananController::class, 'uploadDesain'])->name('pesanan.upload');
-    Route::post('/pesanan/{id}/cancel', [App\Http\Controllers\Admin\PesananController::class, 'cancel'])->name('pesanan.cancel');
-    Route::post('/pesanan/{id}/complete', [App\Http\Controllers\Admin\PesananController::class, 'complete'])->name('pesanan.complete');
-    Route::post('/pesanan/{id}/confirm-pickup', [App\Http\Controllers\Admin\PesananController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
-    Route::post('/pesanan/{id}/update-tracking', [App\Http\Controllers\Admin\PesananController::class, 'updateTracking'])->name('pesanan.update-tracking');
-    Route::post('/pesanan/{id}/confirm-shipment', [App\Http\Controllers\Admin\PesananController::class, 'confirmShipment'])->name('pesanan.confirm-shipment');
-    Route::post('/pesanan/{id}/notification', [App\Http\Controllers\Admin\PesananController::class, 'sendNotification'])->name('pesanan.send-notification');
-    Route::get('/pesanan/{id}/history', [App\Http\Controllers\Admin\PesananController::class, 'history'])->name('pesanan.history');
-    Route::get('/pesanan-dashboard', [App\Http\Controllers\Admin\PesananController::class, 'dashboard'])->name('pesanan.dashboard');
     
-    // API untuk AJAX requests pada halaman pesanan
-    Route::get('/api/pesanan', [App\Http\Controllers\Admin\PesananController::class, 'getDataForAjax'])->name('api.pesanan');
+    // Pesanan routes
+    Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
+    Route::get('/pesanan/{id}', [PesananController::class, 'show'])->name('pesanan.show');
+    Route::get('/pesanan/{id}/print', [PesananController::class, 'printInvoice'])->name('pesanan.print');
+    
+    // Post routes untuk operasi pesanan
+    Route::post('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.update-status');
+    Route::get('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.update-status.get');
+    Route::post('/pesanan/{id}/upload', [PesananController::class, 'uploadDesain'])->name('pesanan.upload');
+    Route::post('/pesanan/{id}/cancel', [PesananController::class, 'cancel'])->name('pesanan.cancel');
+    Route::post('/pesanan/{id}/process-print', [PesananController::class, 'processPrint'])->name('pesanan.process-print');
+    Route::post('/pesanan/{id}/complete', [PesananController::class, 'complete'])->name('pesanan.complete');
+    Route::post('/pesanan/{id}/confirm-pickup', [PesananController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
+    Route::post('/pesanan/{id}/update-tracking', [PesananController::class, 'updateTracking'])->name('pesanan.update-tracking');
+    Route::post('/pesanan/{id}/confirm-shipment', [PesananController::class, 'confirmShipment'])->name('pesanan.confirm-shipment');
+    Route::post('/pesanan/{id}/notification', [PesananController::class, 'sendNotification'])->name('pesanan.send-notification');
+    
+    // Detail produk dalam pesanan
+    Route::get('/pesanan/{id}/produk/{produk_id}', [PesananController::class, 'getDetailProduk'])->name('pesanan.detail-produk');
+
+    // Proses pesanan routes
+    Route::get('/proses-pesanan', [ProsesPesananController::class, 'index'])->name('proses-pesanan.index');
+    Route::get('/proses-pesanan/{id}', [ProsesPesananController::class, 'show'])->name('proses-pesanan.show');
+    Route::post('/proses-pesanan/{id}/status', [ProsesPesananController::class, 'updateStatus'])->name('proses-pesanan.update-status');
+    Route::post('/proses-pesanan/{id}/complete', [ProsesPesananController::class, 'complete'])->name('proses-pesanan.complete');
+    Route::post('/proses-pesanan/{id}/cancel', [ProsesPesananController::class, 'cancel'])->name('proses-pesanan.cancel');
 });
 
 // Route untuk super admin
 Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'role:super_admin'])->group(function() {
     Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
 });
+
+// Route debug (hanya untuk development)
+if (env('APP_DEBUG', false)) {
+    Route::get('/debug/session', function() {
+        return response()->json(session()->all());
+    });
+}
