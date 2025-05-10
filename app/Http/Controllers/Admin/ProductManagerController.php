@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ProductManagerController extends Controller
 {
@@ -55,16 +56,41 @@ class ProductManagerController extends Controller
     {
         try {
             $token = session('api_token');
+            
+            Log::debug('ProductManager: Fetching data from API', [
+                'endpoint' => $endpoint, 
+                'url' => $this->apiBaseUrl . $endpoint,
+                'has_token' => !empty($token)
+            ]);
+            
             $response = Http::withToken($token)->get($this->apiBaseUrl . $endpoint);
             
             if ($response->successful()) {
                 $data = $response->json();
                 $key = basename($endpoint);
+                
+                Log::debug('ProductManager: API response successful', [
+                    'endpoint' => $endpoint,
+                    'key' => $key,
+                    'data_count' => isset($data[$key]) ? count($data[$key]) : 0
+                ]);
+                
                 return $data[$key] ?? [];
+            } else {
+                Log::warning('ProductManager: API response not successful', [
+                    'endpoint' => $endpoint,
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
             }
             
             return [];
         } catch (\Exception $e) {
+            Log::error('ProductManager: Error fetching data from API', [
+                'endpoint' => $endpoint,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return [];
         }
     }
@@ -75,20 +101,60 @@ class ProductManagerController extends Controller
     private function sendApiRequest($method, $endpoint, Request $request = null, $hasFile = false)
     {
         $token = session('api_token');
-        $httpRequest = Http::withToken($token);
         
-        if ($hasFile && $request && $request->hasFile('gambar')) {
-            $response = $httpRequest->attach(
-                'gambar', 
-                $request->file('gambar')->getContent(),
-                $request->file('gambar')->getClientOriginalName()
-            )->$method($this->apiBaseUrl . $endpoint, $request->except('gambar'));
-        } else {
-            $data = $request ? $request->all() : [];
-            $response = $httpRequest->$method($this->apiBaseUrl . $endpoint, $data);
+        try {
+            Log::debug('ProductManager: Sending ' . strtoupper($method) . ' request to API', [
+                'endpoint' => $endpoint,
+                'url' => $this->apiBaseUrl . $endpoint,
+                'has_file' => $hasFile,
+                'has_token' => !empty($token)
+            ]);
+            
+            if ($hasFile && $request && $request->hasFile('gambar')) {
+                // For file uploads, we need to use a multipart form request
+                $response = Http::withToken($token)
+                    ->timeout(30) // Increase timeout for file uploads
+                    ->withHeaders([
+                        'Accept' => 'application/json'
+                    ])
+                    ->attach(
+                        'gambar', 
+                        file_get_contents($request->file('gambar')->getRealPath()),
+                        $request->file('gambar')->getClientOriginalName()
+                    )
+                    ->$method($this->apiBaseUrl . $endpoint, $request->except('gambar'));
+            } else {
+                $data = $request ? $request->all() : [];
+                $response = Http::withToken($token)
+                    ->withHeaders([
+                        'Accept' => 'application/json'
+                    ])
+                    ->$method($this->apiBaseUrl . $endpoint, $data);
+            }
+            
+            $responseData = $response->json();
+            
+            Log::debug('ProductManager: API response', [
+                'endpoint' => $endpoint,
+                'status' => $response->status(),
+                'success' => $responseData['success'] ?? false,
+                'message' => $responseData['message'] ?? 'No message'
+            ]);
+            
+            return $responseData;
+        } catch (\Exception $e) {
+            Log::error('ProductManager: Error sending request to API', [
+                'endpoint' => $endpoint,
+                'method' => $method,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return [
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menghubungi server: ' . $e->getMessage()
+            ];
         }
-        
-        return $response->json();
     }
     
     /**
@@ -100,6 +166,23 @@ class ProductManagerController extends Controller
      */
     public function storeItem(Request $request)
     {
+        // Validasi input terlebih dahulu
+        $request->validate([
+            'nama_item' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'harga_dasar' => 'required|numeric|min:0',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+        
+        if ($request->hasFile('gambar')) {
+            Log::debug('ProductManager: File information', [
+                'original_name' => $request->file('gambar')->getClientOriginalName(),
+                'mime_type' => $request->file('gambar')->getMimeType(),
+                'size' => $request->file('gambar')->getSize(),
+                'error' => $request->file('gambar')->getError()
+            ]);
+        }
+        
         $response = $this->sendApiRequest('post', '/items', $request, true);
         
         if ($response['success'] ?? false) {
@@ -117,7 +200,15 @@ class ProductManagerController extends Controller
      */
     public function updateItem(Request $request, $id)
     {
-        $response = $this->sendApiRequest('put', "/items/{$id}", $request, true);
+        // Validasi input terlebih dahulu
+        $request->validate([
+            'nama_item' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'harga_dasar' => 'required|numeric|min:0',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+        
+        $response = $this->sendApiRequest('post', "/items/{$id}", $request, true);
         
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'items'])
@@ -144,219 +235,183 @@ class ProductManagerController extends Controller
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
-    
+
     /**
      * Bahan Methods
      */
     
-    /**
-     * Store a newly created bahan
-     */
     public function storeBahan(Request $request)
     {
         $response = $this->sendApiRequest('post', '/bahans', $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'bahan'])
                 ->with('success', 'Bahan berhasil ditambahkan');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Update the specified bahan
-     */
     public function updateBahan(Request $request, $id)
     {
         $response = $this->sendApiRequest('put', "/bahans/{$id}", $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'bahan'])
                 ->with('success', 'Bahan berhasil diperbarui');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Remove the specified bahan
-     */
     public function destroyBahan($id)
     {
         $response = $this->sendApiRequest('delete', "/bahans/{$id}");
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'bahan'])
                 ->with('success', 'Bahan berhasil dihapus');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
-    
+
     /**
      * Jenis Methods
      */
     
-    /**
-     * Store a newly created jenis
-     */
     public function storeJenis(Request $request)
     {
         $response = $this->sendApiRequest('post', '/jenis', $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
                 ->with('success', 'Jenis berhasil ditambahkan');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Update the specified jenis
-     */
     public function updateJenis(Request $request, $id)
     {
         $response = $this->sendApiRequest('put', "/jenis/{$id}", $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
                 ->with('success', 'Jenis berhasil diperbarui');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Remove the specified jenis
-     */
     public function destroyJenis($id)
     {
         $response = $this->sendApiRequest('delete', "/jenis/{$id}");
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
                 ->with('success', 'Jenis berhasil dihapus');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
-    
+
     /**
      * Ukuran Methods
      */
     
-    /**
-     * Store a newly created ukuran
-     */
     public function storeUkuran(Request $request)
     {
         $response = $this->sendApiRequest('post', '/ukurans', $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'ukuran'])
                 ->with('success', 'Ukuran berhasil ditambahkan');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Update the specified ukuran
-     */
     public function updateUkuran(Request $request, $id)
     {
         $response = $this->sendApiRequest('put', "/ukurans/{$id}", $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'ukuran'])
                 ->with('success', 'Ukuran berhasil diperbarui');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Remove the specified ukuran
-     */
     public function destroyUkuran($id)
     {
         $response = $this->sendApiRequest('delete', "/ukurans/{$id}");
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'ukuran'])
                 ->with('success', 'Ukuran berhasil dihapus');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
-    
+
     /**
      * Biaya Desain Methods
      */
     
-    /**
-     * Store a newly created biaya desain
-     */
     public function storeBiayaDesain(Request $request)
     {
         $response = $this->sendApiRequest('post', '/biaya-desains', $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
                 ->with('success', 'Biaya desain berhasil ditambahkan');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Update the specified biaya desain
-     */
     public function updateBiayaDesain(Request $request, $id)
     {
         $response = $this->sendApiRequest('put', "/biaya-desains/{$id}", $request);
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
                 ->with('success', 'Biaya desain berhasil diperbarui');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan')
             ->withInput();
     }
 
-    /**
-     * Remove the specified biaya desain
-     */
     public function destroyBiayaDesain($id)
     {
         $response = $this->sendApiRequest('delete', "/biaya-desains/{$id}");
-        
+
         if ($response['success'] ?? false) {
             return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
                 ->with('success', 'Biaya desain berhasil dihapus');
         }
-        
+
         return redirect()->back()
             ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }

@@ -4,6 +4,51 @@
 
 @section('styles')
 <style>
+    .badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.badge.rounded-pill {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.form-check-input:disabled {
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+/* Badge colors for different statuses */
+.bg-pemesanan {
+    background-color: #ffc107; /* warning yellow */
+    color: #212529;
+}
+
+.bg-proses {
+    background-color: #17a2b8; /* info blue */
+    color: #fff;
+}
+
+.bg-pengambilan {
+    background-color: #6f42c1; /* purple */
+    color: #fff;
+}
+
+.bg-selesai {
+    background-color: #198754; /* success green */
+    color: #fff;
+}
+
+.bg-dibatalkan {
+    background-color: #dc3545; /* danger red */
+    color: #fff;
+}
     .status-badge {
         font-size: 0.85rem;
         padding: 0.35em 0.65em;
@@ -243,74 +288,161 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="detailPesananModalLabel">Detail Pesanan #<span id="pesanan-id">0001</span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <h5 class="modal-title" id="detailPesananModalLabel">Detail Pesanan #0001</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row">
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>ID Pemesanan</label>
+                            <label class="form-label fw-bold">ID Pemesanan</label>
                             <input type="text" class="form-control" id="detail-pesanan-id" value="0001" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>ID Pelanggan</label>
+                            <label class="form-label fw-bold">ID Pelanggan</label>
                             <input type="text" class="form-control" id="detail-pelanggan-id" value="A1" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Produk</label>
-                    <div class="input-group">
-                        <input type="text" class="form-control clickable" id="detail-produk" value="Kaos Lengan Panjang" readonly onclick="lihatDetailProduk()">
-                        <div class="input-group-append">
-                            <button class="btn btn-outline-info" type="button" onclick="lihatDetailProduk()">
-                                <i class="fas fa-eye"></i> Lihat Produk
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Alamat</label>
+                
+                <div class="form-group mb-3">
+                    <label class="form-label fw-bold">Alamat</label>
                     <input type="text" class="form-control" id="detail-alamat" value="Bandungan" readonly>
                 </div>
-                <div class="row">
+                
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>Metode Pengambilan</label>
+                            <label class="form-label fw-bold">Metode Pengambilan</label>
                             <input type="text" class="form-control" id="detail-metode" value="Ambil di Tempat" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label>Jumlah</label>
-                            <input type="text" class="form-control" id="detail-jumlah" value="5" readonly>
+                            <label class="form-label fw-bold">Estimasi Selesai</label>
+                            <input type="text" class="form-control" id="detail-estimasi" value="2025-04-10" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Total Harga</label>
-                    <input type="text" class="form-control" id="detail-total" value="Rp 250.000" readonly>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Detail Produk</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="detail-produk-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produk</th>
+                                        <th>Bahan</th>
+                                        <th>Ukuran</th>
+                                        <th>Jumlah</th>
+                                        <th>Harga Satuan</th>
+                                        <th>Subtotal</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-id="1">
+                                        <td>Kaos Lengan Panjang</td>
+                                        <td>Katun</td>
+                                        <td>XL</td>
+                                        <td>3</td>
+                                        <td>Rp 50.000</td>
+                                        <td>Rp 150.000</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" onclick="lihatDetailProduk(1)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr data-id="2">
+                                        <td>Stiker</td>
+                                        <td>Vinyl</td>
+                                        <td>10x10 cm</td>
+                                        <td>5</td>
+                                        <td>Rp 20.000</td>
+                                        <td>Rp 100.000</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" onclick="lihatDetailProduk(2)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr data-id="3">
+                                        <td>Topi Sablon</td>
+                                        <td>Canvas</td>
+                                        <td>All Size</td>
+                                        <td>1</td>
+                                        <td>Rp 35.000</td>
+                                        <td>Rp 35.000</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-info" onclick="lihatDetailProduk(3)">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th colspan="5" class="text-end">Total</th>
+                                        <th id="detail-total-harga">Rp 285.000</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Estimasi Selesai</label>
-                    <input type="text" class="form-control" id="detail-estimasi" value="2025-04-10" readonly>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group mb-0">
+                            <label class="form-label fw-bold">Jasa Tambahan</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="jasaEdit" disabled checked>
+                                    <label class="form-check-label" for="jasaEdit">
+                                        Dengan Jasa Edit
+                                    </label>
+                                </div>
+                                <!-- Jika ada jasa tambahan lain bisa ditambahkan di sini -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group mb-0">
+                            <label class="form-label fw-bold">Status Pesanan</label>
+                            <div>
+                                <span class="badge rounded-pill bg-warning text-dark px-3 py-2 fs-6">Pemesanan</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="jasaEdit" disabled checked>
-                        <label class="custom-control-label" for="jasaEdit">Dengan Jasa Edit</label>
+                
+                <div class="card mb-0">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Catatan</h6>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="detail-catatan" rows="2" readonly>Tolong dikirim secepatnya.</textarea>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" id="prosesPrintBtn">Proses Print</button>
-                <button type="button" class="btn btn-danger" id="batalkanPesananBtn">Batalkan Pesanan</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="prosesPrintBtn">
+                    <i class="fas fa-print me-1"></i> Proses Print
+                </button>
+                <button type="button" class="btn btn-success" id="updateStatusBtn">
+                    <i class="fas fa-check me-1"></i> Update Status
+                </button>
+                <button type="button" class="btn btn-danger" id="batalkanPesananBtn">
+                    <i class="fas fa-times me-1"></i> Batalkan Pesanan
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -322,48 +454,46 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="detailProdukModalLabel">Detail Produk: <span id="produk-nama">Kaos Lengan Panjang</span></h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label>ID Produk</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">ID Produk</label>
                             <input type="text" class="form-control" id="produk-id" value="1" readonly>
                         </div>
-                        <div class="form-group">
-                            <label>Nama Produk</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Nama Produk</label>
                             <input type="text" class="form-control" id="produk-detail-nama" value="Kaos Lengan Panjang" readonly>
                         </div>
-                        <div class="form-group">
-                            <label>Jenis Produk</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Jenis Produk</label>
                             <input type="text" class="form-control" id="produk-jenis" value="Lengan Panjang" readonly>
                         </div>
-                        <div class="form-group">
-                            <label>Bahan</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Bahan</label>
                             <input type="text" class="form-control" id="produk-bahan" value="Katun" readonly>
                         </div>
-                        <div class="form-group">
-                            <label>Ukuran</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Ukuran</label>
                             <input type="text" class="form-control" id="produk-ukuran" value="XL" readonly>
                         </div>
-                        <div class="form-group">
-                            <label>Harga Dasar</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Harga Dasar</label>
                             <input type="text" class="form-control" id="produk-harga" value="Rp 50.000" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <div class="form-group">
-                            <label>Gambar Produk</label>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Gambar Produk</label>
                             <div class="text-center p-3 bg-light" style="border: 1px solid #ddd; border-radius: 5px;">
                                 <img src="https://via.placeholder.com/300x300" alt="Gambar Produk" class="img-fluid" id="produk-gambar">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Catatan</label>
-                            <textarea class="form-control" id="produk-catatan" rows="4" readonly>Tidak ada catatan khusus.</textarea>
+                        <div class="form-group mb-3">
+                            <label class="form-label fw-bold">Catatan</label>
+                            <textarea class="form-control" id="produk-catatan" rows="3" readonly>Tidak ada catatan khusus.</textarea>
                         </div>
                     </div>
                 </div>
@@ -372,22 +502,22 @@
                     <h5>Detail Desain</h5>
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Desain Pelanggan</label>
+                            <div class="form-group mb-3">
+                                <label class="form-label fw-bold">Desain Pelanggan</label>
                                 <div class="text-center p-3 bg-light" style="border: 1px solid #ddd; border-radius: 5px;">
                                     <img src="https://via.placeholder.com/300x150" alt="Desain Pelanggan" class="img-fluid" id="desain-pelanggan">
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label>Desain Final</label>
+                            <div class="form-group mb-3">
+                                <label class="form-label fw-bold">Desain Final</label>
                                 <div class="text-center p-3 bg-light" style="border: 1px solid #ddd; border-radius: 5px;">
                                     <img src="https://via.placeholder.com/300x150" alt="Desain Final" class="img-fluid" id="desain-final">
                                 </div>
                                 <div class="mt-2">
                                     <button type="button" class="btn btn-sm btn-primary btn-block" onclick="uploadDesainFinal()">
-                                        <i class="fas fa-upload"></i> Upload Desain Final
+                                        <i class="fas fa-upload me-1"></i> Upload Desain Final
                                     </button>
                                 </div>
                             </div>
@@ -396,8 +526,41 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                 <button type="button" class="btn btn-primary" onclick="goToProductPage()">Lihat di Katalog</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Update Status -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Update Status Pesanan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label fw-bold">Status Baru</label>
+                    <select class="form-select" id="new-status">
+                        <option value="Pemesanan">Pemesanan</option>
+                        <option value="Sedang Diproses">Sedang Diproses</option>
+                        <option value="Menunggu Pengambilan">Menunggu Pengambilan</option>
+                        <option value="Sedang Dikirim">Sedang Dikirim</option>
+                        <option value="Selesai">Selesai</option>
+                        <option value="Dibatalkan">Dibatalkan</option>
+                    </select>
+                </div>
+                <div class="form-group mt-3">
+                    <label class="form-label fw-bold">Catatan (Opsional)</label>
+                    <textarea class="form-control" id="status-catatan" rows="3" placeholder="Tambahkan catatan untuk perubahan status"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="saveStatusBtn">Simpan Perubahan</button>
             </div>
         </div>
     </div>
@@ -409,33 +572,31 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="uploadDesainModalLabel">Upload Desain</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="uploadDesainForm">
-                    <div class="form-group">
-                        <label for="desainFile">Pilih File Desain</label>
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="desainFile" accept="image/*">
-                            <label class="custom-file-label" for="desainFile">Pilih file...</label>
+                    <div class="form-group mb-3">
+                        <label for="desainFile" class="form-label fw-bold">Pilih File Desain</label>
+                        <div class="input-group">
+                            <input type="file" class="form-control" id="desainFile" accept="image/*">
+                            <label class="input-group-text" for="desainFile">Browse</label>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="desainPreview">Preview</label>
+                    <div class="form-group mb-3">
+                        <label for="desainPreview" class="form-label fw-bold">Preview</label>
                         <div class="text-center p-3 bg-light" id="previewContainer" style="border: 1px solid #ddd; border-radius: 5px; min-height: 150px; display: none;">
                             <img id="desainPreview" class="img-fluid" alt="Preview">
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="catatanDesain">Catatan (Opsional)</label>
+                    <div class="form-group mb-3">
+                        <label for="catatanDesain" class="form-label fw-bold">Catatan (Opsional)</label>
                         <textarea class="form-control" id="catatanDesain" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-primary" id="submitDesain">Upload</button>
             </div>
         </div>
@@ -446,452 +607,203 @@
 @section('scripts')
 <script>
     // Data global untuk pesanan yang sedang aktif
-    let activePesananId = null;
-    let activeProdukId = null;
+let activePesananId = null;
+let activeProdukId = null;
+
+// Fungsi untuk melihat detail pesanan
+function lihatDetail(id) {
+    activePesananId = id;
     
-    // Fungsi untuk melihat detail pesanan
-    function lihatDetail(id) {
-        activePesananId = id;
-        
-        // Update detail UI
-        $('#pesanan-id').text(id);
-        $('#detail-pesanan-id').val(id);
-        
-        // Jika ini implementasi yang lengkap, Anda akan melakukan AJAX request
-        // untuk mendapatkan data pesanan berdasarkan ID
-        // Untuk contoh ini, kita gunakan data dummy
-        
-        switch(id) {
-            case '0001':
-                $('#detail-pelanggan-id').val('A1');
-                $('#detail-produk').val('Kaos Lengan Panjang');
-                $('#detail-alamat').val('Bandungan');
-                $('#detail-metode').val('Ambil di Tempat');
-                $('#detail-jumlah').val('5');
-                $('#detail-total').val('Rp 250.000');
-                $('#detail-estimasi').val('2025-04-10');
-                $('#jasaEdit').prop('checked', true);
-                break;
-            case '0002':
-                $('#detail-pelanggan-id').val('B2');
-                $('#detail-produk').val('Hoodie Premium');
-                $('#detail-alamat').val('Semarang');
-                $('#detail-metode').val('Dikirim');
-                $('#detail-jumlah').val('3');
-                $('#detail-total').val('Rp 450.000');
-                $('#detail-estimasi').val('2025-04-12');
-                $('#jasaEdit').prop('checked', true);
-                break;
-            case '0003':
-                $('#detail-pelanggan-id').val('C3');
-                $('#detail-produk').val('Jersey Custom');
-                $('#detail-alamat').val('Yogyakarta');
-                $('#detail-metode').val('Ambil di Tempat');
-                $('#detail-jumlah').val('7');
-                $('#detail-total').val('Rp 175.000');
-                $('#detail-estimasi').val('2025-04-08');
-                $('#jasaEdit').prop('checked', false);
-                break;
-            case '0004':
-                $('#detail-pelanggan-id').val('D4');
-                $('#detail-produk').val('Topi Sablon');
-                $('#detail-alamat').val('Jakarta');
-                $('#detail-metode').val('Dikirim');
-                $('#detail-jumlah').val('10');
-                $('#detail-total').val('Rp 320.000');
-                $('#detail-estimasi').val('2025-04-15');
-                $('#jasaEdit').prop('checked', true);
-                break;
-            case '0005':
-                $('#detail-pelanggan-id').val('E5');
-                $('#detail-produk').val('Kaos Polo');
-                $('#detail-alamat').val('Surabaya');
-                $('#detail-metode').val('Ambil di Tempat');
-                $('#detail-jumlah').val('4');
-                $('#detail-total').val('Rp 180.000');
-                $('#detail-estimasi').val('2025-04-07');
-                $('#jasaEdit').prop('checked', false);
-                break;
-        }
-        
-        // Tampilkan modal
-        $('#detailPesananModal').modal('show');
+    // Update detail UI
+    $('#detailPesananModalLabel').text('Detail Pesanan #' + id);
+    $('#detail-pesanan-id').val(id);
+    
+    // Di sini dalam implementasi lengkap, Anda akan melakukan AJAX request
+    // untuk mendapatkan data pesanan berdasarkan ID
+    // Untuk contoh ini, kita gunakan data statis
+    
+    // Tampilkan modal
+    $('#detailPesananModal').modal('show');
+}
+
+// Fungsi untuk melihat detail produk
+function lihatDetailProduk(id) {
+    activeProdukId = id;
+    
+    // Atur judul modal dan ID produk
+    $('#produk-id').val(id);
+    
+    // Set data produk berdasarkan ID
+    switch(id) {
+        case 1:
+            $('#produk-nama').text('Kaos Lengan Panjang');
+            $('#produk-detail-nama').val('Kaos Lengan Panjang');
+            $('#produk-jenis').val('Lengan Panjang');
+            $('#produk-bahan').val('Katun');
+            $('#produk-ukuran').val('XL');
+            $('#produk-harga').val('Rp 50.000');
+            $('#produk-catatan').val('Tidak ada catatan khusus.');
+            $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Kaos+Lengan+Panjang');
+            $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+1');
+            $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+1');
+            break;
+        case 2:
+            $('#produk-nama').text('Stiker');
+            $('#produk-detail-nama').val('Stiker');
+            $('#produk-jenis').val('Stiker');
+            $('#produk-bahan').val('Vinyl');
+            $('#produk-ukuran').val('10x10 cm');
+            $('#produk-harga').val('Rp 20.000');
+            $('#produk-catatan').val('Stiker cutting untuk outdoor.');
+            $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Stiker');
+            $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+2');
+            $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+2');
+            break;
+        case 3:
+            $('#produk-nama').text('Topi Sablon');
+            $('#produk-detail-nama').val('Topi Sablon');
+            $('#produk-jenis').val('Topi');
+            $('#produk-bahan').val('Canvas');
+            $('#produk-ukuran').val('All Size');
+            $('#produk-harga').val('Rp 35.000');
+            $('#produk-catatan').val('Topi snapback dengan sablon custom');
+            $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Topi+Sablon');
+            $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+3');
+            $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+3');
+            break;
     }
     
-    // Fungsi untuk melihat detail produk (dari halaman list)
-    function lihatProduk(nama, id) {
-        activeProdukId = id;
-        
-        // Update detail produk
-        $('#produk-nama').text(nama);
-        $('#produk-id').val(id);
-        $('#produk-detail-nama').val(nama);
-        
-        // Set data produk berdasarkan ID
-        switch(id) {
-            case 1:
-                $('#produk-jenis').val('Lengan Panjang');
-                $('#produk-bahan').val('Katun');
-                $('#produk-ukuran').val('XL');
-                $('#produk-harga').val('Rp 50.000');
-                $('#produk-catatan').val('Tidak ada catatan khusus.');
-                break;
-            case 2:
-                $('#produk-jenis').val('Hoodie');
-                $('#produk-bahan').val('Cotton Fleece');
-                $('#produk-ukuran').val('L');
-                $('#produk-harga').val('Rp 150.000');
-                $('#produk-catatan').val('Bahan premium, double layer');
-                break;
-            case 3:
-                $('#produk-jenis').val('Jersey');
-                $('#produk-bahan').val('Dry Fit');
-                $('#produk-ukuran').val('M');
-                $('#produk-harga').val('Rp 25.000');
-                $('#produk-catatan').val('Jersey tim olahraga');
-                break;
-            case 4:
-                $('#produk-jenis').val('Topi');
-                $('#produk-bahan').val('Canvas');
-                $('#produk-ukuran').val('All Size');
-                $('#produk-harga').val('Rp 32.000');
-                $('#produk-catatan').val('Topi snapback dengan sablon custom');
-                break;
-            case 5:
-                $('#produk-jenis').val('Polo');
-                $('#produk-bahan').val('Lacoste');
-                $('#produk-ukuran').val('L');
-                $('#produk-harga').val('Rp 45.000');
-                $('#produk-catatan').val('Kaos polo untuk formal/semi-formal');
-                break;
-        }
-        
-        // Update gambar produk (dalam implementasi nyata, URL gambar akan dinamis)
-        $('#produk-gambar').attr('src', 'https://via.placeholder.com/300x300?text=Produk+' + id);
-        $('#desain-pelanggan').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Pelanggan+' + id);
-        $('#desain-final').attr('src', 'https://via.placeholder.com/300x150?text=Desain+Final+' + id);
-        
-        // Tampilkan modal
-        $('#detailProdukModal').modal('show');
-    }
+    // Tampilkan modal
+    $('#detailProdukModal').modal('show');
+}
+
+// Fungsi untuk membuka modal update status
+function openUpdateStatusModal() {
+    $('#updateStatusModal').modal('show');
+}
+
+// Fungsi untuk upload desain final
+function uploadDesainFinal() {
+    // Reset form upload
+    $('#uploadDesainForm')[0].reset();
+    $('#previewContainer').hide();
     
-    // Fungsi untuk melihat detail produk (dari modal detail pesanan)
-    function lihatDetailProduk() {
-        const produkNama = $('#detail-produk').val();
-        let produkId;
-        
-        // Tentukan ID produk berdasarkan nama
-        switch(produkNama) {
-            case 'Kaos Lengan Panjang':
-                produkId = 1;
-                break;
-            case 'Hoodie Premium':
-                produkId = 2;
-                break;
-            case 'Jersey Custom':
-                produkId = 3;
-                break;
-            case 'Topi Sablon':
-                produkId = 4;
-                break;
-            case 'Kaos Polo':
-                produkId = 5;
-                break;
-            default:
-                produkId = 1;
-        }
-        
-        // Bisa menutup modal pesanan jika perlu
-        // $('#detailPesananModal').modal('hide');
-        
-        // Tampilkan detail produk
-        lihatProduk(produkNama, produkId);
+    // Tampilkan modal upload
+    $('#uploadDesainModal').modal('show');
+}
+
+// Fungsi untuk pergi ke halaman produk di katalog
+function goToProductPage() {
+    if (activeProdukId) {
+        alert("Membuka halaman produk ID #" + activeProdukId + " di katalog");
+        // window.location.href = '/admin/product-manager/product/' + activeProdukId;
     }
-    
-    // Fungsi untuk proses pesanan
-    function prosesOrder(id) {
-        if (confirm("Apakah Anda yakin ingin memproses pesanan #" + id + "?")) {
-            // Simulasi proses pesanan (dalam implementasi nyata akan menggunakan AJAX)
-            alert("Pesanan #" + id + " sedang diproses!");
-            
-            // Update status di UI (implementasi sederhana)
-            const statusCell = $("#pesananTable tr").filter(function() {
-                return $(this).find("td:eq(2)").text() === id;
-            }).find("td:eq(4)").find("span");
-            
-            // Ubah badge status
-            statusCell.removeClass("status-pemesanan").addClass("status-proses");
-            statusCell.text("Sedang Diproses");
-            
-            // Dalam implementasi nyata, Anda akan melakukan POST request
-            // $.post('/admin/pesanan/' + id + '/status', { status: 'proses' }, function(response) {
-            //    console.log('Status berhasil diubah:', response);
-            // });
-        }
-    }
-    
-    // Fungsi untuk selesaikan pesanan
-    function selesaikanOrder(id) {
-        if (confirm("Apakah Anda yakin ingin menyelesaikan pesanan #" + id + "?")) {
-            // Simulasi selesaikan pesanan
-            alert("Pesanan #" + id + " telah diselesaikan!");
-            
-            // Update status di UI
-            const statusCell = $("#pesananTable tr").filter(function() {
-                return $(this).find("td:eq(2)").text() === id;
-            }).find("td:eq(4)").find("span");
-            
-            // Ubah badge status
-            statusCell.removeClass().addClass("status-badge status-selesai");
-            statusCell.text("Selesai");
-        }
-    }
-    
-    // Fungsi untuk konfirmasi pengambilan
-    function konfirmasiPengambilan(id) {
-        if (confirm("Konfirmasi pengambilan pesanan #" + id + "?")) {
-            // Simulasi konfirmasi pengambilan
-            alert("Pengambilan pesanan #" + id + " telah dikonfirmasi!");
-            
-            // Update status di UI
-            const statusCell = $("#pesananTable tr").filter(function() {
-                return $(this).find("td:eq(2)").text() === id;
-            }).find("td:eq(4)").find("span");
-            
-            // Ubah badge status
-            statusCell.removeClass().addClass("status-badge status-selesai");
-            statusCell.text("Selesai");
-        }
-    }
-    
-    // Fungsi untuk konfirmasi pengiriman
-    function konfirmasiPengiriman(id) {
-        if (confirm("Konfirmasi pengiriman pesanan #" + id + "?")) {
-            // Simulasi konfirmasi pengiriman
-            alert("Pengiriman pesanan #" + id + " telah dikonfirmasi!");
-            
-            // Update status di UI
-            const statusCell = $("#pesananTable tr").filter(function() {
-                return $(this).find("td:eq(2)").text() === id;
-            }).find("td:eq(4)").find("span");
-            
-            // Ubah badge status
-            statusCell.removeClass().addClass("status-badge status-selesai");
-            statusCell.text("Selesai");
-        }
-    }
-    
-    // Fungsi untuk batalkan pesanan
-    function batalkanOrder(id) {
-        if (confirm("PERHATIAN! Apakah Anda yakin ingin MEMBATALKAN pesanan #" + id + "?\nTindakan ini tidak dapat dibatalkan!")) {
-            // Simulasi batalkan pesanan
-            alert("Pesanan #" + id + " telah dibatalkan!");
-            
-            // Update status di UI atau hapus baris dari tabel
-            const row = $("#pesananTable tr").filter(function() {
-                return $(this).find("td:eq(2)").text() === id;
-            });
-            
-            // Opsi 1: Ubah status
-            const statusCell = row.find("td:eq(4)").find("span");
-            statusCell.removeClass().addClass("status-badge").css({
-                backgroundColor: "#FFCDD2", 
-                color: "#C62828"
-            });
-            statusCell.text("Dibatalkan");
-            
-            // Opsi 2: Hapus baris (Nonaktifkan jika ingin menyimpan record dibatalkan)
-            // row.fadeOut(400, function() {
-            //     $(this).remove();
-            // });
-        }
-    }
-    
-    // Fungsi untuk mencetak invoice
-    function printInvoice(id) {
-        // Dalam implementasi nyata, akan membuka jendela baru dengan halaman cetak
-        window.open('/admin/pesanan/' + id + '/print', '_blank');
-    }
-    
-    // Fungsi untuk upload desain
-    function uploadDesain(id) {
-        // Reset form
-        $('#uploadDesainForm')[0].reset();
-        $('#previewContainer').hide();
-        
-        // Set ID pesanan aktif
-        activePesananId = id;
-        
-        // Tampilkan modal
-        $('#uploadDesainModal').modal('show');
-    }
-    
-    // Fungsi untuk upload desain final
-    function uploadDesainFinal() {
-        // Persiapkan modal upload yang sama
-        $('#uploadDesainForm')[0].reset();
-        $('#previewContainer').hide();
-        $('#uploadDesainModalLabel').text('Upload Desain Final');
-        
-        // Tampilkan modal
-        $('#uploadDesainModal').modal('show');
-    }
-    
-    // Fungsi untuk update tracking
-    function updateTracking(id) {
-        // Implementasi sederhana untuk demo
-        const trackingNumber = prompt("Masukkan nomor resi untuk pesanan #" + id + ":");
-        if (trackingNumber) {
-            alert("Nomor resi " + trackingNumber + " telah ditambahkan untuk pesanan #" + id);
-        }
-    }
-    
-    // Fungsi untuk kirim notifikasi
-    function kirimNotifikasi(id) {
-        // Implementasi sederhana untuk demo
-        const pesan = prompt("Masukkan pesan notifikasi untuk pelanggan pesanan #" + id + ":");
-        if (pesan) {
-            alert("Notifikasi telah dikirim ke pelanggan pesanan #" + id);
-        }
-    }
-    
-    // Fungsi untuk lihat riwayat
-    function lihatRiwayat(id) {
-        // Dalam implementasi nyata, akan mengarahkan ke halaman riwayat
-        alert("Membuka riwayat pesanan #" + id);
-        window.location.href = '/admin/pesanan/' + id + '/history';
-    }
-    
-    // Fungsi untuk pergi ke halaman produk di katalog
-    function goToProductPage() {
-        // Dalam implementasi nyata, akan mengarahkan ke halaman detail produk
-        if (activeProdukId) {
-            alert("Membuka halaman produk ID #" + activeProdukId + " di katalog");
-            window.location.href = '/admin/product-manager/product/' + activeProdukId;
-        }
-    }
-    
-    // Fungsi pencarian
-    function searchTable() {
-        const searchText = $('#searchInput').val().toLowerCase();
-        $("#pesananTable tbody tr").filter(function() {
-            const pesananId = $(this).find("td:eq(2)").text().toLowerCase();
-            const pelanggan = $(this).find("td:eq(3)").text().toLowerCase();
-            const produk = $(this).find("td:eq(5)").text().toLowerCase();
-            
-            // Mencari berdasarkan ID pesanan, nama pelanggan, atau produk
-            const matchesSearch = pesananId.includes(searchText) || 
-                                  pelanggan.includes(searchText) || 
-                                  produk.includes(searchText);
-            
-            $(this).toggle(matchesSearch);
-        });
-    }
-    
-    // Filter berdasarkan status
-    function filterByStatus(status) {
-        if (status === 'all') {
-            // Tampilkan semua
-            $("#pesananTable tbody tr").show();
-        } else {
-            $("#pesananTable tbody tr").filter(function() {
-                const rowStatus = $(this).find("td:eq(4)").text().toLowerCase();
-                return rowStatus.includes(status.toLowerCase());
-            }).show();
-            
-            $("#pesananTable tbody tr").filter(function() {
-                const rowStatus = $(this).find("td:eq(4)").text().toLowerCase();
-                return !rowStatus.includes(status.toLowerCase());
-            }).hide();
-        }
-    }
-    
-    // Event listeners
-    $(document).ready(function() {
-        // Preview upload file
-        $('#desainFile').change(function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('#desainPreview').attr('src', e.target.result);
-                    $('#previewContainer').show();
-                }
-                reader.readAsDataURL(file);
-                
-                // Update label dengan nama file
-                $(this).next('.custom-file-label').html(file.name);
+}
+
+// Event listeners saat dokumen selesai dimuat
+$(document).ready(function() {
+    // Preview upload file
+    $('#desainFile').change(function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#desainPreview').attr('src', e.target.result);
+                $('#previewContainer').show();
             }
-        });
-        
-        // Submit upload desain
-        $('#submitDesain').click(function() {
-            const file = $('#desainFile')[0].files[0];
-            if (!file) {
-                alert("Silakan pilih file desain terlebih dahulu!");
-                return;
-            }
-            
-            // Simulasi upload (dalam implementasi nyata akan menggunakan AJAX FormData)
-            alert("Desain berhasil diupload!");
-            $('#uploadDesainModal').modal('hide');
-            
-            // Jika ini adalah upload desain final, update gambar di modal produk
-            if ($('#uploadDesainModalLabel').text() === 'Upload Desain Final') {
-                // Preview file sebagai desain final
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('#desain-final').attr('src', e.target.result);
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-        
-        // Tombol proses print di modal detail pesanan
-        $('#prosesPrintBtn').click(function() {
-            if (activePesananId) {
-                if (confirm("Proses print untuk pesanan #" + activePesananId + "?")) {
-                    alert("Pesanan #" + activePesananId + " sedang diproses untuk dicetak!");
-                    $('#detailPesananModal').modal('hide');
-                    
-                    // Update status di UI
-                    const statusCell = $("#pesananTable tr").filter(function() {
-                        return $(this).find("td:eq(2)").text() === activePesananId;
-                    }).find("td:eq(4)").find("span");
-                    
-                    // Ubah badge status
-                    statusCell.removeClass().addClass("status-badge status-proses");
-                    statusCell.text("Sedang Diproses");
-                }
-            }
-        });
-        
-        // Tombol batalkan pesanan di modal detail pesanan
-        $('#batalkanPesananBtn').click(function() {
-            if (activePesananId) {
-                batalkanOrder(activePesananId);
-                $('#detailPesananModal').modal('hide');
-            }
-        });
-        
-        // Pencarian saat tekan tombol search
-        $('#searchBtn').click(function() {
-            searchTable();
-        });
-        
-        // Pencarian saat ketik
-        $('#searchInput').keyup(function() {
-            searchTable();
-        });
-        
-        // Filter berdasarkan status
-        $('.btn-group .btn').click(function() {
-            $('.btn-group .btn').removeClass('active');
-            $(this).addClass('active');
-            
-            const status = $(this).data('status');
-            filterByStatus(status);
-        });
+            reader.readAsDataURL(file);
+        }
     });
+    
+    // Submit upload desain
+    $('#submitDesain').click(function() {
+        const file = $('#desainFile')[0].files[0];
+        if (!file) {
+            alert("Silakan pilih file desain terlebih dahulu!");
+            return;
+        }
+        
+        // Simulasi upload (dalam implementasi nyata akan menggunakan AJAX FormData)
+        alert("Desain berhasil diupload!");
+        $('#uploadDesainModal').modal('hide');
+        
+        // Update gambar desain final di modal produk
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#desain-final').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(file);
+    });
+    
+    // Tombol proses print di modal detail pesanan
+    $('#prosesPrintBtn').click(function() {
+        if (activePesananId) {
+            if (confirm("Proses print untuk pesanan #" + activePesananId + "?")) {
+                alert("Pesanan #" + activePesananId + " sedang diproses untuk dicetak!");
+                $('#detailPesananModal').modal('hide');
+                
+                // Update status di UI tabel pesanan
+                // Implementasi sesuai kebutuhan
+            }
+        }
+    });
+    
+    // Tombol update status
+    $('#updateStatusBtn').click(function() {
+        openUpdateStatusModal();
+    });
+    
+    // Tombol simpan status baru
+    $('#saveStatusBtn').click(function() {
+        const newStatus = $('#new-status').val();
+        const statusNote = $('#status-catatan').val();
+        
+        if (activePesananId && newStatus) {
+            alert("Status pesanan #" + activePesananId + " diubah menjadi: " + newStatus);
+            $('#updateStatusModal').modal('hide');
+            
+            // Update badge status di modal detail pesanan
+            const badgeClass = getBadgeClassForStatus(newStatus);
+            const badgeHtml = `<span class="badge ${badgeClass} py-2 px-3">${newStatus}</span>`;
+            $('#detail-status-badge').html(badgeHtml);
+            
+            // Update status di UI tabel pesanan
+            // Implementasi sesuai kebutuhan
+        }
+    });
+    
+    // Tombol batalkan pesanan
+    $('#batalkanPesananBtn').click(function() {
+        if (activePesananId) {
+            if (confirm("PERHATIAN! Apakah Anda yakin ingin MEMBATALKAN pesanan #" + activePesananId + "?\nTindakan ini tidak dapat dibatalkan!")) {
+                alert("Pesanan #" + activePesananId + " telah dibatalkan!");
+                $('#detailPesananModal').modal('hide');
+                
+                // Update status di UI tabel pesanan
+                // Implementasi sesuai kebutuhan
+            }
+        }
+    });
+});
+
+// Fungsi helper untuk mendapatkan kelas badge berdasarkan status
+function getBadgeClassForStatus(status) {
+    switch(status) {
+        case 'Pemesanan':
+            return 'bg-warning text-dark';
+        case 'Sedang Diproses':
+            return 'bg-info text-dark';
+        case 'Menunggu Pengambilan':
+            return 'bg-primary';
+        case 'Sedang Dikirim':
+            return 'bg-info';
+        case 'Selesai':
+            return 'bg-success';
+        case 'Dibatalkan':
+            return 'bg-danger';
+        default:
+            return 'bg-secondary';
+    }
+}
 </script>
 @endsection 

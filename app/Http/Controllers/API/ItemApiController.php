@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Facades\File;
 
 class ItemApiController extends Controller
 {
@@ -30,65 +30,92 @@ class ItemApiController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('API: Request untuk menambah item baru diterima', $request->except('gambar'));
-        
-        $validatedData = $request->validate([
-            'nama_item' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'harga_dasar' => 'required|numeric|min:0',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-        
-        $item = new Item();
-        $item->nama_item = $request->nama_item;
-        $item->deskripsi = $request->deskripsi;
-        $item->harga_dasar = $request->harga_dasar;
-        
-        // Upload gambar jika ada
-        if ($request->hasFile('gambar')) {
-            Log::debug('API: Gambar ditemukan, memproses upload');
-            try {
-                $gambar = $request->file('gambar');
+        try {
+            Log::info('API: Request untuk menambah item baru diterima', $request->except('gambar'));
+            
+            // Log gambar info jika ada
+            if ($request->hasFile('gambar')) {
+                $file = $request->file('gambar');
+                Log::info('API: Informasi file gambar yang diupload', [
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'error' => $file->getError(),
+                    'is_valid' => $file->isValid()
+                ]);
+            } else {
+                Log::info('API: Tidak ada file gambar yang diupload');
+            }
+            
+            $validatedData = $request->validate([
+                'nama_item' => 'required|string|max:255',
+                'deskripsi' => 'nullable|string',
+                'harga_dasar' => 'required|numeric|min:0',
+                'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+            
+            $item = new Item();
+            $item->nama_item = $request->nama_item;
+            $item->deskripsi = $request->deskripsi;
+            $item->harga_dasar = $request->harga_dasar;
+            
+            // Upload gambar jika ada
+            if ($request->hasFile('gambar') && $request->file('gambar')->isValid()) {
+                // Generate a unique filename
+                $file = $request->file('gambar');
+                $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
+                $directoryPath = 'product-images';
                 
-                // Buat direktori jika belum ada
-                $dirPath = 'public/product-images';
-                if (!Storage::exists($dirPath)) {
-                    Storage::makeDirectory($dirPath);
-                    Log::debug('API: Membuat direktori', ['path' => $dirPath]);
+                // Ensure directory exists
+                $fullDirectoryPath = storage_path('app/public/' . $directoryPath);
+                if (!File::isDirectory($fullDirectoryPath)) {
+                    Log::info('API: Creating directory', ['path' => $fullDirectoryPath]);
+                    File::makeDirectory($fullDirectoryPath, 0755, true);
                 }
                 
-                $gambarName = 'product-images/' . Str::slug($request->nama_item) . '_' . time() . '.' . $gambar->getClientOriginalExtension();
+                // Move the file directly
+                $uploadSuccess = $file->move($fullDirectoryPath, $fileName);
                 
-                // Coba menyimpan file
-                if ($gambar->storeAs('public', $gambarName)) {
-                    $item->gambar = $gambarName;
-                    Log::debug('API: Gambar berhasil disimpan', ['path' => $gambarName]);
-                    
-                    // Debug info
-                    $fullPath = storage_path('app/public/' . $gambarName);
-                    Log::debug('API: Info file gambar', [
-                        'full_path' => $fullPath,
-                        'exists' => file_exists($fullPath),
-                        'size' => file_exists($fullPath) ? filesize($fullPath) : 0,
-                        'permissions' => file_exists($fullPath) ? substr(sprintf('%o', fileperms($fullPath)), -4) : 'N/A'
+                if ($uploadSuccess) {
+                    $item->gambar = $directoryPath . '/' . $fileName;
+                    Log::info('API: Gambar berhasil diupload', [
+                        'path' => $item->gambar,
+                        'full_path' => $fullDirectoryPath . '/' . $fileName,
+                        'exists' => File::exists($fullDirectoryPath . '/' . $fileName)
                     ]);
                 } else {
-                    Log::error('API: Gagal menyimpan gambar');
+                    Log::error('API: Gagal memindahkan file gambar', [
+                        'target_path' => $fullDirectoryPath . '/' . $fileName
+                    ]);
                 }
-            } catch (\Exception $e) {
-                Log::error('API: Error saat upload gambar: ' . $e->getMessage());
             }
+            
+            $item->save();
+            
+            Log::info('API: Item berhasil disimpan', [
+                'id' => $item->id, 
+                'nama' => $item->nama_item,
+                'gambar_path' => $item->gambar
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil ditambahkan',
+                'item' => $item
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('API: Error pada store item: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan item',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        $item->save();
-        
-        Log::info('API: Item berhasil disimpan', ['id' => $item->id, 'nama' => $item->nama_item]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Item berhasil ditambahkan',
-            'item' => $item
-        ], 201);
     }
 
     /**
@@ -96,21 +123,31 @@ class ItemApiController extends Controller
      */
     public function show($id)
     {
-        Log::info('API: Request untuk menampilkan item diterima', ['id' => $id]);
-        
-        $item = Item::find($id);
-        
-        if (!$item) {
+        try {
+            Log::info('API: Request untuk menampilkan item diterima', ['id' => $id]);
+            
+            $item = Item::find($id);
+            
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item tidak ditemukan'
+                ], 404);
+            }
+            
+            return response()->json([
+                'success' => true,
+                'item' => $item
+            ]);
+        } catch (\Exception $e) {
+            Log::error('API: Error pada show item: ' . $e->getMessage());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Item tidak ditemukan'
-            ], 404);
+                'message' => 'Terjadi kesalahan saat mengambil data item',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        return response()->json([
-            'success' => true,
-            'item' => $item
-        ]);
     }
 
     /**
@@ -118,53 +155,94 @@ class ItemApiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        Log::info('API: Request untuk memperbarui item diterima', ['id' => $id, 'data' => $request->except('gambar')]);
-        
-        $validatedData = $request->validate([
-            'nama_item' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string',
-            'harga_dasar' => 'required|numeric|min:0',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-        
-        $item = Item::find($id);
-        
-        if (!$item) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Item tidak ditemukan'
-            ], 404);
-        }
-        
-        $item->nama_item = $request->nama_item;
-        $item->deskripsi = $request->deskripsi;
-        $item->harga_dasar = $request->harga_dasar;
-        
-        // Upload gambar baru jika ada
-        if ($request->hasFile('gambar')) {
-            Log::debug('API: Gambar baru ditemukan, memproses upload');
+        try {
+            Log::info('API: Request untuk memperbarui item diterima', ['id' => $id, 'data' => $request->except('gambar')]);
             
-            // Hapus gambar lama jika ada
-            if ($item->gambar) {
-                Log::debug('API: Menghapus gambar lama', ['gambar' => $item->gambar]);
-                Storage::delete('public/' . $item->gambar);
+            $validatedData = $request->validate([
+                'nama_item' => 'required|string|max:255',
+                'deskripsi' => 'nullable|string',
+                'harga_dasar' => 'required|numeric|min:0',
+                'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            ]);
+            
+            $item = Item::find($id);
+            
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item tidak ditemukan'
+                ], 404);
             }
             
-            $gambar = $request->file('gambar');
-            $gambarName = 'product-images/' . Str::slug($request->nama_item) . '_' . time() . '.' . $gambar->getClientOriginalExtension();
-            $gambar->storeAs('public', $gambarName);
-            $item->gambar = $gambarName;
+            $item->nama_item = $request->nama_item;
+            $item->deskripsi = $request->deskripsi;
+            $item->harga_dasar = $request->harga_dasar;
+            
+            // Upload gambar baru jika ada
+            if ($request->hasFile('gambar') && $request->file('gambar')->isValid()) {
+                // Generate a unique filename
+                $file = $request->file('gambar');
+                $fileName = Str::random(20) . '.' . $file->getClientOriginalExtension();
+                $directoryPath = 'product-images';
+                
+                // Ensure directory exists
+                $fullDirectoryPath = storage_path('app/public/' . $directoryPath);
+                if (!File::isDirectory($fullDirectoryPath)) {
+                    Log::info('API: Creating directory', ['path' => $fullDirectoryPath]);
+                    File::makeDirectory($fullDirectoryPath, 0755, true);
+                }
+                
+                // Delete old image if exists
+                if ($item->gambar) {
+                    $oldImagePath = storage_path('app/public/' . $item->gambar);
+                    if (File::exists($oldImagePath)) {
+                        Log::info('API: Deleting old image', ['path' => $oldImagePath]);
+                        File::delete($oldImagePath);
+                    }
+                }
+                
+                // Move the file directly
+                $uploadSuccess = $file->move($fullDirectoryPath, $fileName);
+                
+                if ($uploadSuccess) {
+                    $item->gambar = $directoryPath . '/' . $fileName;
+                    Log::info('API: Gambar berhasil diupload (update)', [
+                        'path' => $item->gambar,
+                        'full_path' => $fullDirectoryPath . '/' . $fileName,
+                        'exists' => File::exists($fullDirectoryPath . '/' . $fileName)
+                    ]);
+                } else {
+                    Log::error('API: Gagal memindahkan file gambar (update)', [
+                        'target_path' => $fullDirectoryPath . '/' . $fileName
+                    ]);
+                }
+            }
+            
+            $item->save();
+            
+            Log::info('API: Item berhasil diperbarui', [
+                'id' => $item->id,
+                'gambar_path' => $item->gambar
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil diperbarui',
+                'item' => $item
+            ]);
+        } catch (\Exception $e) {
+            Log::error('API: Error pada update item: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memperbarui item',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        $item->save();
-        
-        Log::info('API: Item berhasil diperbarui', ['id' => $item->id]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Item berhasil diperbarui',
-            'item' => $item
-        ]);
     }
 
     /**
@@ -172,30 +250,48 @@ class ItemApiController extends Controller
      */
     public function destroy($id)
     {
-        Log::info('API: Request untuk menghapus item diterima', ['id' => $id]);
-        
-        $item = Item::find($id);
-        
-        if (!$item) {
+        try {
+            Log::info('API: Request untuk menghapus item diterima', ['id' => $id]);
+            
+            $item = Item::find($id);
+            
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item tidak ditemukan'
+                ], 404);
+            }
+            
+            // Hapus gambar jika ada
+            if ($item->gambar) {
+                $imagePath = storage_path('app/public/' . $item->gambar);
+                if (File::exists($imagePath)) {
+                    Log::info('API: Menghapus gambar item', ['gambar' => $imagePath]);
+                    File::delete($imagePath);
+                } else {
+                    Log::warning('API: Gambar tidak ditemukan saat menghapus', ['gambar' => $imagePath]);
+                }
+            }
+            
+            $item->delete();
+            
+            Log::info('API: Item berhasil dihapus', ['id' => $id]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('API: Error pada destroy item: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Item tidak ditemukan'
-            ], 404);
+                'message' => 'Terjadi kesalahan saat menghapus item',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        
-        // Hapus gambar jika ada
-        if ($item->gambar) {
-            Log::debug('API: Menghapus gambar item', ['gambar' => $item->gambar]);
-            Storage::delete('public/' . $item->gambar);
-        }
-        
-        $item->delete();
-        
-        Log::info('API: Item berhasil dihapus', ['id' => $id]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Item berhasil dihapus'
-        ]);
     }
 }
