@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 class Ukuran extends Model
 {
     /**
+     * Nama tabel yang terkait dengan model.
+     *
+     * @var string
+     */
+    protected $table = 'ukurans';
+    
+    /**
      * Indicates if the model should be timestamped.
      *
      * @var bool
@@ -14,14 +21,7 @@ class Ukuran extends Model
     public $timestamps = false;
     
     /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
-    protected $table = 'ukurans';
-    
-    /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal.
      *
      * @var array
      */
@@ -31,7 +31,7 @@ class Ukuran extends Model
     ];
     
     /**
-     * The attributes that should be cast.
+     * Atribut yang harus dikonversi ke tipe data khusus.
      *
      * @var array
      */
@@ -45,5 +45,13 @@ class Ukuran extends Model
     public function items()
     {
         return $this->belongsToMany(Item::class, 'item_ukurans');
+    }
+    
+    /**
+     * Get the customs for the ukuran.
+     */
+    public function customs()
+    {
+        return $this->hasMany(Custom::class);
     }
 }

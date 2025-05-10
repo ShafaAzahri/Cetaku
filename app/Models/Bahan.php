@@ -14,7 +14,7 @@ class Bahan extends Model
     public $timestamps = false;
     
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal.
      *
      * @var array
      */
@@ -24,7 +24,7 @@ class Bahan extends Model
     ];
     
     /**
-     * The attributes that should be cast.
+     * Atribut yang harus dikonversi ke tipe data khusus.
      *
      * @var array
      */
@@ -38,5 +38,13 @@ class Bahan extends Model
     public function items()
     {
         return $this->belongsToMany(Item::class, 'item_bahans');
+    }
+    
+    /**
+     * Get the customs for the bahan.
+     */
+    public function customs()
+    {
+        return $this->hasMany(Custom::class);
     }
 }

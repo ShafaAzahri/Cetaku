@@ -4,51 +4,7 @@
 
 @section('styles')
 <style>
-    .badge {
-    font-weight: 500;
-    letter-spacing: 0.3px;
-}
-
-.badge.rounded-pill {
-    padding-left: 12px;
-    padding-right: 12px;
-}
-
-.form-check-input:checked {
-    background-color: #0d6efd;
-    border-color: #0d6efd;
-}
-
-.form-check-input:disabled {
-    opacity: 0.8;
-    pointer-events: none;
-}
-
-/* Badge colors for different statuses */
-.bg-pemesanan {
-    background-color: #ffc107; /* warning yellow */
-    color: #212529;
-}
-
-.bg-proses {
-    background-color: #17a2b8; /* info blue */
-    color: #fff;
-}
-
-.bg-pengambilan {
-    background-color: #6f42c1; /* purple */
-    color: #fff;
-}
-
-.bg-selesai {
-    background-color: #198754; /* success green */
-    color: #fff;
-}
-
-.bg-dibatalkan {
-    background-color: #dc3545; /* danger red */
-    color: #fff;
-}
+    
     .status-badge {
         font-size: 0.85rem;
         padding: 0.35em 0.65em;

@@ -4,14 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Mesin extends Model
+class Pembayaran extends Model
 {
     /**
      * Nama tabel yang terkait dengan model.
      *
      * @var string
      */
-    protected $table = 'mesins';
+    protected $table = 'pembayarans';
 
     /**
      * Atribut yang dapat diisi secara massal.
@@ -19,9 +19,11 @@ class Mesin extends Model
      * @var array
      */
     protected $fillable = [
-        'nama_mesin',
-        'tipe_mesin',
-        'status'
+        'pesanan_id',
+        'metode',
+        'status',
+        'bukti_bayar',
+        'tanggal_bayar'
     ];
 
     /**
@@ -30,14 +32,14 @@ class Mesin extends Model
      * @var array
      */
     protected $casts = [
-        'created_at' => 'datetime',
+        'tanggal_bayar' => 'datetime',
     ];
 
     /**
-     * Dapatkan proses pesanan terkait dengan mesin.
+     * Dapatkan pesanan terkait dengan pembayaran.
      */
-    public function prosesPesanans()
+    public function pesanan()
     {
-        return $this->hasMany(ProsesPesanan::class);
+        return $this->belongsTo(Pesanan::class);
     }
 }

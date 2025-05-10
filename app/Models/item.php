@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Item extends Model
 {
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal.
      *
      * @var array
      */
@@ -26,7 +26,7 @@ class Item extends Model
     public $timestamps = false;
     
     /**
-     * The attributes that should be cast.
+     * Atribut yang harus dikonversi ke tipe data khusus.
      *
      * @var array
      */
@@ -56,5 +56,13 @@ class Item extends Model
     public function jenis()
     {
         return $this->belongsToMany(Jenis::class, 'item_jenis');
+    }
+    
+    /**
+     * Get the customs for the item.
+     */
+    public function customs()
+    {
+        return $this->hasMany(Custom::class);
     }
 }

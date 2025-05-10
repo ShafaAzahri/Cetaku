@@ -14,7 +14,7 @@ class Jenis extends Model
     public $timestamps = false;
     
     /**
-     * The attributes that are mass assignable.
+     * Atribut yang dapat diisi secara massal.
      *
      * @var array
      */
@@ -24,7 +24,7 @@ class Jenis extends Model
     ];
     
     /**
-     * The attributes that should be cast.
+     * Atribut yang harus dikonversi ke tipe data khusus.
      *
      * @var array
      */
@@ -33,10 +33,18 @@ class Jenis extends Model
     ];
     
     /**
-     * Get the items for the jenis.
+     * The items that belong to the jenis.
      */
     public function items()
     {
         return $this->belongsToMany(Item::class, 'item_jenis');
+    }
+    
+    /**
+     * Get the customs for the jenis.
+     */
+    public function customs()
+    {
+        return $this->hasMany(Custom::class);
     }
 }

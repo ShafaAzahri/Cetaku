@@ -7,7 +7,10 @@ use App\Http\Controllers\API\ItemApiController;
 use App\Http\Controllers\API\BahanApiController;
 use App\Http\Controllers\API\JenisApiController;
 use App\Http\Controllers\API\UkuranApiController;
+use App\Http\Controllers\API\Admin\PesananApiController;
 use App\Http\Controllers\API\BiayaDesainApiController;
+use App\Http\Controllers\API\Admin\ProsesPesananApiController;
+
 
 Route::post('/login', [AuthApiController::class, 'login']);
 Route::post('/register', [AuthApiController::class, 'register']);
@@ -74,3 +77,28 @@ Route::middleware('api.admin')->group(function() {
     Route::delete('/biaya-desains/{id}', [BiayaDesainApiController::class, 'destroy']);
 });
 
+// Route untuk API pesanan
+Route::middleware('api.admin')->group(function() {
+    // PesananApiController
+    Route::get('/pesanan', [App\Http\Controllers\API\Admin\PesananApiController::class, 'index']);
+    Route::post('/pesanan', [App\Http\Controllers\API\Admin\PesananApiController::class, 'store']);
+    Route::get('/pesanan/{id}', [App\Http\Controllers\API\Admin\PesananApiController::class, 'show']);
+    Route::put('/pesanan/{id}', [App\Http\Controllers\API\Admin\PesananApiController::class, 'update']);
+    Route::put('/pesanan/{id}/status', [App\Http\Controllers\API\Admin\PesananApiController::class, 'updateStatus']);
+    Route::post('/pesanan/{id}/proses', [App\Http\Controllers\API\Admin\PesananApiController::class, 'assignProcess']);
+    Route::post('/pesanan/{id}/desain', [App\Http\Controllers\API\Admin\PesananApiController::class, 'uploadDesain']);
+    Route::get('/operator/list', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getOperators']);
+    Route::get('/mesin/list', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getMesins']);
+    Route::get('/pesanan/statistik', [App\Http\Controllers\API\Admin\PesananApiController::class, 'getStatistics']);
+    
+    // ProsesPesananApiController
+    Route::get('/proses', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'index']);
+    Route::post('/proses', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'store']);
+    Route::get('/proses/{id}', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'show']);
+    Route::put('/proses/{id}', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'update']);
+    Route::put('/proses/{id}/selesai', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'complete']);
+    Route::put('/proses/{id}/batal', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'cancel']);
+    Route::get('/proses/pesanan/{pesananId}', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'getByPesanan']);
+    Route::get('/proses/operator/{operatorId}', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'getByOperator']);
+    Route::get('/proses/statistik', [App\Http\Controllers\API\Admin\ProsesPesananApiController::class, 'getStatistics']);
+});
