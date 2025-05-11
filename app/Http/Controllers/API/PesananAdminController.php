@@ -141,12 +141,37 @@ class PesananAdminController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-            
+              
             DB::beginTransaction();
             
             $pesanan = Pesanan::findOrFail($id);
             $oldStatus = $pesanan->status;
             $newStatus = $request->status;
+            
+            // Jika status berubah dari "Sedang Diproses" ke status lain
+            if ($oldStatus == 'Sedang Diproses' && $newStatus != 'Sedang Diproses') {
+                // Cari semua proses produksi yang terkait dengan pesanan ini dan belum selesai
+                $detailPesananIds = DetailPesanan::where('pesanan_id', $id)->pluck('id')->toArray();
+                
+                $prosesPesanans = ProsesPesanan::whereIn('detail_pesanan_id', $detailPesananIds)
+                    ->where('status_proses', '!=', 'Selesai')
+                    ->whereNull('waktu_selesai')
+                    ->get();
+                
+                // Ubah status semua proses produksi menjadi "Selesai"
+                foreach ($prosesPesanans as $proses) {
+                    $proses->status_proses = 'Selesai';
+                    $proses->waktu_selesai = now();
+                    $proses->save();
+                    
+                    // Bebaskan mesin terkait
+                    $mesin = $proses->mesin;
+                    if ($mesin) {
+                        $mesin->status = 'aktif';
+                        $mesin->save();
+                    }
+                }
+            }
             
             // Update status pesanan
             $pesanan->status = $newStatus;
@@ -154,7 +179,7 @@ class PesananAdminController extends Controller
             // Jika pesanan baru dikonfirmasi, set admin_id
             if ($oldStatus == 'Pemesanan' && $newStatus == 'Dikonfirmasi') {
                 $user = Auth::user();
-                    $pesanan->admin_id = $user ? $user->id : null; // Dengan pengecekan null
+                $pesanan->admin_id = $user ? $user->id : null;
             }
             
             // Jika pesanan selesai, catat waktu selesai
