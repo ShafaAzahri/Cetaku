@@ -7,9 +7,8 @@ use App\Http\Controllers\API\ItemApiController;
 use App\Http\Controllers\API\BahanApiController;
 use App\Http\Controllers\API\JenisApiController;
 use App\Http\Controllers\API\UkuranApiController;
-use App\Http\Controllers\API\Admin\PesananApiController;
 use App\Http\Controllers\API\BiayaDesainApiController;
-use App\Http\Controllers\API\Admin\ProsesPesananApiController;
+use App\Http\Controllers\API\PesananAdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,32 +81,21 @@ Route::middleware('api.admin')->group(function() {
     Route::put('/biaya-desains/{id}', [BiayaDesainApiController::class, 'update']);
     Route::delete('/biaya-desains/{id}', [BiayaDesainApiController::class, 'destroy']);
     
-    // Pesanan routes
-    Route::get('/pesanan', [PesananApiController::class, 'index']);
-    Route::post('/pesanan', [PesananApiController::class, 'store']);
-    Route::get('/pesanan/{id}', [PesananApiController::class, 'show']);
-    Route::put('/pesanan/{id}', [PesananApiController::class, 'update']);
-    Route::put('/pesanan/{id}/status', [PesananApiController::class, 'updateStatus']);
-    Route::post('/pesanan/{id}/proses', [PesananApiController::class, 'assignProcess']);
-    Route::post('/pesanan/{id}/desain', [PesananApiController::class, 'uploadDesain']);
-    Route::get('/pesanan/{id}/produk/{detailId}', [PesananApiController::class, 'getProductDetail']);
-    Route::post('/pesanan/{id}/konfirmasi-pengambilan', [PesananApiController::class, 'confirmPickup']);
-    Route::post('/pesanan/{id}/konfirmasi-pengiriman', [PesananApiController::class, 'confirmShipment']);
-    Route::post('/pesanan/{id}/konfirmasi-penerimaan', [PesananApiController::class, 'confirmReceived']);
-    Route::get('/pesanan/statistik', [PesananApiController::class, 'getStatistics']);
+    // Manajemen Pesanan Admin routes
+    Route::get('/admin/pesanan', [PesananAdminController::class, 'index']);
+    Route::get('/admin/pesanan/{id}', [PesananAdminController::class, 'show']);
+    Route::put('/admin/pesanan/{id}/status', [PesananAdminController::class, 'updateStatus']);
+    Route::post('/admin/pesanan/{id}/assign-production', [PesananAdminController::class, 'assignProduction']);
+    Route::post('/admin/pesanan/{id}/complete-production', [PesananAdminController::class, 'completeProduction']);
+    Route::post('/admin/pesanan/{id}/confirm-shipment', [PesananAdminController::class, 'confirmShipment']);
+    Route::post('/admin/pesanan/{id}/confirm-pickup', [PesananAdminController::class, 'confirmPickup']);
+    Route::post('/admin/pesanan/{id}/upload-desain', [PesananAdminController::class, 'uploadDesain']);
+    Route::post('/admin/pesanan/{id}/cancel', [PesananAdminController::class, 'cancelOrder']);
     
-    // List data
-    Route::get('/operator/list', [PesananApiController::class, 'getOperators']);
-    Route::get('/mesin/list', [PesananApiController::class, 'getMesins']);
+    // Daftar mesin dan operator
+    Route::get('/admin/mesin/available', [PesananAdminController::class, 'getAvailableMachines']);
+    Route::get('/admin/operators', [PesananAdminController::class, 'getOperators']);
     
-    // Proses Pesanan routes
-    Route::get('/proses', [ProsesPesananApiController::class, 'index']);
-    Route::post('/proses', [ProsesPesananApiController::class, 'store']);
-    Route::get('/proses/{id}', [ProsesPesananApiController::class, 'show']);
-    Route::put('/proses/{id}', [ProsesPesananApiController::class, 'update']);
-    Route::put('/proses/{id}/selesai', [ProsesPesananApiController::class, 'complete']);
-    Route::put('/proses/{id}/batal', [ProsesPesananApiController::class, 'cancel']);
-    Route::get('/proses/pesanan/{pesananId}', [ProsesPesananApiController::class, 'getByPesanan']);
-    Route::get('/proses/operator/{operatorId}', [ProsesPesananApiController::class, 'getByOperator']);
-    Route::get('/proses/statistik', [ProsesPesananApiController::class, 'getStatistics']);
+    // Statistik
+    Route::get('/admin/pesanan/statistics', [PesananAdminController::class, 'getStatistics']);
 });

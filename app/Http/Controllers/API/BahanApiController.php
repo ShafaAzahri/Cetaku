@@ -174,7 +174,7 @@ class BahanApiController extends Controller
         }
     }
 
-    /**
+   /**
      * Menghapus bahan berdasarkan id
      */
     public function destroy($id)
@@ -182,37 +182,55 @@ class BahanApiController extends Controller
         try {
             Log::info('API: Request untuk menghapus bahan diterima', ['id' => $id]);
             
-            $bahan = Bahan::find($id);
-            
-            if (!$bahan) {
+            // Gunakan transaction untuk memastikan semua operasi berhasil atau tidak sama sekali
+            return DB::transaction(function() use ($id) {
+                $bahan = Bahan::find($id);
+                
+                if (!$bahan) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Bahan tidak ditemukan'
+                    ], 404);
+                }
+                
+                // Cek apakah bahan digunakan dalam Custom (produk yang mungkin sudah dipesan)
+                $customCount = DB::table('customs')->where('bahan_id', $id)->count();
+                if ($customCount > 0) {
+                    Log::warning('API: Bahan tidak dapat dihapus karena digunakan dalam tabel customs', [
+                        'bahan_id' => $id,
+                        'custom_count' => $customCount
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Bahan tidak dapat dihapus karena sudah digunakan dalam pesanan'
+                    ], 400);
+                }
+                
+                // Hapus relasi dengan item terlebih dahulu
+                Log::info('API: Menghapus relasi bahan dengan item', ['bahan_id' => $id]);
+                $bahan->items()->detach();
+                
+                // Hapus bahan
+                $bahan->delete();
+                
+                Log::info('API: Bahan berhasil dihapus', ['id' => $id]);
+                
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Bahan tidak ditemukan'
-                ], 404);
-            }
-            
-            DB::beginTransaction();
-            
-            // Hapus relasi dengan item sebelum menghapus bahan
-            $bahan->items()->detach();
-            $bahan->delete();
-            
-            DB::commit();
-            
-            Log::info('API: Bahan berhasil dihapus', ['id' => $id]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Bahan berhasil dihapus'
-            ]);
+                    'success' => true,
+                    'message' => 'Bahan berhasil dihapus'
+                ]);
+            });
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('API: Error pada destroy bahan: ' . $e->getMessage());
+            Log::error('API: Error pada destroy bahan: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menghapus bahan',
-                'error' => $e->getMessage()
+                'message' => 'Terjadi kesalahan saat menghapus bahan: ' . $e->getMessage()
             ], 500);
         }
     }

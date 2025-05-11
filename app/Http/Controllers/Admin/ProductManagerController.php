@@ -49,9 +49,6 @@ class ProductManagerController extends Controller
         return view('admin.product-manager', $data);
     }
     
-    /**
-     * Fetch data from API
-     */
     private function fetchData($endpoint)
     {
         try {
@@ -67,14 +64,34 @@ class ProductManagerController extends Controller
             
             if ($response->successful()) {
                 $data = $response->json();
-                $key = basename($endpoint);
                 
-                Log::debug('ProductManager: API response successful', [
+                // Log full response untuk debugging
+                Log::debug('ProductManager: API full response', [
                     'endpoint' => $endpoint,
-                    'key' => $key,
-                    'data_count' => isset($data[$key]) ? count($data[$key]) : 0
+                    'response' => $data
                 ]);
                 
+                // Handle berbagai format key berdasarkan endpoint
+                if ($endpoint === '/biaya-desains') {
+                    // Coba beberapa kemungkinan key
+                    if (isset($data['biaya_desains'])) {
+                        return $data['biaya_desains'];
+                    } elseif (isset($data['biayaDesains'])) {
+                        return $data['biayaDesains'];
+                    } elseif (isset($data['biaya-desains'])) {
+                        return $data['biaya-desains'];
+                    }
+                    
+                    // Jika masih tidak ditemukan, log key yang tersedia
+                    Log::warning('ProductManager: Biaya desain key not found in response', [
+                        'available_keys' => array_keys($data)
+                    ]);
+                    
+                    return [];
+                }
+                
+                // Default handling untuk endpoint lain
+                $key = basename($endpoint);
                 return $data[$key] ?? [];
             } else {
                 Log::warning('ProductManager: API response not successful', [
@@ -225,21 +242,39 @@ class ProductManagerController extends Controller
      */
     public function destroyItem($id)
     {
-        $response = $this->sendApiRequest('delete', "/items/{$id}");
-        
-        if ($response['success'] ?? false) {
-            return redirect()->route('admin.product-manager', ['tab' => 'items'])
-                ->with('success', 'Item berhasil dihapus');
+        try {
+            Log::info('ProductManager: Request untuk menghapus item diterima', ['id' => $id]);
+            
+            $response = $this->sendApiRequest('delete', "/items/{$id}");
+            
+            if ($response['success'] ?? false) {
+                Log::info('ProductManager: Item berhasil dihapus', ['id' => $id]);
+                return redirect()->route('admin.product-manager', ['tab' => 'items'])
+                    ->with('success', 'Item berhasil dihapus');
+            }
+            
+            Log::warning('ProductManager: Gagal menghapus item', [
+                'id' => $id, 
+                'message' => $response['message'] ?? 'Tidak ada pesan error'
+            ]);
+            
+            return redirect()->back()
+                ->with('error', $response['message'] ?? 'Terjadi kesalahan saat menghapus item');
+        } catch (\Exception $e) {
+            Log::error('ProductManager: Exception pada destroyItem', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan tak terduga: ' . $e->getMessage());
         }
-        
-        return redirect()->back()
-            ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
 
     /**
      * Bahan Methods
      */
-    
+
     public function storeBahan(Request $request)
     {
         $response = $this->sendApiRequest('post', '/bahans', $request);
@@ -268,17 +303,38 @@ class ProductManagerController extends Controller
             ->withInput();
     }
 
+    /**
+     * Remove the specified bahan
+     */
     public function destroyBahan($id)
     {
-        $response = $this->sendApiRequest('delete', "/bahans/{$id}");
-
-        if ($response['success'] ?? false) {
-            return redirect()->route('admin.product-manager', ['tab' => 'bahan'])
-                ->with('success', 'Bahan berhasil dihapus');
+        try {
+            Log::info('ProductManager: Request untuk menghapus bahan diterima', ['id' => $id]);
+            
+            $response = $this->sendApiRequest('delete', "/bahans/{$id}");
+            
+            if ($response['success'] ?? false) {
+                Log::info('ProductManager: Bahan berhasil dihapus', ['id' => $id]);
+                return redirect()->route('admin.product-manager', ['tab' => 'bahan'])
+                    ->with('success', 'Bahan berhasil dihapus');
+            }
+            
+            Log::warning('ProductManager: Gagal menghapus bahan', [
+                'id' => $id, 
+                'message' => $response['message'] ?? 'Tidak ada pesan error'
+            ]);
+            
+            return redirect()->back()
+                ->with('error', $response['message'] ?? 'Terjadi kesalahan saat menghapus bahan');
+        } catch (\Exception $e) {
+            Log::error('ProductManager: Exception pada destroyBahan', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan tak terduga: ' . $e->getMessage());
         }
-
-        return redirect()->back()
-            ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
 
     /**
@@ -313,17 +369,38 @@ class ProductManagerController extends Controller
             ->withInput();
     }
 
+    /**
+     * Remove the specified jenis
+     */
     public function destroyJenis($id)
     {
-        $response = $this->sendApiRequest('delete', "/jenis/{$id}");
-
-        if ($response['success'] ?? false) {
-            return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
-                ->with('success', 'Jenis berhasil dihapus');
+        try {
+            Log::info('ProductManager: Request untuk menghapus jenis diterima', ['id' => $id]);
+            
+            $response = $this->sendApiRequest('delete', "/jenis/{$id}");
+            
+            if ($response['success'] ?? false) {
+                Log::info('ProductManager: Jenis berhasil dihapus', ['id' => $id]);
+                return redirect()->route('admin.product-manager', ['tab' => 'jenis'])
+                    ->with('success', 'Jenis berhasil dihapus');
+            }
+            
+            Log::warning('ProductManager: Gagal menghapus jenis', [
+                'id' => $id, 
+                'message' => $response['message'] ?? 'Tidak ada pesan error'
+            ]);
+            
+            return redirect()->back()
+                ->with('error', $response['message'] ?? 'Terjadi kesalahan saat menghapus jenis');
+        } catch (\Exception $e) {
+            Log::error('ProductManager: Exception pada destroyJenis', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan tak terduga: ' . $e->getMessage());
         }
-
-        return redirect()->back()
-            ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
 
     /**
@@ -358,17 +435,38 @@ class ProductManagerController extends Controller
             ->withInput();
     }
 
+    /**
+     * Remove the specified ukuran
+     */
     public function destroyUkuran($id)
     {
-        $response = $this->sendApiRequest('delete', "/ukurans/{$id}");
-
-        if ($response['success'] ?? false) {
-            return redirect()->route('admin.product-manager', ['tab' => 'ukuran'])
-                ->with('success', 'Ukuran berhasil dihapus');
+        try {
+            Log::info('ProductManager: Request untuk menghapus ukuran diterima', ['id' => $id]);
+            
+            $response = $this->sendApiRequest('delete', "/ukurans/{$id}");
+            
+            if ($response['success'] ?? false) {
+                Log::info('ProductManager: Ukuran berhasil dihapus', ['id' => $id]);
+                return redirect()->route('admin.product-manager', ['tab' => 'ukuran'])
+                    ->with('success', 'Ukuran berhasil dihapus');
+            }
+            
+            Log::warning('ProductManager: Gagal menghapus ukuran', [
+                'id' => $id, 
+                'message' => $response['message'] ?? 'Tidak ada pesan error'
+            ]);
+            
+            return redirect()->back()
+                ->with('error', $response['message'] ?? 'Terjadi kesalahan saat menghapus ukuran');
+        } catch (\Exception $e) {
+            Log::error('ProductManager: Exception pada destroyUkuran', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan tak terduga: ' . $e->getMessage());
         }
-
-        return redirect()->back()
-            ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
 
     /**
@@ -403,16 +501,37 @@ class ProductManagerController extends Controller
             ->withInput();
     }
 
+    /**
+     * Remove the specified biaya desain
+     */
     public function destroyBiayaDesain($id)
     {
-        $response = $this->sendApiRequest('delete', "/biaya-desains/{$id}");
-
-        if ($response['success'] ?? false) {
-            return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
-                ->with('success', 'Biaya desain berhasil dihapus');
+        try {
+            Log::info('ProductManager: Request untuk menghapus biaya desain diterima', ['id' => $id]);
+            
+            $response = $this->sendApiRequest('delete', "/biaya-desains/{$id}");
+            
+            if ($response['success'] ?? false) {
+                Log::info('ProductManager: Biaya desain berhasil dihapus', ['id' => $id]);
+                return redirect()->route('admin.product-manager', ['tab' => 'biaya-desain'])
+                    ->with('success', 'Biaya desain berhasil dihapus');
+            }
+            
+            Log::warning('ProductManager: Gagal menghapus biaya desain', [
+                'id' => $id, 
+                'message' => $response['message'] ?? 'Tidak ada pesan error'
+            ]);
+            
+            return redirect()->back()
+                ->with('error', $response['message'] ?? 'Terjadi kesalahan saat menghapus biaya desain');
+        } catch (\Exception $e) {
+            Log::error('ProductManager: Exception pada destroyBiayaDesain', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan tak terduga: ' . $e->getMessage());
         }
-
-        return redirect()->back()
-            ->with('error', $response['message'] ?? 'Terjadi kesalahan');
     }
 }

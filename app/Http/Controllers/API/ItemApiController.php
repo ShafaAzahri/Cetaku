@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
+
 
 class ItemApiController extends Controller
 {
@@ -245,7 +247,7 @@ class ItemApiController extends Controller
         }
     }
 
-    /**
+   /**
      * Menghapus item berdasarkan id
      */
     public function destroy($id)
@@ -253,44 +255,72 @@ class ItemApiController extends Controller
         try {
             Log::info('API: Request untuk menghapus item diterima', ['id' => $id]);
             
-            $item = Item::find($id);
-            
-            if (!$item) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Item tidak ditemukan'
-                ], 404);
-            }
-            
-            // Hapus gambar jika ada
-            if ($item->gambar) {
-                $imagePath = storage_path('app/public/' . $item->gambar);
-                if (File::exists($imagePath)) {
-                    Log::info('API: Menghapus gambar item', ['gambar' => $imagePath]);
-                    File::delete($imagePath);
-                } else {
-                    Log::warning('API: Gambar tidak ditemukan saat menghapus', ['gambar' => $imagePath]);
+            // Gunakan transaction untuk memastikan semua operasi berhasil atau tidak sama sekali
+            return DB::transaction(function() use ($id) {
+                $item = Item::find($id);
+                
+                if (!$item) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Item tidak ditemukan'
+                    ], 404);
                 }
-            }
-            
-            $item->delete();
-            
-            Log::info('API: Item berhasil dihapus', ['id' => $id]);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Item berhasil dihapus'
-            ]);
+                
+                // Cek apakah item digunakan dalam Custom (produk yang mungkin sudah dipesan)
+                $customCount = DB::table('customs')->where('item_id', $id)->count();
+                if ($customCount > 0) {
+                    Log::warning('API: Item tidak dapat dihapus karena digunakan dalam tabel customs', [
+                        'item_id' => $id,
+                        'custom_count' => $customCount
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Item tidak dapat dihapus karena sudah digunakan dalam pesanan'
+                    ], 400);
+                }
+                
+                // Hapus relasi dengan bahan, ukuran, dan jenis terlebih dahulu
+                Log::info('API: Menghapus relasi item dengan bahan', ['item_id' => $id]);
+                $item->bahans()->detach();
+                
+                Log::info('API: Menghapus relasi item dengan ukuran', ['item_id' => $id]);
+                $item->ukurans()->detach();
+                
+                Log::info('API: Menghapus relasi item dengan jenis', ['item_id' => $id]);
+                $item->jenis()->detach();
+                
+                // Hapus gambar jika ada
+                if ($item->gambar) {
+                    $imagePath = storage_path('app/public/' . $item->gambar);
+                    if (File::exists($imagePath)) {
+                        Log::info('API: Menghapus gambar item', ['gambar' => $imagePath]);
+                        File::delete($imagePath);
+                    } else {
+                        Log::warning('API: Gambar tidak ditemukan saat menghapus', ['gambar' => $imagePath]);
+                    }
+                }
+                
+                // Hapus item
+                $item->delete();
+                
+                Log::info('API: Item berhasil dihapus', ['id' => $id]);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Item berhasil dihapus'
+                ]);
+            });
         } catch (\Exception $e) {
             Log::error('API: Error pada destroy item: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menghapus item',
-                'error' => $e->getMessage()
+                'message' => 'Terjadi kesalahan saat menghapus item: ' . $e->getMessage()
             ], 500);
         }
     }

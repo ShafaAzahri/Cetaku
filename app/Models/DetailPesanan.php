@@ -14,6 +14,13 @@ class DetailPesanan extends Model
     protected $table = 'detail_pesanans';
 
     /**
+     * Menonaktifkan timestamps otomatis.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
      * Atribut yang dapat diisi secara massal.
      *
      * @var array

@@ -8,6 +8,8 @@ use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+
 
 class UkuranApiController extends Controller
 {
@@ -128,27 +130,60 @@ class UkuranApiController extends Controller
      */
     public function destroy($id)
     {
-        Log::info('API: Request untuk menghapus ukuran diterima', ['id' => $id]);
-        
-        $ukuran = Ukuran::find($id);
-        
-        if (!$ukuran) {
+        try {
+            Log::info('API: Request untuk menghapus ukuran diterima', ['id' => $id]);
+            
+            // Gunakan transaction untuk memastikan semua operasi berhasil atau tidak sama sekali
+            return DB::transaction(function() use ($id) {
+                $ukuran = Ukuran::find($id);
+                
+                if (!$ukuran) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ukuran tidak ditemukan'
+                    ], 404);
+                }
+                
+                // Cek apakah ukuran digunakan dalam Custom (produk yang mungkin sudah dipesan)
+                $customCount = DB::table('customs')->where('ukuran_id', $id)->count();
+                if ($customCount > 0) {
+                    Log::warning('API: Ukuran tidak dapat dihapus karena digunakan dalam tabel customs', [
+                        'ukuran_id' => $id,
+                        'custom_count' => $customCount
+                    ]);
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ukuran tidak dapat dihapus karena sudah digunakan dalam pesanan'
+                    ], 400);
+                }
+                
+                // Hapus relasi dengan item terlebih dahulu
+                Log::info('API: Menghapus relasi ukuran dengan item', ['ukuran_id' => $id]);
+                $ukuran->items()->detach();
+                
+                // Hapus ukuran
+                $ukuran->delete();
+                
+                Log::info('API: Ukuran berhasil dihapus', ['id' => $id]);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Ukuran berhasil dihapus'
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::error('API: Error pada destroy ukuran: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Ukuran tidak ditemukan'
-            ], 404);
+                'message' => 'Terjadi kesalahan saat menghapus ukuran: ' . $e->getMessage()
+            ], 500);
         }
-        
-        // Hapus relasi dengan item sebelum menghapus ukuran
-        $ukuran->items()->detach();
-        $ukuran->delete();
-        
-        Log::info('API: Ukuran berhasil dihapus', ['id' => $id]);
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Ukuran berhasil dihapus'
-        ]);
     }
     
     /**

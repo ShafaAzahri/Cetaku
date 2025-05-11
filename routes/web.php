@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\Admin\ProsesPesananController;
 use App\Http\Controllers\Admin\ProductManagerController;
+use App\Http\Controllers\Admin\PesananManagerController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\WelcomeController;
 
@@ -71,7 +72,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::put('/biaya-desains/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desains.update');
     Route::delete('/biaya-desains/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desains.destroy');
     
-    Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
+    // Pesanan Management
+    Route::get('/pesanan', [PesananManagerController::class, 'index'])->name('pesanan.index');
+    Route::get('/pesanan/{id}', [PesananManagerController::class, 'show'])->name('pesanan.show');
+    Route::put('/pesanan/{id}/status', [PesananManagerController::class, 'updateStatus'])->name('pesanan.update-status');
+    Route::post('/pesanan/{id}/assign-production', [PesananManagerController::class, 'assignProduction'])->name('pesanan.assign-production');
+    Route::post('/pesanan/{id}/complete-production', [PesananManagerController::class, 'completeProduction'])->name('pesanan.complete-production');
+    Route::post('/pesanan/{id}/confirm-shipment', [PesananManagerController::class, 'confirmShipment'])->name('pesanan.confirm-shipment');
+    Route::post('/pesanan/{id}/confirm-pickup', [PesananManagerController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
+    Route::post('/pesanan/{id}/upload-desain', [PesananManagerController::class, 'uploadDesain'])->name('pesanan.upload-desain');
+    Route::post('/pesanan/{id}/cancel', [PesananManagerController::class, 'cancelOrder'])->name('pesanan.cancel');
 });
 
 // Route untuk super admin
