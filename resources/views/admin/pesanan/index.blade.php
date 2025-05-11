@@ -29,14 +29,6 @@
         background-color: #B3E5FC;
         color: #0277BD;
     }
-    .status-selesai {
-        background-color: #C8E6C9;
-        color: #2E7D32;
-    }
-    .status-dibatalkan {
-        background-color: #FFCDD2;
-        color: #C62828;
-    }
     .clickable {
         cursor: pointer;
         transition: all 0.2s;
@@ -118,7 +110,6 @@
                         <button type="button" class="btn btn-sm btn-outline-secondary filter-btn {{ request('status') == 'all' || !request('status') ? 'active' : '' }}" data-status="all">Semua</button>
                         <button type="button" class="btn btn-sm btn-outline-warning filter-btn {{ request('status') == 'Pemesanan' ? 'active' : '' }}" data-status="Pemesanan">Baru</button>
                         <button type="button" class="btn btn-sm btn-outline-info filter-btn {{ request('status') == 'Sedang Diproses' ? 'active' : '' }}" data-status="Sedang Diproses">Proses</button>
-                        <button type="button" class="btn btn-sm btn-outline-success filter-btn {{ request('status') == 'Selesai' ? 'active' : '' }}" data-status="Selesai">Selesai</button>
                     </div>
                 </div>
             </div>
@@ -140,6 +131,7 @@
                     </thead>
                     <tbody>
                         @forelse($pesanan as $p)
+                        @if($p['status'] != 'Selesai' && $p['status'] != 'Dibatalkan')
                         <tr class="clickable pesanan-row" data-status="{{ $p['status'] }}" data-id="{{ $p['id'] }}">
                             <td class="ps-3">#{{ $p['id'] }}</td>
                             <td>{{ $p['tanggal'] }}</td>
@@ -158,10 +150,6 @@
                                             $statusClass = 'status-pengambilan'; break;
                                         case 'Sedang Dikirim':
                                             $statusClass = 'status-dikirim'; break;
-                                        case 'Selesai':
-                                            $statusClass = 'status-selesai'; break;
-                                        case 'Dibatalkan':
-                                            $statusClass = 'status-dibatalkan'; break;
                                         default:
                                             $statusClass = ''; break;
                                     }
@@ -207,18 +195,13 @@
                                     </button>
                                     @endif
                                     
-                                    <a href="{{ route('admin.pesanan.print', $p['id']) }}" class="btn btn-sm btn-secondary action-btn" target="_blank" title="Cetak Invoice">
-                                        <i class="fas fa-file-invoice"></i>
-                                    </a>
-                                    
-                                    @if($p['status'] != 'Selesai' && $p['status'] != 'Dibatalkan')
                                     <button type="button" class="btn btn-sm btn-danger action-btn cancel-btn" data-id="{{ $p['id'] }}" title="Batalkan Pesanan">
                                         <i class="fas fa-times"></i>
                                     </button>
-                                    @endif
                                 </div>
                             </td>
                         </tr>
+                        @endif
                         @empty
                         <tr>
                             <td colspan="8" class="text-center py-4">Tidak ada data pesanan</td>

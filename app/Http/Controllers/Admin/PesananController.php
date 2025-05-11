@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Pesanan;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 
 class PesananController extends Controller
@@ -299,73 +302,86 @@ class PesananController extends Controller
     }
     
     /**
-     * Mengubah status pesanan
+     * Mengubah status pesanan.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function updateStatus(Request $request, $id)
     {
         try {
-            // Validasi input
-            $validated = $request->validate([
-                'status' => 'required|string|in:Pemesanan,Dikonfirmasi,Sedang Diproses,Menunggu Pengambilan,Sedang Dikirim,Selesai,Dibatalkan',
-                'catatan' => 'nullable|string|max:255',
-            ]);
+            $pesanan = Pesanan::find($id);
             
-            // Panggil API untuk update status
-            $response = Http::withToken(session('api_token'))
-                ->put($this->apiBaseUrl . "/pesanan/{$id}/status", [
-                    'status' => $request->status,
-                    'catatan' => $request->catatan
-                ]);
-                
-            if (!$response->successful()) {
-                $errorData = $response->json();
-                $errorMessage = $errorData['message'] ?? 'Gagal mengubah status pesanan';
-                
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $errorMessage
-                    ], $response->status());
-                }
-                
-                return redirect()->back()->with('error', $errorMessage);
-            }
-            
-            $responseData = $response->json();
-            
-            // Log perubahan status
-            Log::info('Status pesanan diubah', [
-                'id' => $id,
-                'status' => $request->status,
-                'admin_id' => session('user')['id'] ?? null
-            ]);
-            
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "Status pesanan #$id berhasil diubah menjadi $request->status",
-                    'status' => $request->status,
-                    'badgeClass' => $this->getBadgeClassForStatus($request->status)
-                ]);
-            }
-            
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('success', "Status pesanan #$id berhasil diubah menjadi $request->status");
-        } catch (\Exception $e) {
-            Log::error('Error saat update status pesanan: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            
-            if ($request->ajax()) {
+            if (!$pesanan) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Terjadi kesalahan saat mengubah status pesanan: " . $e->getMessage()
-                ], 500);
+                    'message' => 'Pesanan tidak ditemukan'
+                ], 404);
             }
             
-            return redirect()->back()
-                ->with('error', "Terjadi kesalahan saat mengubah status pesanan: " . $e->getMessage());
+            // Validasi input
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:Pemesanan,Dikonfirmasi,Sedang Diproses,Menunggu Pengambilan,Sedang Dikirim,Selesai,Dibatalkan',
+                'catatan' => 'nullable|string'
+            ]);
+            
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            
+            // Update status
+            $oldStatus = $pesanan->status;
+            $pesanan->status = $request->status;
+            
+            // Set admin_id jika status berubah menjadi Dikonfirmasi
+            if ($request->status === 'Dikonfirmasi' && $oldStatus !== 'Dikonfirmasi') {
+                // Pastikan admin_id terisi dengan ID admin yang login
+                $pesanan->admin_id = Auth::id();
+                
+                // Jika Auth::id() tidak tersedia, gunakan request->user()->id
+                if (!$pesanan->admin_id && $request->user()) {
+                    $pesanan->admin_id = $request->user()->id;
+                }
+                
+                // Atau jika ada data admin di session
+                if (!$pesanan->admin_id && session('user') && isset(session('user')['id'])) {
+                    $pesanan->admin_id = session('user')['id'];
+                }
+                
+                // Log data tentang admin
+                Log::info('Setting admin_id for pesanan', [
+                    'pesanan_id' => $pesanan->id,
+                    'status' => $request->status,
+                    'admin_id' => $pesanan->admin_id,
+                    'auth_id' => Auth::id(),
+                    'request_user_id' => $request->user() ? $request->user()->id : null,
+                    'session_user_id' => session('user') ? session('user')['id'] : null
+                ]);
+            }
+            
+            // Update catatan jika diberikan
+            if ($request->has('catatan') && !empty($request->catatan)) {
+                $pesanan->catatan = $request->catatan;
+            }
+            
+            $pesanan->save();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $pesanan,
+                'message' => 'Status pesanan berhasil diperbarui'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating pesanan status: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memperbarui status pesanan: ' . $e->getMessage()
+            ], 500);
         }
     }
     
