@@ -12,24 +12,32 @@
         border-radius: 4px;
     }
     .status-pemesanan {
-        background-color: #FFC107;
-        color: #000;
+        background-color: #FFE0B2;
+        color: #E65100;
+    }
+    .status-dikonfirmasi {
+        background-color: #B3E5FC;
+        color: #0277BD;
     }
     .status-proses {
-        background-color: #00BCD4;
-        color: #fff;
+        background-color: #FFF9C4;
+        color: #F57F17;
     }
     .status-pengambilan {
-        background-color: #673AB7;
-        color: #fff;
+        background-color: #FFD180;
+        color: #EF6C00;
     }
     .status-dikirim {
-        background-color: #2196F3;
-        color: #fff;
+        background-color: #B3E5FC;
+        color: #0277BD;
     }
     .status-selesai {
-        background-color: #4CAF50;
-        color: #fff;
+        background-color: #C8E6C9;
+        color: #2E7D32;
+    }
+    .status-dibatalkan {
+        background-color: #FFCDD2;
+        color: #C62828;
     }
     .detail-section {
         background-color: #f8f9fa;
@@ -58,6 +66,20 @@
             </a>
         </div>
     </div>
+
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
     <div class="card">
         <div class="card-body">
@@ -167,6 +189,9 @@
                                     case 'Pemesanan':
                                         $statusClass = 'status-pemesanan';
                                         break;
+                                    case 'Dikonfirmasi':
+                                        $statusClass = 'status-dikonfirmasi';
+                                        break;
                                     case 'Sedang Diproses':
                                         $statusClass = 'status-proses';
                                         break;
@@ -178,6 +203,9 @@
                                         break;
                                     case 'Selesai':
                                         $statusClass = 'status-selesai';
+                                        break;
+                                    case 'Dibatalkan':
+                                        $statusClass = 'status-dibatalkan';
                                         break;
                                 }
                             @endphp
@@ -193,59 +221,82 @@
             </div>
 
             <div class="mt-4">
-                <form action="{{ route('admin.pesanan.update-status', ['id' => $pesanan['id']]) }}" method="POST" class="d-inline">
+                <form action="{{ route('admin.pesanan.update-status', ['id' => $pesanan['id']]) }}" method="POST">
                     @csrf
-                    <div class="form-group" style="max-width: 300px; display: inline-block; margin-right: 10px;">
-                        <select class="form-control" name="status">
-                            <option value="Pemesanan" {{ $pesanan['status'] == 'Pemesanan' ? 'selected' : '' }}>Pemesanan</option>
-                            <option value="Sedang Diproses" {{ $pesanan['status'] == 'Sedang Diproses' ? 'selected' : '' }}>Sedang Diproses</option>
-                            <option value="Menunggu Pengambilan" {{ $pesanan['status'] == 'Menunggu Pengambilan' ? 'selected' : '' }}>Menunggu Pengambilan</option>
-                            <option value="Sedang Dikirim" {{ $pesanan['status'] == 'Sedang Dikirim' ? 'selected' : '' }}>Sedang Dikirim</option>
-                            <option value="Selesai" {{ $pesanan['status'] == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                            <option value="Dibatalkan" {{ $pesanan['status'] == 'Dibatalkan' ? 'selected' : '' }}>Dibatalkan</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="status" class="form-label">Update Status</label>
+                                <select class="form-select" name="status">
+                                    @foreach($statusList ?? [] as $status => $label)
+                                        <option value="{{ $status }}" {{ $pesanan['status'] == $status ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="catatan" class="form-label">Catatan Status (Opsional)</label>
+                                <input type="text" class="form-control" name="catatan" placeholder="Tambahkan catatan untuk perubahan status">
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-check"></i> Update Status
+                            </button>
+                        </div>
                     </div>
-                    <button type="submit" class="btn btn-success action-button">
-                        <i class="fas fa-check"></i> Update Status
-                    </button>
                 </form>
 
-                <a href="{{ route('admin.pesanan.print', ['id' => $pesanan['id']]) }}" class="btn btn-primary action-button" target="_blank">
-                    <i class="fas fa-print"></i> Proses Print
-                </a>
+                <div class="mt-4">
+                    @if($pesanan['status'] == 'Pemesanan')
+                    <a href="{{ route('admin.pesanan.konfirmasi', $pesanan['id']) }}" class="btn btn-primary action-button">
+                        <i class="fas fa-check"></i> Konfirmasi Pesanan
+                    </a>
+                    @endif
 
-                @if($pesanan['status'] != 'Selesai' && $pesanan['status'] != 'Dibatalkan')
-                <form action="{{ route('admin.pesanan.cancel', ['id' => $pesanan['id']]) }}" method="POST" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-danger action-button" onclick="return confirm('PERHATIAN! Apakah Anda yakin ingin MEMBATALKAN pesanan ini?')">
-                        <i class="fas fa-times"></i> Batalkan Pesanan
-                    </button>
-                </form>
-                @endif
+                    @if($pesanan['status'] == 'Dikonfirmasi' || $pesanan['status'] == 'Sedang Diproses')
+                    <a href="{{ route('admin.pesanan.proses', $pesanan['id']) }}" class="btn btn-primary action-button">
+                        <i class="fas fa-print"></i> Proses Cetak
+                    </a>
+                    @endif
+
+                    @if($pesanan['status'] == 'Menunggu Pengambilan')
+                    <form action="{{ route('admin.pesanan.confirm-pickup', ['id' => $pesanan['id']]) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-success action-button" onclick="return confirm('PERHATIAN! Apakah Anda yakin pesanan ini telah diambil oleh pelanggan?')">
+                            <i class="fas fa-handshake"></i> Konfirmasi Pengambilan
+                        </button>
+                    </form>
+                    @endif
+
+                    @if($pesanan['status'] == 'Sedang Diproses' && $pesanan['metode'] == 'Dikirim')
+                    <a href="{{ route('admin.pesanan.kirim', $pesanan['id']) }}" class="btn btn-info action-button">
+                        <i class="fas fa-truck"></i> Konfirmasi Pengiriman
+                    </a>
+                    @endif
+
+                    @if($pesanan['status'] == 'Sedang Dikirim')
+                    <form action="{{ route('admin.pesanan.confirm-delivery', ['id' => $pesanan['id']]) }}" method="POST" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-success action-button" onclick="return confirm('PERHATIAN! Apakah Anda yakin pesanan ini telah diterima oleh pelanggan?')">
+                            <i class="fas fa-box"></i> Konfirmasi Penerimaan
+                        </button>
+                    </form>
+                    @endif
+
+                    @if($pesanan['status'] != 'Selesai' && $pesanan['status'] != 'Dibatalkan')
+                    <form action="{{ route('admin.pesanan.cancel', ['id' => $pesanan['id']]) }}" method="POST" class="d-inline">
+                        @csrf
+                        <input type="hidden" name="alasan" value="Dibatalkan oleh admin">
+                        <button type="submit" class="btn btn-danger action-button" onclick="return confirm('PERHATIAN! Apakah Anda yakin ingin MEMBATALKAN pesanan ini?')">
+                            <i class="fas fa-times"></i> Batalkan Pesanan
+                        </button>
+                    </form>
+                    @endif
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-@if(isset($_GET['fokus_produk']))
-<script>
-    // Scroll ke produk tertentu jika ada parameter fokus_produk
-    document.addEventListener('DOMContentLoaded', function() {
-        const produkName = "{{ htmlspecialchars(request()->get('fokus_produk', '')) }}";
-        const rows = document.querySelectorAll('.product-table tbody tr');
-        
-        for (let i = 0; i < rows.length; i++) {
-            const produkText = rows[i].querySelector('td:first-child').textContent;
-            if (produkText.includes(produkName)) {
-                rows[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                rows[i].classList.add('bg-light');
-                setTimeout(() => {
-                    rows[i].classList.remove('bg-light');
-                }, 3000);
-                break;
-            }
-        }
-    });
-</script>
-@endif
 @endsection

@@ -71,32 +71,32 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::put('/biaya-desains/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desains.update');
     Route::delete('/biaya-desains/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desains.destroy');
     
-    // Pesanan routes
     Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
-    Route::get('/pesanan/{id}', [PesananController::class, 'show'])->name('pesanan.show');
-    Route::get('/pesanan/{id}/print', [PesananController::class, 'printInvoice'])->name('pesanan.print');
+    Route::get('/pesanan/{id}', [PesananController::class, 'show'])->name('pesanan.show')->where('id', '[0-9]+');
     
-    // Post routes untuk operasi pesanan
+    // Konfirmasi
+    Route::get('/pesanan/{id}/konfirmasi', [PesananController::class, 'konfirmasi'])->name('pesanan.konfirmasi');
+    Route::post('/pesanan/{id}/konfirmasi', [PesananController::class, 'prosesKonfirmasi'])->name('pesanan.proses-konfirmasi');
+    
+    // Proses
+    Route::get('/pesanan/{id}/proses', [PesananController::class, 'proses'])->name('pesanan.proses');
+    Route::post('/pesanan/{id}/process-print', [PesananController::class, 'prosesPrint'])->name('pesanan.process-print');
+    
+    // Pengiriman
+    Route::get('/pesanan/{id}/kirim', [PesananController::class, 'kirim'])->name('pesanan.kirim');
+    Route::post('/pesanan/{id}/kirim', [PesananController::class, 'prosesKirim'])->name('pesanan.proses-kirim');
+    
+    // Update status
     Route::post('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.update-status');
-    Route::get('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.update-status.get');
-    Route::post('/pesanan/{id}/upload', [PesananController::class, 'uploadDesain'])->name('pesanan.upload');
-    Route::post('/pesanan/{id}/cancel', [PesananController::class, 'cancel'])->name('pesanan.cancel');
-    Route::post('/pesanan/{id}/process-print', [PesananController::class, 'processPrint'])->name('pesanan.process-print');
-    Route::post('/pesanan/{id}/complete', [PesananController::class, 'complete'])->name('pesanan.complete');
-    Route::post('/pesanan/{id}/confirm-pickup', [PesananController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
-    Route::post('/pesanan/{id}/update-tracking', [PesananController::class, 'updateTracking'])->name('pesanan.update-tracking');
-    Route::post('/pesanan/{id}/confirm-shipment', [PesananController::class, 'confirmShipment'])->name('pesanan.confirm-shipment');
-    Route::post('/pesanan/{id}/notification', [PesananController::class, 'sendNotification'])->name('pesanan.send-notification');
     
-    // Detail produk dalam pesanan
+    // Konfirmasi tindakan
+    Route::post('/pesanan/{id}/confirm-pickup', [PesananController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
+    Route::post('/pesanan/{id}/confirm-delivery', [PesananController::class, 'confirmDelivery'])->name('pesanan.confirm-delivery');
+    Route::post('/pesanan/{id}/cancel', [PesananController::class, 'cancel'])->name('pesanan.cancel');
+    
+    // Detail produk
     Route::get('/pesanan/{id}/produk/{produk_id}', [PesananController::class, 'getDetailProduk'])->name('pesanan.detail-produk');
-
-    // Proses pesanan routes
-    Route::get('/proses-pesanan', [ProsesPesananController::class, 'index'])->name('proses-pesanan.index');
-    Route::get('/proses-pesanan/{id}', [ProsesPesananController::class, 'show'])->name('proses-pesanan.show');
-    Route::post('/proses-pesanan/{id}/status', [ProsesPesananController::class, 'updateStatus'])->name('proses-pesanan.update-status');
-    Route::post('/proses-pesanan/{id}/complete', [ProsesPesananController::class, 'complete'])->name('proses-pesanan.complete');
-    Route::post('/proses-pesanan/{id}/cancel', [ProsesPesananController::class, 'cancel'])->name('proses-pesanan.cancel');
+    Route::post('/pesanan/{id}/upload', [PesananController::class, 'uploadDesain'])->name('pesanan.upload');
 });
 
 // Route untuk super admin
