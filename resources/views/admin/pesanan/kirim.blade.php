@@ -1,144 +1,228 @@
 @extends('admin.layout.admin')
 
-@section('title', 'Proses Cetak Pesanan')
+@section('title', 'Konfirmasi Pengiriman')
 
 @section('styles')
 <style>
-    .card-header {
-        background-color: #f8f9fa;
+    .shipping-form {
+        max-width: 600px;
+        margin: 40px auto;
     }
-    .detail-section {
+    .shipping-info {
         background-color: #f8f9fa;
-        border-radius: 5px;
+        border-radius: 8px;
         padding: 20px;
+        margin-bottom: 30px;
+    }
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    .shipping-icon {
+        font-size: 3rem;
+        color: #17a2b8;
         margin-bottom: 20px;
     }
-    .product-item {
-        border: 1px solid #dee2e6;
-        border-radius: 5px;
-        padding: 15px;
-        margin-bottom: 15px;
+    .courier-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 15px 0;
     }
-    .product-item:hover {
+    .courier-option {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .courier-option:hover {
+        border-color: #17a2b8;
         background-color: #f8f9fa;
+    }
+    .courier-option.selected {
+        border-color: #17a2b8;
+        background-color: #e7f3fe;
+    }
+    .shipping-alert {
+        background-color: #e8f5e9;
+        border-color: #4caf50;
+        color: #2e7d32;
     }
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
-    <div class="row mb-2">
-        <div class="col-md-6">
-            <h1 class="h3 mb-0 text-dark">Proses Cetak - Pesanan #{{ $pesanan->id }}</h1>
-        </div>
-        <div class="col-md-6 text-md-right">
-            <a href="{{ route('admin.pesanan.show', $pesanan->id) }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Kembali ke Detail Pesanan
-            </a>
-        </div>
-    </div>
-
-    <div class="card shadow">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Pilih Operator & Mesin</h6>
-        </div>
-        <div class="card-body">
-            <form action="{{ route('admin.pesanan.process-print', $pesanan->id) }}" method="POST">
-                @csrf
-                
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="operator_id" class="form-label font-weight-bold">Pilih Operator</label>
-                            <select class="form-select @error('operator_id') is-invalid @enderror" id="operator_id" name="operator_id" required>
-                                <option value="">-- Pilih Operator --</option>
-                                @foreach($operators as $operator)
-                                <option value="{{ $operator->id }}">{{ $operator->nama }} ({{ $operator->posisi }})</option>
-                                @endforeach
-                            </select>
-                            @error('operator_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="mesin_id" class="form-label font-weight-bold">Pilih Mesin</label>
-                            <select class="form-select @error('mesin_id') is-invalid @enderror" id="mesin_id" name="mesin_id" required>
-                                <option value="">-- Pilih Mesin --</option>
-                                @foreach($mesins as $mesin)
-                                <option value="{{ $mesin->id }}">{{ $mesin->nama_mesin }} ({{ $mesin->tipe_mesin }})</option>
-                                @endforeach
-                            </select>
-                            @error('mesin_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow shipping-form">
+                <div class="card-header text-center bg-info text-white">
+                    <i class="fas fa-shipping-fast shipping-icon d-block"></i>
+                    <h4 class="mb-0">Konfirmasi Pengiriman</h4>
                 </div>
                 
-                <div class="form-group mb-4">
-                    <label class="form-label font-weight-bold">Pilih Produk yang Akan Diproses</label>
-                    
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="radio" name="detail_pesanan_id" id="all_products" value="" checked>
-                        <label class="form-check-label" for="all_products">
-                            <strong>Semua Produk</strong> - Proses semua produk dalam pesanan ini
-                        </label>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h5>Pesanan #{{ $pesanan->id }}</h5>
+                        <p class="text-muted">Akan dikirim kepada {{ $pesanan->user->nama ?? 'Pelanggan' }}</p>
                     </div>
                     
-                    <div class="mt-3">
-                        <p><strong>Atau pilih produk spesifik:</strong></p>
+                    <div class="shipping-info">
+                        <h6 class="text-uppercase text-muted fw-bold mb-3">Informasi Pengiriman</h6>
                         
-                        @foreach($pesanan->detailPesanans as $detail)
-                        <div class="product-item">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="detail_pesanan_id" id="product_{{ $detail->id }}" value="{{ $detail->id }}">
-                                <label class="form-check-label" for="product_{{ $detail->id }}">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
-                                            <strong>{{ $detail->custom->item->nama_item ?? 'Produk tidak diketahui' }}</strong>
-                                            <span class="text-muted ms-2">({{ $detail->jumlah }} unit)</span>
-                                        </div>
-                                        <div>
-                                            @if($detail->prosesPesanan)
-                                                <span class="badge bg-warning text-dark">Sudah Ada Proses</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <small class="text-muted">
-                                            Bahan: {{ $detail->custom->bahan->nama_bahan ?? 'Unknown' }} | 
-                                            Ukuran: {{ $detail->custom->ukuran->size ?? 'Unknown' }} | 
-                                            Jenis: {{ $detail->custom->jenis->kategori ?? 'Unknown' }}
-                                        </small>
-                                    </div>
+                        <div class="info-item">
+                            <span class="text-muted">Ekspedisi:</span>
+                            <span class="fw-bold">{{ $pesanan->ekspedisi->nama_ekspedisi ?? 'Belum dipilih' }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="text-muted">Layanan:</span>
+                            <span class="fw-bold">{{ $pesanan->ekspedisi->layanan ?? '-' }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="text-muted">Estimasi:</span>
+                            <span class="fw-bold">{{ $pesanan->ekspedisi->estimasi ?? '-' }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="text-muted">Ongkos Kirim:</span>
+                            <span class="fw-bold">Rp {{ number_format($pesanan->ekspedisi->ongkos_kirim ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="text-muted">Alamat Tujuan:</span>
+                            <div class="text-end fw-bold" style="max-width: 200px;">
+                                {{ $pesanan->user->alamats->first()->alamat_lengkap ?? 'Alamat tidak tersedia' }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <form action="{{ route('admin.pesanan.proses-kirim', $pesanan->id) }}" method="POST" id="shippingForm">
+                        @csrf
+                        
+                        <div class="mb-4">
+                            <label for="no_resi" class="form-label fw-bold">Nomor Resi</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+                                <input type="text" class="form-control" id="no_resi" name="no_resi" 
+                                       placeholder="Masukkan nomor resi pengiriman" required>
+                            </div>
+                            <small class="form-text text-muted">Nomor resi akan dikirim ke pelanggan via email/SMS</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="tanggal_kirim" class="form-label fw-bold">Tanggal Pengiriman</label>
+                            <input type="date" class="form-control" id="tanggal_kirim" name="tanggal_kirim" 
+                                   value="{{ date('Y-m-d') }}" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="catatan" class="form-label fw-bold">Catatan Pengiriman (Opsional)</label>
+                            <textarea class="form-control" id="catatan" name="catatan" rows="3" 
+                                      placeholder="Masukkan catatan khusus untuk pengiriman..."></textarea>
+                        </div>
+                        
+                        <!-- Checklist -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3">Checklist Pengiriman</h6>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="check1" required>
+                                <label class="form-check-label" for="check1">
+                                    Produk sudah dikemas dengan baik
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="check2" required>
+                                <label class="form-check-label" for="check2">
+                                    Label pengiriman sudah terpasang
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="check3" required>
+                                <label class="form-check-label" for="check3">
+                                    Invoice sudah disertakan
                                 </label>
                             </div>
                         </div>
-                        @endforeach
-                    </div>
+                        
+                        <!-- Success Alert -->
+                        <div class="alert shipping-alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Perhatian:</strong> Setelah mengkonfirmasi pengiriman, status pesanan akan berubah menjadi "Sedang Dikirim".
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{{ route('admin.pesanan.show', $pesanan->id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i> Batal
+                            </a>
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-truck me-1"></i> Konfirmasi Pengiriman
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div class="form-group">
-                    <label for="catatan" class="form-label font-weight-bold">Catatan Proses (Opsional)</label>
-                    <textarea class="form-control" id="catatan" name="catatan" rows="3" placeholder="Tambahkan catatan untuk proses produksi"></textarea>
-                </div>
-                
-                <div class="alert alert-info mt-4">
-                    <i class="fas fa-info-circle me-2"></i> Proses cetak akan ditugaskan kepada operator yang dipilih dan status pesanan akan berubah menjadi "Sedang Diproses".
-                </div>
-                
-                <div class="mt-4 text-center">
-                    <a href="{{ route('admin.pesanan.show', $pesanan->id) }}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Batal
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-print"></i> Mulai Proses Cetak
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        // Auto-format nomor resi
+        $('#no_resi').on('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        
+        // Form validation
+        $('#shippingForm').on('submit', function(e) {
+            var allChecked = true;
+            $('.form-check-input[required]').each(function() {
+                if (!$(this).is(':checked')) {
+                    allChecked = false;
+                }
+            });
+            
+            if (!allChecked) {
+                e.preventDefault();
+                alert('Harap centang semua checklist sebelum mengirim');
+                return false;
+            }
+            
+            if (!$('#no_resi').val()) {
+                e.preventDefault();
+                alert('Silakan masukkan nomor resi pengiriman');
+                return false;
+            }
+            
+            var confirmText = 'Apakah Anda yakin ingin mengkonfirmasi pengiriman untuk pesanan #{{ $pesanan->id }}?\n\n';
+            confirmText += 'Nomor Resi: ' + $('#no_resi').val() + '\n';
+            confirmText += 'Tanggal Kirim: ' + $('#tanggal_kirim').val();
+            
+            if (!confirm(confirmText)) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Highlight required fields
+        $('.form-check-input[required]').on('change', function() {
+            if ($(this).is(':checked')) {
+                $(this).closest('.form-check').addClass('text-success');
+            } else {
+                $(this).closest('.form-check').removeClass('text-success');
+            }
+        });
+    });
+</script>
 @endsection

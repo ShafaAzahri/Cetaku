@@ -6,103 +6,38 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Storage;
-use App\Models\Pesanan;
-use App\Models\DetailPesanan;
-use App\Models\ProsesPesanan;
-use App\Models\User;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 
 class PesananController extends Controller
 {
-    protected $apiBaseUrl;
-
+    private readonly string $apiUrl;
+    
     public function __construct()
     {
-        $this->apiBaseUrl = rtrim(env('API_URL', config('app.url')), '/');
+        $this->apiUrl = rtrim(config('app.api_url', config('app.url')), '/') . '/api';
     }
-
+    
     /**
      * Menampilkan daftar pesanan
      */
     public function index(Request $request)
     {
-        // Buat query awal
-        $query = Pesanan::with([
-            'user', 
-            'admin', 
-            'ekspedisi', 
-            'detailPesanans.custom.item'
-        ]);
-        
-        // Filter status
-        if ($request->has('status') && $request->status != 'all') {
-            $query->where('status', $request->status);
-        }
-        
-        // Filter status: Hanya tampilkan pesanan yang belum selesai/batal
-        $query->whereNotIn('status', ['Selesai', 'Dibatalkan']);
-        
-        // Pencarian
-        if ($request->has('search') && !empty($request->search)) {
-            $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
-                $q->where('id', 'like', "%{$searchTerm}%")
-                ->orWhereHas('user', function($userQuery) use ($searchTerm) {
-                    $userQuery->where('nama', 'like', "%{$searchTerm}%");
-                });
-            });
-        }
-        
-        // Pengurutan
-        $query->orderBy('tanggal_dipesan', 'desc');
-        
-        // Pagination
-        $perPage = $request->input('perpage', 10);
-        $pesananData = $query->paginate($perPage);
-        
-        // Format data untuk view
-        $pesanan = collect($pesananData->items())->map(function($item) {
-            $totalHarga = 0;
-            $produkNama = '';
+        try {
+            $params = $this->buildFilterParams($request);
+            $response = $this->callApi('GET', '/pesanan', $params);
             
-            // Dapatkan detail produk dari detail pesanan pertama
-            if (!empty($item->detailPesanans)) {
-                $detailPesanan = $item->detailPesanans->first();
-                $produkNama = $detailPesanan->custom->item->nama_item ?? 'Produk tidak diketahui';
-                
-                // Hitung total harga
-                foreach ($item->detailPesanans as $detail) {
-                    $totalHarga += $detail->total_harga;
-                }
-            }
-            
-            return [
-                'id' => $item->id,
-                'tanggal' => isset($item->tanggal_dipesan) ? date('Y-m-d', strtotime($item->tanggal_dipesan)) : date('Y-m-d'),
-                'pelanggan' => $item->user->nama ?? 'Unknown',
-                'status' => $item->status,
-                'metode' => $item->metode_pengambilan == 'ambil' ? 'Ambil di Tempat' : 'Dikirim',
-                'produk' => $produkNama,
-                'total' => $totalHarga,
-                'detail_pesanans' => $item->detailPesanans
+            $data = [
+                'pesanan' => $this->formatPesananList($response['data'] ?? []),
+                'pagination' => $this->extractPagination($response),
+                'filters' => $request->only(['status', 'search', 'start_date', 'end_date']),
+                'perPage' => $request->get('perpage', 10)
             ];
-        });
-        
-        $pagination = [
-            'current_page' => $pesananData->currentPage(),
-            'last_page' => $pesananData->lastPage(),
-            'per_page' => $pesananData->perPage(),
-            'total' => $pesananData->total()
-        ];
-        
-        // Ambil daftar operator dan mesin untuk halaman proses
-        $operators = \App\Models\Operator::where('status', 'aktif')->get();
-        $mesins = \App\Models\Mesin::where('status', 'aktif')->get();
-        
-        return view('admin.pesanan.index', compact('pesanan', 'pagination', 'perPage', 'operators', 'mesins'));
+            
+            return view('admin.pesanan.index', $data);
+        } catch (\Exception $e) {
+            Log::error('Error loading pesanan list: ' . $e->getMessage());
+            return view('admin.pesanan.index')
+                ->with('error', 'Gagal memuat daftar pesanan: ' . $e->getMessage());
+        }
     }
     
     /**
@@ -110,68 +45,425 @@ class PesananController extends Controller
      */
     public function show($id)
     {
-        $pesanan = Pesanan::with([
-            'user.alamats', 
-            'admin', 
-            'ekspedisi', 
-            'detailPesanans.custom.item',
-            'detailPesanans.custom.ukuran',
-            'detailPesanans.custom.bahan',
-            'detailPesanans.custom.jenis',
-            'detailPesanans.prosesPesanan'
-        ])->find($id);
-        
-        if (!$pesanan) {
+        try {
+            $pesanan = $this->callApi('GET', "/pesanan/{$id}")['data'];
+            $operators = $this->callApi('GET', '/operator/list')['data'] ?? [];
+            $mesins = $this->callApi('GET', '/mesin/list')['data'] ?? [];
+            
+            return view('admin.pesanan.show', [
+                'pesanan' => $this->formatPesananDetail($pesanan),
+                'operators' => $operators,
+                'mesins' => $mesins,
+                'statusList' => $this->getStatusOptions()
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error loading pesanan {$id}: " . $e->getMessage());
             return redirect()->route('admin.pesanan.index')
                 ->with('error', 'Pesanan tidak ditemukan');
         }
-        
-        // Format data untuk view
-        $pesananFormatted = [
-            'id' => $pesanan->id,
-            'tanggal' => date('Y-m-d', strtotime($pesanan->tanggal_dipesan ?? 'now')),
-            'pelanggan' => $pesanan->user->nama ?? 'Unknown',
-            'pelanggan_id' => $pesanan->user->id ?? null,
-            'status' => $pesanan->status,
-            'alamat' => !empty($pesanan->user->alamats) ? $pesanan->user->alamats->first()->alamat_lengkap : 'Belum ada alamat',
-            'metode' => $pesanan->metode_pengambilan == 'ambil' ? 'Ambil di Tempat' : 'Dikirim',
-            'total' => $pesanan->detailPesanans->sum('total_harga'),
-            'estimasi_selesai' => $pesanan->estimasi_waktu ? date('Y-m-d', strtotime('+' . $pesanan->estimasi_waktu . ' days')) : 'Belum ditentukan',
-            'dengan_jasa_edit' => $pesanan->detailPesanans->where('tipe_desain', 'dibuatkan')->count() > 0,
-            'catatan' => $pesanan->catatan ?? 'Tidak ada catatan',
-            'produk_items' => []
-        ];
-        
-        // Tambahkan detail produk
-        foreach ($pesanan->detailPesanans as $detail) {
-            $custom = $detail->custom;
-            $item = $custom->item ?? null;
-            $ukuran = $custom->ukuran ?? null;
-            $bahan = $custom->bahan ?? null;
-            $jenis = $custom->jenis ?? null;
+    }
+    
+    /**
+     * Menampilkan detail produk dalam pesanan
+     */
+    public function getDetailProduk($id, $produkId)
+    {
+        try {
+            $response = $this->callApi('GET', "/pesanan/{$id}/produk/{$produkId}");
+            $data = $response['data'];
             
-            $produkItem = [
-                'id' => $detail->id,
-                'nama' => $item ? $item->nama_item : 'Produk tidak diketahui',
-                'bahan' => $bahan ? $bahan->nama_bahan : 'Unknown',
-                'ukuran' => $ukuran ? $ukuran->size : 'Unknown',
-                'jumlah' => $detail->jumlah,
-                'harga_satuan' => $custom ? $custom->harga : 0,
-                'subtotal' => $detail->total_harga,
-                'desain_customer' => $detail->upload_desain ?? null,
-                'desain_final' => $detail->desain_revisi ?? null,
-                'detail' => [
-                    'jenis' => $jenis ? $jenis->kategori : 'Unknown',
-                    'gambar' => $item && $item->gambar ? $item->gambar : null,
-                    'catatan' => $detail->catatan ?? 'Tidak ada catatan khusus.'
-                ]
-            ];
+            return view('admin.pesanan.detail-produk', [
+                'pesanan' => $data['pesanan'],
+                'produk' => $data['product'],
+                'alamat' => $data['alamat'],
+                'pelanggan' => $data['customer']
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error loading product detail: " . $e->getMessage());
+            return redirect()->route('admin.pesanan.show', $id)
+                ->with('error', 'Detail produk tidak ditemukan');
+        }
+    }
+    
+    /**
+     * Konfirmasi pesanan
+     */
+    public function konfirmasi($id)
+    {
+        try {
+            $pesanan = $this->callApi('GET', "/pesanan/{$id}")['data'];
             
-            $pesananFormatted['produk_items'][] = $produkItem;
+            if ($pesanan['status'] !== 'Pemesanan') {
+                return redirect()->route('admin.pesanan.show', $id)
+                    ->with('error', 'Pesanan ini tidak dapat dikonfirmasi');
+            }
+            
+            return view('admin.pesanan.konfirmasi', ['pesanan' => $pesanan]);
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.index');
+        }
+    }
+    
+    /**
+     * Proses konfirmasi pesanan
+     */
+    public function prosesKonfirmasi(Request $request, $id)
+    {
+        $request->validate([
+            'catatan' => 'nullable|string|max:500'
+        ]);
+        
+        try {
+            $this->callApi('PUT', "/pesanan/{$id}/status", [
+                'status' => 'Dikonfirmasi',
+                'catatan' => $request->catatan
+            ]);
+            
+            return redirect()->route('admin.pesanan.show', $id)
+                ->with('success', 'Pesanan berhasil dikonfirmasi');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
+        }
+    }
+    
+    /**
+     * Halaman proses produksi
+     */
+    public function proses($id)
+    {
+        try {
+            $pesanan = $this->callApi('GET', "/pesanan/{$id}")['data'];
+            $operators = $this->callApi('GET', '/operator/list')['data'] ?? [];
+            $mesins = $this->callApi('GET', '/mesin/list')['data'] ?? [];
+            
+            if (!in_array($pesanan['status'], ['Dikonfirmasi', 'Sedang Diproses'])) {
+                return redirect()->route('admin.pesanan.show', $id)
+                    ->with('error', 'Pesanan tidak dapat diproses');
+            }
+            
+            return view('admin.pesanan.proses', [
+                'pesanan' => $pesanan,
+                'operators' => $operators,
+                'mesins' => $mesins
+            ]);
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
+        }
+    }
+    
+    /**
+     * Proses produksi pesanan
+     */
+    public function prosesPrint(Request $request, $id)
+    {
+        $request->validate([
+            'operator_id' => 'required|exists:operators,id',
+            'mesin_id' => 'required|exists:mesins,id',
+            'detail_pesanan_id' => 'nullable|exists:detail_pesanans,id',
+            'catatan' => 'nullable|string|max:500'
+        ]);
+        
+        try {
+            // Jika tidak ada detail_pesanan_id, ambil semua detail pesanan
+            if (!$request->detail_pesanan_id) {
+                $pesanan = $this->callApi('GET', "/pesanan/{$id}")['data'];
+                
+                foreach ($pesanan['detailPesanans'] as $detail) {
+                    try {
+                        $this->callApi('POST', "/pesanan/{$id}/proses", [
+                            'detail_pesanan_id' => $detail['id'],
+                            'operator_id' => $request->operator_id,
+                            'mesin_id' => $request->mesin_id,
+                            'catatan' => $request->catatan
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::warning("Failed to assign process for detail {$detail['id']}: " . $e->getMessage());
+                    }
+                }
+            } else {
+                $this->callApi('POST', "/pesanan/{$id}/proses", $request->all());
+            }
+            
+            return redirect()->route('admin.pesanan.show', $id)
+                ->with('success', 'Pesanan berhasil masuk proses produksi');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.proses', $id);
+        }
+    }
+    
+    /**
+     * Update status pesanan
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:' . implode(',', array_keys($this->getStatusOptions())),
+            'catatan' => 'nullable|string|max:500'
+        ]);
+        
+        try {
+            $this->callApi('PUT', "/pesanan/{$id}/status", $request->only(['status', 'catatan']));
+            
+            return redirect()->route('admin.pesanan.show', $id)
+                ->with('success', 'Status pesanan berhasil diperbarui');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
+        }
+    }
+    
+    /**
+     * Konfirmasi pengambilan
+     */
+    public function confirmPickup($id)
+    {
+        return $this->confirmAction($id, 'confirm-pickup', '/pesanan/{id}/konfirmasi-pengambilan');
+    }
+    
+    /**
+     * Konfirmasi pengiriman
+     */
+    public function kirim($id)
+    {
+        try {
+            $pesanan = $this->callApi('GET', "/pesanan/{$id}")['data'];
+            
+            if ($pesanan['status'] !== 'Sedang Diproses' || $pesanan['metode_pengambilan'] !== 'antar') {
+                return redirect()->route('admin.pesanan.show', $id)
+                    ->with('error', 'Pesanan tidak dapat dikirim');
+            }
+            
+            return view('admin.pesanan.kirim', ['pesanan' => $pesanan]);
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
+        }
+    }
+    
+    /**
+     * Proses pengiriman
+     */
+    public function prosesKirim(Request $request, $id)
+    {
+        $request->validate([
+            'no_resi' => 'nullable|string|max:50',
+            'catatan' => 'nullable|string|max:500'
+        ]);
+        
+        try {
+            $this->callApi('POST', "/pesanan/{$id}/konfirmasi-pengiriman", $request->all());
+            
+            return redirect()->route('admin.pesanan.show', $id)
+                ->with('success', 'Pesanan berhasil dikirim');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
+        }
+    }
+    
+    /**
+     * Konfirmasi penerimaan
+     */
+    public function confirmDelivery($id)
+    {
+        return $this->confirmAction($id, 'confirm-delivery', '/pesanan/{id}/konfirmasi-penerimaan');
+    }
+    
+    /**
+     * Batal pesanan
+     */
+    public function cancel(Request $request, $id)
+    {
+        try {
+            $this->callApi('PUT', "/pesanan/{$id}/status", [
+                'status' => 'Dibatalkan',
+                'catatan' => $request->input('alasan', 'Dibatalkan oleh admin')
+            ]);
+            
+            return redirect()->route('admin.pesanan.index')
+                ->with('success', 'Pesanan berhasil dibatalkan');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
+        }
+    }
+    
+    /**
+     * Upload desain
+     */
+    public function uploadDesain(Request $request, $id)
+    {
+        $request->validate([
+            'produk_id' => 'required|integer',
+            'tipe' => 'required|in:customer,final',
+            'desain' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'catatan' => 'nullable|string|max:500'
+        ]);
+        
+        try {
+            $file = $request->file('desain');
+            $fileName = $this->generateDesainFileName($id, $request->produk_id, $request->tipe, $file);
+            $file->storeAs('public/desain', $fileName);
+            
+            $this->callApi('POST', "/pesanan/{$id}/desain", [
+                'detail_pesanan_id' => $request->produk_id,
+                'tipe' => $request->tipe === 'customer' ? 'upload_desain' : 'desain_revisi',
+                'file_name' => $fileName,
+                'catatan' => $request->catatan
+            ]);
+            
+            return redirect()->route('admin.pesanan.detail-produk', ['id' => $id, 'produk_id' => $request->produk_id])
+                ->with('success', 'Desain berhasil diupload');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.detail-produk', ['id' => $id, 'produk_id' => $request->produk_id]);
+        }
+    }
+    
+    // Private Helper Methods
+    
+    private function callApi(string $method, string $endpoint, ?array $data = null)
+    {
+        $response = Http::withToken(session('api_token'))
+            ->timeout(30)
+            ->$method($this->apiUrl . $endpoint, $data);
+        
+        if (!$response->successful()) {
+            throw new \Exception($response->json('message', 'API Error'));
         }
         
-        // Daftar status untuk form update
-        $statusList = [
+        return $response->json();
+    }
+    
+    private function buildFilterParams(Request $request): array
+    {
+        $params = [];
+        
+        if ($request->filled('status') && $request->status !== 'all') {
+            $params['status'] = $request->status;
+        }
+        
+        if ($request->filled('search')) {
+            $params['search'] = $request->search;
+        }
+        
+        if ($request->filled('start_date')) {
+            $params['start_date'] = $request->start_date;
+        }
+        
+        if ($request->filled('end_date')) {
+            $params['end_date'] = $request->end_date;
+        }
+        
+        if ($request->has('perpage')) {
+            $params['paginate'] = 'true';
+            $params['per_page'] = $request->perpage;
+        }
+        
+        return $params;
+    }
+    
+    private function formatPesananList(array $pesanan): array
+    {
+        return array_map(function ($item) {
+            $totalHarga = array_sum(array_column($item['detailPesanans'] ?? [], 'total_harga'));
+            $firstDetail = $item['detailPesanans'][0] ?? null;
+            $produkNama = $firstDetail['custom']['item']['nama_item'] ?? 'Produk tidak diketahui';
+            
+            return [
+                'id' => $item['id'],
+                'tanggal' => date('Y-m-d', strtotime($item['tanggal_dipesan'] ?? now())),
+                'pelanggan' => $item['user']['nama'] ?? 'Unknown',
+                'status' => $item['status'],
+                'metode' => $item['metode_pengambilan'] === 'ambil' ? 'Ambil di Tempat' : 'Dikirim',
+                'produk' => $produkNama,
+                'total' => $totalHarga,
+                'detail_pesanans' => $item['detailPesanans']
+            ];
+        }, $pesanan);
+    }
+    
+    private function formatPesananDetail(array $pesanan): array
+    {
+        $formatted = [
+            'id' => $pesanan['id'],
+            'tanggal' => date('Y-m-d', strtotime($pesanan['tanggal_dipesan'] ?? now())),
+            'pelanggan' => $pesanan['user']['nama'] ?? 'Unknown',
+            'pelanggan_id' => $pesanan['user']['id'] ?? null,
+            'status' => $pesanan['status'],
+            'metode' => $pesanan['metode_pengambilan'] === 'ambil' ? 'Ambil di Tempat' : 'Dikirim',
+            'alamat' => $this->getAlamat($pesanan),
+            'total' => array_sum(array_column($pesanan['detailPesanans'] ?? [], 'total_harga')),
+            'estimasi_selesai' => $this->getEstimasiSelesai($pesanan),
+            'dengan_jasa_edit' => $this->hasJasaEdit($pesanan),
+            'catatan' => $pesanan['catatan'] ?? 'Tidak ada catatan',
+            'produk_items' => $this->formatProdukItems($pesanan['detailPesanans'] ?? [])
+        ];
+        
+        return $formatted;
+    }
+    
+    private function getAlamat(array $pesanan): string
+    {
+        $alamats = $pesanan['user']['alamats'] ?? [];
+        return !empty($alamats) ? $alamats[0]['alamat_lengkap'] : 'Belum ada alamat';
+    }
+    
+    private function getEstimasiSelesai(array $pesanan): string
+    {
+        if (!isset($pesanan['estimasi_waktu'])) {
+            return 'Belum ditentukan';
+        }
+        
+        return date('Y-m-d', strtotime('+' . $pesanan['estimasi_waktu'] . ' days'));
+    }
+    
+    private function hasJasaEdit(array $pesanan): bool
+    {
+        $details = $pesanan['detailPesanans'] ?? [];
+        return count(array_filter($details, fn($d) => $d['tipe_desain'] === 'dibuatkan')) > 0;
+    }
+    
+    private function formatProdukItems(array $detailPesanans): array
+    {
+        return array_map(function ($detail) {
+            $custom = $detail['custom'] ?? [];
+            $item = $custom['item'] ?? null;
+            $ukuran = $custom['ukuran'] ?? null;
+            $bahan = $custom['bahan'] ?? null;
+            $jenis = $custom['jenis'] ?? null;
+            
+            return [
+                'id' => $detail['id'],
+                'nama' => $item ? $item['nama_item'] : 'Produk tidak diketahui',
+                'bahan' => $bahan ? $bahan['nama_bahan'] : 'Unknown',
+                'ukuran' => $ukuran ? $ukuran['size'] : 'Unknown',
+                'jumlah' => $detail['jumlah'],
+                'harga_satuan' => $custom ? $custom['harga'] : 0,
+                'subtotal' => $detail['total_harga'],
+                'desain_customer' => $detail['upload_desain'] ?? null,
+                'desain_final' => $detail['desain_revisi'] ?? null,
+                'detail' => [
+                    'jenis' => $jenis ? $jenis['kategori'] : 'Unknown',
+                    'gambar' => $item && $item['gambar'] ? $item['gambar'] : null,
+                    'catatan' => $detail['catatan'] ?? 'Tidak ada catatan khusus.'
+                ]
+            ];
+        }, $detailPesanans);
+    }
+    
+    private function extractPagination(array $response): array
+    {
+        if (!isset($response['data']['data'])) {
+            return ['current_page' => 1, 'last_page' => 1, 'total' => count($response['data'] ?? [])];
+        }
+        
+        return [
+            'current_page' => $response['data']['current_page'] ?? 1,
+            'last_page' => $response['data']['last_page'] ?? 1,
+            'per_page' => $response['data']['per_page'] ?? 10,
+            'total' => $response['data']['total'] ?? 0
+        ];
+    }
+    
+    private function getStatusOptions(): array
+    {
+        return [
             'Pemesanan' => 'Pemesanan',
             'Dikonfirmasi' => 'Dikonfirmasi',
             'Sedang Diproses' => 'Sedang Diproses',
@@ -180,501 +472,42 @@ class PesananController extends Controller
             'Selesai' => 'Selesai',
             'Dibatalkan' => 'Dibatalkan'
         ];
-        
-        return view('admin.pesanan.show', [
-            'pesanan' => $pesananFormatted,
-            'statusList' => $statusList,
-            'operators' => \App\Models\Operator::where('status', 'aktif')->get(),
-            'mesins' => \App\Models\Mesin::where('status', 'aktif')->get()
-        ]);
     }
     
-    /**
-     * Konfirmasi pesanan - halaman form
-     */
-    public function konfirmasi($id)
+    private function generateDesainFileName($pesananId, $produkId, $tipe, $file): string
     {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Pemesanan') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan ini tidak dalam status Pemesanan');
-        }
-        
-        return view('admin.pesanan.konfirmasi', ['pesanan' => $pesanan]);
+        return 'desain_' . $tipe . '_pesanan_' . $pesananId . '_produk_' . $produkId . '_' . time() . '.' . $file->getClientOriginalExtension();
     }
     
-    /**
-     * Proses konfirmasi pesanan
-     */
-    public function prosesKonfirmasi(Request $request, $id)
+    private function confirmAction($id, $viewAction, $apiEndpoint)
     {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Pemesanan') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan ini tidak dalam status Pemesanan');
-        }
-        
-        $validator = Validator::make($request->all(), [
-            'catatan' => 'nullable|string|max:255'
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-        
-        // Update status pesanan dan admin_id
-        $pesanan->status = 'Dikonfirmasi';
-        $pesanan->admin_id = Auth::id();
-        
-        if ($request->has('catatan') && !empty($request->catatan)) {
-            $pesanan->catatan = $request->catatan;
-        }
-        
-        $pesanan->save();
-        
-        return redirect()->route('admin.pesanan.show', $id)
-            ->with('success', 'Pesanan berhasil dikonfirmasi');
-    }
-    
-    /**
-     * Halaman proses print
-     */
-    public function proses($id)
-    {
-        $pesanan = Pesanan::with('detailPesanans.custom.item')->find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Dikonfirmasi' && $pesanan->status !== 'Sedang Diproses') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan ini tidak dalam status yang valid untuk diproses');
-        }
-        
-        $operators = \App\Models\Operator::where('status', 'aktif')->get();
-        $mesins = \App\Models\Mesin::where('status', 'aktif')->get();
-        
-        return view('admin.pesanan.proses', [
-            'pesanan' => $pesanan,
-            'operators' => $operators,
-            'mesins' => $mesins
-        ]);
-    }
-    
-    /**
-     * Proses cetak pesanan
-     */
-    public function prosesPrint(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'operator_id' => 'required|exists:operators,id',
-            'mesin_id' => 'required|exists:mesins,id',
-            'detail_pesanan_id' => 'nullable|exists:detail_pesanans,id',
-            'catatan' => 'nullable|string|max:255'
-        ]);
-        
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-        
-        $pesanan = Pesanan::with('detailPesanans')->find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        // Jika detail_pesanan_id kosong, proses semua detail pesanan
-        if (empty($request->detail_pesanan_id)) {
-            foreach ($pesanan->detailPesanans as $detail) {
-                // Cek apakah detail ini sudah memiliki proses
-                $existingProcess = ProsesPesanan::where('detail_pesanan_id', $detail->id)->first();
-                if (!$existingProcess) {
-                    // Buat proses baru
-                    $prosesPesanan = new ProsesPesanan();
-                    $prosesPesanan->detail_pesanan_id = $detail->id;
-                    $prosesPesanan->operator_id = $request->operator_id;
-                    $prosesPesanan->mesin_id = $request->mesin_id;
-                    $prosesPesanan->waktu_mulai = now();
-                    $prosesPesanan->status_proses = 'Ditugaskan';
-                    
-                    if ($request->has('catatan')) {
-                        $prosesPesanan->catatan = $request->catatan;
-                    }
-                    
-                    $prosesPesanan->save();
-                }
-            }
-        } else {
-            // Proses hanya detail yang dipilih
-            $detail = DetailPesanan::find($request->detail_pesanan_id);
+        try {
+            $pesanan = $this->callApi('GET', "/pesanan/{$id}")['data'];
             
-            if (!$detail || $detail->pesanan_id != $pesanan->id) {
-                return redirect()->back()
-                    ->with('error', 'Detail pesanan tidak valid');
+            $statusMap = [
+                'confirm-pickup' => 'Menunggu Pengambilan',
+                'confirm-delivery' => 'Sedang Dikirim'
+            ];
+            
+            if (!isset($statusMap[$viewAction]) || $pesanan['status'] !== $statusMap[$viewAction]) {
+                return redirect()->route('admin.pesanan.show', $id)
+                    ->with('error', 'Pesanan tidak dapat diproses untuk tindakan ini');
             }
             
-            // Cek apakah detail ini sudah memiliki proses
-                            $existingProcess = ProsesPesanan::where('detail_pesanan_id', $detail->id)->first();
-            if (!$existingProcess) {
-                // Buat proses baru
-                $prosesPesanan = new ProsesPesanan();
-                $prosesPesanan->detail_pesanan_id = $detail->id;
-                $prosesPesanan->operator_id = $request->operator_id;
-                $prosesPesanan->mesin_id = $request->mesin_id;
-                $prosesPesanan->waktu_mulai = now();
-                $prosesPesanan->status_proses = 'Ditugaskan';
-                
-                if ($request->has('catatan')) {
-                    $prosesPesanan->catatan = $request->catatan;
-                }
-                
-                $prosesPesanan->save();
-            } else {
-                return redirect()->back()
-                    ->with('error', 'Detail pesanan ini sudah memiliki proses');
-            }
-        }
-        
-        // Update status pesanan menjadi "Sedang Diproses" jika belum
-        if ($pesanan->status !== 'Sedang Diproses') {
-            $pesanan->status = 'Sedang Diproses';
-            $pesanan->save();
-        }
-        
-        return redirect()->route('admin.pesanan.show', $id)
-            ->with('success', 'Pesanan berhasil masuk proses cetak');
-    }
-    
-    /**
-     * Halaman konfirmasi pengiriman
-     */
-    public function kirim($id)
-    {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Sedang Diproses' || $pesanan->metode_pengambilan !== 'antar') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan ini tidak dalam status yang valid untuk pengiriman');
-        }
-        
-        return view('admin.pesanan.kirim', ['pesanan' => $pesanan]);
-    }
-    
-    /**
-     * Proses konfirmasi pengiriman
-     */
-    public function prosesKirim(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'no_resi' => 'nullable|string|max:50',
-            'catatan' => 'nullable|string|max:255'
-        ]);
-        
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-        
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Sedang Diproses') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan tidak dalam status Sedang Diproses');
-        }
-        
-        // Update status pesanan
-        $pesanan->status = 'Sedang Dikirim';
-        
-        // Simpan no resi dan catatan
-        if ($request->has('no_resi') && !empty($request->no_resi)) {
-            $pesanan->catatan = $pesanan->catatan 
-                ? $pesanan->catatan . "\n\nNo. Resi: " . $request->no_resi
-                : "No. Resi: " . $request->no_resi;
-        }
-        
-        if ($request->has('catatan') && !empty($request->catatan)) {
-            $pesanan->catatan = $pesanan->catatan 
-                ? $pesanan->catatan . "\n\nCatatan pengiriman: " . $request->catatan
-                : "Catatan pengiriman: " . $request->catatan;
-        }
-        
-        $pesanan->save();
-        
-        return redirect()->route('admin.pesanan.show', $id)
-            ->with('success', 'Pesanan berhasil dikirim');
-    }
-    
-    /**
-     * Konfirmasi pengambilan pesanan
-     */
-    public function confirmPickup($id)
-    {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Menunggu Pengambilan') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan tidak dalam status Menunggu Pengambilan');
-        }
-        
-        // Update status pesanan
-        $pesanan->status = 'Selesai';
-        $pesanan->save();
-        
-        return redirect()->route('admin.pesanan.index')
-            ->with('success', 'Pengambilan pesanan berhasil dikonfirmasi');
-    }
-    
-    /**
-     * Konfirmasi penerimaan pesanan
-     */
-    public function confirmDelivery($id)
-    {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status !== 'Sedang Dikirim') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan tidak dalam status Sedang Dikirim');
-        }
-        
-        // Update status pesanan
-        $pesanan->status = 'Selesai';
-        $pesanan->save();
-        
-        return redirect()->route('admin.pesanan.index')
-            ->with('success', 'Penerimaan pesanan berhasil dikonfirmasi');
-    }
-    
-    /**
-     * Batalkan pesanan
-     */
-    public function cancel(Request $request, $id)
-    {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        if ($pesanan->status == 'Selesai' || $pesanan->status == 'Dibatalkan') {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Pesanan ini tidak dapat dibatalkan');
-        }
-        
-        // Update status pesanan
-        $pesanan->status = 'Dibatalkan';
-        
-        if ($request->has('alasan') && !empty($request->alasan)) {
-            $pesanan->catatan = $pesanan->catatan 
-                ? $pesanan->catatan . "\n\nDibatalkan dengan alasan: " . $request->alasan
-                : "Dibatalkan dengan alasan: " . $request->alasan;
-        } else {
-            $pesanan->catatan = $pesanan->catatan 
-                ? $pesanan->catatan . "\n\nPesanan dibatalkan oleh admin"
-                : "Pesanan dibatalkan oleh admin";
-        }
-        
-        $pesanan->save();
-        
-        return redirect()->route('admin.pesanan.index')
-            ->with('success', 'Pesanan berhasil dibatalkan');
-    }
-    
-    /**
-     * Mengubah status pesanan.
-     */
-    public function updateStatus(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|string|in:Pemesanan,Dikonfirmasi,Sedang Diproses,Menunggu Pengambilan,Sedang Dikirim,Selesai,Dibatalkan',
-            'catatan' => 'nullable|string'
-        ]);
-
-        if ($validator->fails()) {
-            return back()->with('error', $validator->errors()->first());
-        }
-
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return back()->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        // Update status
-        $oldStatus = $pesanan->status;
-        $pesanan->status = $request->status;
-        
-        // Set admin_id jika status berubah menjadi Dikonfirmasi
-        if ($request->status === 'Dikonfirmasi' && $oldStatus !== 'Dikonfirmasi') {
-            $pesanan->admin_id = Auth::id();
-        }
-        
-        // Update catatan jika diberikan
-        if ($request->has('catatan') && !empty($request->catatan)) {
-            $pesanan->catatan = $request->catatan;
-        }
-        
-        $pesanan->save();
-        
-        return redirect()->route('admin.pesanan.show', $id)
-            ->with('success', 'Status pesanan berhasil diperbarui');
-    }
-    
-    /**
-     * Menampilkan detail produk dalam pesanan
-     */
-    public function getDetailProduk($id, $produkId)
-    {
-        $pesanan = Pesanan::find($id);
-        
-        if (!$pesanan) {
-            return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Pesanan tidak ditemukan');
-        }
-        
-        $detailPesanan = DetailPesanan::with([
-                'custom.item', 
-                'custom.ukuran', 
-                'custom.bahan', 
-                'custom.jenis'
-            ])
-            ->where('id', $produkId)
-            ->where('pesanan_id', $id)
-            ->first();
-        
-        if (!$detailPesanan) {
-            return redirect()->route('admin.pesanan.show', $id)
-                ->with('error', 'Detail pesanan tidak ditemukan');
-        }
-        
-        // Format data untuk view
-        $produk = [
-            'id' => $detailPesanan->id,
-            'nama' => $detailPesanan->custom->item->nama_item ?? 'Produk tidak diketahui',
-            'jenis' => $detailPesanan->custom->jenis->kategori ?? 'Unknown',
-            'bahan' => $detailPesanan->custom->bahan->nama_bahan ?? 'Unknown',
-            'ukuran' => $detailPesanan->custom->ukuran->size ?? 'Unknown',
-            'jumlah' => $detailPesanan->jumlah,
-            'harga' => $detailPesanan->custom->harga ?? 0,
-            'subtotal' => $detailPesanan->total_harga,
-            'tipe_desain' => $detailPesanan->tipe_desain,
-            'biaya_desain' => $detailPesanan->biaya_jasa ?? 0,
-            'catatan' => $detailPesanan->catatan ?? 'Tidak ada catatan khusus',
-            'gambar_url' => $detailPesanan->custom->item && $detailPesanan->custom->item->gambar 
-                ? asset('storage/' . $detailPesanan->custom->item->gambar) 
-                : asset('images/no-image.png'),
-            'desain_customer_url' => $detailPesanan->upload_desain 
-                ? asset('storage/desain/' . $detailPesanan->upload_desain) 
-                : null,
-            'desain_final_url' => $detailPesanan->desain_revisi 
-                ? asset('storage/desain/' . $detailPesanan->desain_revisi) 
-                : null,
-        ];
-        
-        return view('admin.pesanan.detail-produk', [
-            'pesanan' => $pesanan,
-            'produk' => $produk,
-            'alamat' => $pesanan->user && $pesanan->user->alamats->isNotEmpty() 
-                ? $pesanan->user->alamats->first()->alamat_lengkap 
-                : 'Belum ada alamat',
-            'pelanggan' => $pesanan->user
-        ]);
-    }
-    
-    /**
-     * Upload desain untuk produk dalam pesanan
-     */
-    public function uploadDesain(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'desain' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'produk_id' => 'required|integer',
-            'tipe' => 'required|in:customer,final',
-            'catatan' => 'nullable|string|max:255',
-        ]);
-        
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-        
-        $detailPesanan = DetailPesanan::where('id', $request->produk_id)
-            ->where('pesanan_id', $id)
-            ->first();
-        
-        if (!$detailPesanan) {
-            return redirect()->back()
-                ->with('error', 'Detail pesanan tidak ditemukan');
-        }
-        
-        // Upload file
-        if ($request->hasFile('desain') && $request->file('desain')->isValid()) {
-            $file = $request->file('desain');
-            $fileName = 'desain_' . $request->tipe . '_pesanan_' . $id . '_produk_' . $request->produk_id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $this->callApi('POST', str_replace('{id}', $id, $apiEndpoint));
             
-            // Simpan file
-            $path = $file->storeAs('public/desain', $fileName);
-            
-            // Update detail pesanan
-            if ($request->tipe === 'customer') {
-                $detailPesanan->upload_desain = $fileName;
-            } else {
-                $detailPesanan->desain_revisi = $fileName;
-            }
-            
-            // Update catatan jika diberikan
-            if ($request->has('catatan') && !empty($request->catatan)) {
-                $detailPesanan->catatan = $request->catatan;
-            }
-            
-            $detailPesanan->save();
-            
-            return redirect()->route('admin.pesanan.detail-produk', ['id' => $id, 'produk_id' => $request->produk_id])
-                ->with('success', 'Desain berhasil diupload');
+            return redirect()->route('admin.pesanan.index')
+                ->with('success', 'Tindakan berhasil dilakukan');
+        } catch (\Exception $e) {
+            return $this->handleException($e, 'admin.pesanan.show', $id);
         }
+    }
+    
+    private function handleException(\Exception $e, string $route, $params = null)
+    {
+        Log::error($e->getMessage());
         
-        return redirect()->back()
-            ->with('error', 'Gagal mengupload desain');
+        $url = is_array($params) ? route($route, $params) : route($route, $params);
+        return redirect($url)->with('error', $e->getMessage());
     }
 }

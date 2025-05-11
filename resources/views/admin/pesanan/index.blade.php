@@ -29,6 +29,14 @@
         background-color: #B3E5FC;
         color: #0277BD;
     }
+    .status-selesai {
+        background-color: #C8E6C9;
+        color: #2E7D32;
+    }
+    .status-dibatalkan {
+        background-color: #FFCDD2;
+        color: #C62828;
+    }
     .clickable {
         cursor: pointer;
     }
@@ -48,6 +56,12 @@
         justify-content: center;
         border-radius: 4px;
         margin-right: 5px;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
     }
 </style>
 @endsection
@@ -79,37 +93,71 @@
     </div>
     @endif
 
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <form action="{{ route('admin.pesanan.index') }}" method="GET">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Cari</label>
+                    <input type="text" class="form-control" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="ID Pesanan atau Pelanggan...">
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Semua Status</option>
+                        <option value="Pemesanan" {{ ($filters['status'] ?? '') == 'Pemesanan' ? 'selected' : '' }}>Pemesanan</option>
+                        <option value="Dikonfirmasi" {{ ($filters['status'] ?? '') == 'Dikonfirmasi' ? 'selected' : '' }}>Dikonfirmasi</option>
+                        <option value="Sedang Diproses" {{ ($filters['status'] ?? '') == 'Sedang Diproses' ? 'selected' : '' }}>Sedang Diproses</option>
+                        <option value="Menunggu Pengambilan" {{ ($filters['status'] ?? '') == 'Menunggu Pengambilan' ? 'selected' : '' }}>Menunggu Pengambilan</option>
+                        <option value="Sedang Dikirim" {{ ($filters['status'] ?? '') == 'Sedang Dikirim' ? 'selected' : '' }}>Sedang Dikirim</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="start_date" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" name="start_date" value="{{ $filters['start_date'] ?? '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="end_date" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" name="end_date" value="{{ $filters['end_date'] ?? '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="perpage" class="form-label">Tampilkan</label>
+                    <select name="perpage" class="form-select">
+                        <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 per halaman</option>
+                        <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25 per halaman</option>
+                        <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 per halaman</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary d-block w-100">
+                        <i class="fas fa-search"></i> Cari
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div class="card shadow mb-4">
         <div class="card-header py-3 bg-white">
             <div class="row align-items-center">
-                <div class="col-md-6 mb-2 mb-md-0">
-                    <form action="{{ route('admin.pesanan.index') }}" method="GET">
-                        <div class="input-group search-box">
-                            <input type="text" class="form-control" placeholder="Cari ID Pesanan atau Pelanggan..." name="search" value="{{ request('search') }}">
-                            <button class="btn btn-outline-secondary" type="submit">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
+                <div class="col">
+                    <h6 class="m-0 font-weight-bold text-primary">Pesanan Aktif</h6>
                 </div>
-                <div class="col-md-3 mb-2 mb-md-0">
-                    <form action="{{ route('admin.pesanan.index') }}" method="GET" id="perpage-form">
-                        <input type="hidden" name="search" value="{{ request('search') }}">
-                        <input type="hidden" name="status" value="{{ request('status', 'all') }}">
-                        <select class="form-select" name="perpage" onchange="this.form.submit()">
-                            @php $perPage = $perPage ?? 10; @endphp
-                            <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 per halaman</option>
-                            <option value="25" {{ $perPage == 25 ? 'selected' : '' }}>25 per halaman</option>
-                            <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 per halaman</option>
-                            <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100 per halaman</option>
-                        </select>
-                    </form>
-                </div>
-                <div class="col-md-3 text-end">
+                <div class="col-auto">
                     <div class="btn-group">
-                        <a href="{{ route('admin.pesanan.index', ['status' => 'all', 'perpage' => request('perpage')]) }}" class="btn btn-sm btn-outline-secondary {{ request('status') == 'all' || !request('status') ? 'active' : '' }}">Semua</a>
-                        <a href="{{ route('admin.pesanan.index', ['status' => 'Pemesanan', 'perpage' => request('perpage')]) }}" class="btn btn-sm btn-outline-warning {{ request('status') == 'Pemesanan' ? 'active' : '' }}">Baru</a>
-                        <a href="{{ route('admin.pesanan.index', ['status' => 'Sedang Diproses', 'perpage' => request('perpage')]) }}" class="btn btn-sm btn-outline-info {{ request('status') == 'Sedang Diproses' ? 'active' : '' }}">Proses</a>
+                        <a href="{{ route('admin.pesanan.index', ['status' => 'all', 'perpage' => $perPage]) }}" 
+                           class="btn btn-sm btn-outline-secondary {{ ($filters['status'] ?? 'all') == 'all' ? 'active' : '' }}">
+                            Semua
+                        </a>
+                        <a href="{{ route('admin.pesanan.index', ['status' => 'Pemesanan', 'perpage' => $perPage]) }}" 
+                           class="btn btn-sm btn-outline-warning {{ ($filters['status'] ?? '') == 'Pemesanan' ? 'active' : '' }}">
+                            Baru
+                        </a>
+                        <a href="{{ route('admin.pesanan.index', ['status' => 'Sedang Diproses', 'perpage' => $perPage]) }}" 
+                           class="btn btn-sm btn-outline-info {{ ($filters['status'] ?? '') == 'Sedang Diproses' ? 'active' : '' }}">
+                            Proses
+                        </a>
                     </div>
                 </div>
             </div>
@@ -131,7 +179,6 @@
                     </thead>
                     <tbody>
                         @forelse($pesanan as $p)
-                        @if($p['status'] != 'Selesai' && $p['status'] != 'Dibatalkan')
                         <tr>
                             <td class="ps-3">#{{ $p['id'] }}</td>
                             <td>{{ $p['tanggal'] }}</td>
@@ -150,6 +197,10 @@
                                             $statusClass = 'status-pengambilan'; break;
                                         case 'Sedang Dikirim':
                                             $statusClass = 'status-dikirim'; break;
+                                        case 'Selesai':
+                                            $statusClass = 'status-selesai'; break;
+                                        case 'Dibatalkan':
+                                            $statusClass = 'status-dibatalkan'; break;
                                         default:
                                             $statusClass = ''; break;
                                     }
@@ -177,14 +228,13 @@
                                     </a>
                                     @endif
                                     
-                                    @if($p['status'] == 'Menunggu Pengambilan')
+                                    @if($p['status'] == 'Menunggu Pengambilan' && $p['metode'] == 'Ambil di Tempat')
                                     <form action="{{ route('admin.pesanan.confirm-pickup', $p['id']) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <input type="hidden" name="pesanan_id" value="{{ $p['id'] }}">
-                                    <button type="submit" class="btn btn-sm btn-success action-btn" title="Konfirmasi Pengambilan" onclick="return confirm('Konfirmasi pengambilan pesanan?')">
-                                        <i class="fas fa-handshake"></i>
-                                    </button>
-                                </form>
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success action-btn" title="Konfirmasi Pengambilan" onclick="return confirm('Konfirmasi pengambilan pesanan?')">
+                                            <i class="fas fa-handshake"></i>
+                                        </button>
+                                    </form>
                                     @endif
                                     
                                     @if($p['status'] == 'Sedang Diproses' && $p['metode'] == 'Dikirim')
@@ -196,24 +246,24 @@
                                     @if($p['status'] == 'Sedang Dikirim')
                                     <form action="{{ route('admin.pesanan.confirm-delivery', $p['id']) }}" method="POST" class="d-inline">
                                         @csrf
-                                        <input type="hidden" name="pesanan_id" value="{{ $p['id'] }}">
                                         <button type="submit" class="btn btn-sm btn-success action-btn" title="Konfirmasi Penerimaan" onclick="return confirm('Konfirmasi penerimaan pesanan?')">
                                             <i class="fas fa-box"></i>
                                         </button>
                                     </form>
                                     @endif
                                     
+                                    @if(in_array($p['status'], ['Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim']))
                                     <form action="{{ route('admin.pesanan.cancel', $p['id']) }}" method="POST" class="d-inline">
                                         @csrf
-                                        <input type="hidden" name="pesanan_id" value="{{ $p['id'] }}">
-                                        <button type="submit" class="btn btn-sm btn-danger action-btn" title="Batalkan Pesanan" onclick="return confirm('PERHATIAN! Apakah Anda yakin ingin membatalkan pesanan?')">
+                                        <input type="hidden" name="alasan" value="Dibatalkan oleh admin">
+                                        <button type="submit" class="btn btn-sm btn-danger action-btn" title="Batalkan Pesanan" onclick="return confirm('PERHATIAN! Apakah Anda yakin ingin MEMBATALKAN pesanan?')">
                                             <i class="fas fa-times"></i>
                                         </button>
                                     </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
-                        @endif
                         @empty
                         <tr>
                             <td colspan="8" class="text-center py-4">Tidak ada data pesanan</td>
@@ -228,7 +278,7 @@
         <div class="card-footer bg-white">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="text-muted">
-                    Menampilkan {{ $pesanan->count() }} dari {{ $pagination['total'] }} pesanan
+                    Menampilkan {{ count($pesanan) }} dari {{ $pagination['total'] }} pesanan
                 </div>
                 
                 <nav aria-label="Page navigation">
@@ -240,7 +290,7 @@
                             </li>
                         @else
                             <li class="page-item">
-                                <a class="page-link" href="{{ url()->current() }}?page={{ $pagination['current_page']-1 }}&perpage={{ $perPage }}&status={{ request('status', 'all') }}&search={{ request('search', '') }}" rel="prev">&laquo;</a>
+                                <a class="page-link" href="{{ url()->current() }}?page={{ $pagination['current_page']-1 }}&perpage={{ $perPage }}&status={{ $filters['status'] ?? '' }}&search={{ $filters['search'] ?? '' }}" rel="prev">&laquo;</a>
                             </li>
                         @endif
 
@@ -252,7 +302,7 @@
                                 </li>
                             @else
                                 <li class="page-item">
-                                    <a class="page-link" href="{{ url()->current() }}?page={{ $i }}&perpage={{ $perPage }}&status={{ request('status', 'all') }}&search={{ request('search', '') }}">{{ $i }}</a>
+                                    <a class="page-link" href="{{ url()->current() }}?page={{ $i }}&perpage={{ $perPage }}&status={{ $filters['status'] ?? '' }}&search={{ $filters['search'] ?? '' }}">{{ $i }}</a>
                                 </li>
                             @endif
                         @endfor
@@ -260,7 +310,7 @@
                         {{-- Next Page Link --}}
                         @if($pagination['current_page'] < $pagination['last_page'])
                             <li class="page-item">
-                                <a class="page-link" href="{{ url()->current() }}?page={{ $pagination['current_page']+1 }}&perpage={{ $perPage }}&status={{ request('status', 'all') }}&search={{ request('search', '') }}" rel="next">&raquo;</a>
+                                <a class="page-link" href="{{ url()->current() }}?page={{ $pagination['current_page']+1 }}&perpage={{ $perPage }}&status={{ $filters['status'] ?? '' }}&search={{ $filters['search'] ?? '' }}" rel="next">&raquo;</a>
                             </li>
                         @else
                             <li class="page-item disabled">
@@ -274,4 +324,21 @@
         @endif
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+    $(document).ready(function() {
+        // Auto-submit form on select change for perpage
+        $('select[name="perpage"]').change(function() {
+            $(this).closest('form').submit();
+        });
+        
+        // Highlight active filter
+        $('.filter-btn').click(function() {
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+        });
+    });
+</script>
 @endsection
