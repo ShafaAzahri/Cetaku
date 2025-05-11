@@ -72,31 +72,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::delete('/biaya-desains/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desains.destroy');
     
     Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
-    Route::get('/pesanan/{id}', [PesananController::class, 'show'])->name('pesanan.show')->where('id', '[0-9]+');
-    
-    // Konfirmasi
-    Route::get('/pesanan/{id}/konfirmasi', [PesananController::class, 'konfirmasi'])->name('pesanan.konfirmasi');
-    Route::post('/pesanan/{id}/konfirmasi', [PesananController::class, 'prosesKonfirmasi'])->name('pesanan.proses-konfirmasi');
-    
-    // Proses
-    Route::get('/pesanan/{id}/proses', [PesananController::class, 'proses'])->name('pesanan.proses');
-    Route::post('/pesanan/{id}/process-print', [PesananController::class, 'prosesPrint'])->name('pesanan.process-print');
-    
-    // Pengiriman
-    Route::get('/pesanan/{id}/kirim', [PesananController::class, 'kirim'])->name('pesanan.kirim');
-    Route::post('/pesanan/{id}/kirim', [PesananController::class, 'prosesKirim'])->name('pesanan.proses-kirim');
-    
-    // Update status
-    Route::post('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.update-status');
-    
-    // Konfirmasi tindakan
-    Route::post('/pesanan/{id}/confirm-pickup', [PesananController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
-    Route::post('/pesanan/{id}/confirm-delivery', [PesananController::class, 'confirmDelivery'])->name('pesanan.confirm-delivery');
-    Route::post('/pesanan/{id}/cancel', [PesananController::class, 'cancel'])->name('pesanan.cancel');
-    
-    // Detail produk
-    Route::get('/pesanan/{id}/produk/{produk_id}', [PesananController::class, 'getDetailProduk'])->name('pesanan.detail-produk');
-    Route::post('/pesanan/{id}/upload', [PesananController::class, 'uploadDesain'])->name('pesanan.upload');
 });
 
 // Route untuk super admin
