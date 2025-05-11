@@ -7,6 +7,9 @@ use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\Admin\ProsesPesananController;
 use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\PesananManagerController;
+use App\Http\Controllers\Admin\OperatorController;
+use App\Http\Controllers\Admin\MesinController;
+use App\Http\Controllers\Admin\ProsesProduksiController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\WelcomeController;
 
@@ -82,6 +85,22 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::post('/pesanan/{id}/confirm-pickup', [PesananManagerController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
     Route::post('/pesanan/{id}/upload-desain', [PesananManagerController::class, 'uploadDesain'])->name('pesanan.upload-desain');
     Route::post('/pesanan/{id}/cancel', [PesananManagerController::class, 'cancelOrder'])->name('pesanan.cancel');
+
+    // Operator Management
+    Route::get('/operators', [OperatorController::class, 'index'])->name('operators.index');
+    Route::get('/operators/{id}', [OperatorController::class, 'show'])->name('operators.show');
+    Route::put('/operators/{id}/status', [OperatorController::class, 'updateStatus'])->name('operators.update-status');
+    
+    // Mesin Management
+    Route::get('/mesins', [MesinController::class, 'index'])->name('mesins.index');
+    Route::get('/mesins/{id}', [MesinController::class, 'show'])->name('mesins.show');
+    Route::put('/mesins/{id}/status', [MesinController::class, 'updateStatus'])->name('mesins.update-status');
+    
+    // Proses Produksi Management
+    Route::get('/proses-produksi', [ProsesProduksiController::class, 'index'])->name('proses-produksi.index');
+    Route::get('/proses-produksi/status/{status}', [ProsesProduksiController::class, 'showByStatus'])->name('proses-produksi.status');
+    Route::get('/proses-produksi/{id}', [ProsesProduksiController::class, 'show'])->name('proses-produksi.show');
+    Route::put('/proses-produksi/{id}/status', [ProsesProduksiController::class, 'updateStatus'])->name('proses-produksi.update-status');
 });
 
 // Route untuk super admin

@@ -69,7 +69,7 @@ class PesananManagerController extends Controller
     public function show($id)
     {
         try {
-            // Ambil detail pesanan dari API
+            // Ambil detail pesanan dari API (kode yang sudah ada)
             $response = $this->sendApiRequest('get', "/admin/pesanan/{$id}");
             
             if (!($response['success'] ?? false)) {
@@ -80,18 +80,30 @@ class PesananManagerController extends Controller
             $pesanan = $response['pesanan'];
             $statusOptions = $response['status_options'] ?? [];
             
-            // Ambil data mesin dan operator
+            // Ambil data mesin dan operator (kode yang sudah ada)
             $machineResponse = $this->sendApiRequest('get', '/admin/mesin/available');
             $operatorResponse = $this->sendApiRequest('get', '/admin/operators');
             
             $mesinList = ($machineResponse['success'] ?? false) ? $machineResponse['machines'] : [];
             $operatorList = ($operatorResponse['success'] ?? false) ? $operatorResponse['operators'] : [];
             
+            // HANYA Ambil biaya desain
+            $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
+            $biayaDesain = 0;
+            
+            if (($biayaDesainResponse['success'] ?? false) && 
+                isset($biayaDesainResponse['biaya_desains']) && 
+                count($biayaDesainResponse['biaya_desains']) > 0) {
+                // Ambil data biaya desain pertama
+                $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
+            }
+            
             return view('admin.pesanan.show', compact(
                 'pesanan',
                 'statusOptions',
                 'mesinList',
-                'operatorList'
+                'operatorList',
+                'biayaDesain'
             ));
         } catch (\Exception $e) {
             Log::error('Error pada halaman detail pesanan: ' . $e->getMessage());

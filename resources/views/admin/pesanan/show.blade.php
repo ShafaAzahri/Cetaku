@@ -386,6 +386,16 @@
                                         <div class="info-value">{{ $detail['tipe_desain'] == 'sendiri' ? 'Upload Sendiri' : 'Dibuatkan' }}</div>
                                     </div>
                                     <div class="info-row">
+                                        <div class="info-label">Biaya Desain</div>
+                                        <div class="info-value">
+                                            @if($detail['tipe_desain'] == 'sendiri')
+                                                Rp 0
+                                            @else
+                                                Rp {{ number_format($detail['biaya_jasa'] ?? $default_biaya_desain ?? 20000, 0, ',', '.') }}
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="info-row">
                                         <div class="info-label">Harga Satuan</div>
                                         <div class="info-value">Rp {{ number_format($detail['custom']['harga'] ?? 80000, 0, ',', '.') }}</div>
                                     </div>
@@ -507,13 +517,25 @@
                 <div class="total-section">
                     @php
                         $subTotal = 0;
+                        $totalBiayaDesain = 0;
+                        
                         foreach ($pesanan['detail_pesanans'] ?? [] as $detail) {
-                            $subTotal += $detail['total_harga'] ?? 0;
+                            $hargaProduk = $detail['custom']['harga'] ?? 0;
+                            $jumlah = $detail['jumlah'] ?? 1;
+                            $subTotal += $hargaProduk * $jumlah;
+                            
+                            // Hitung biaya desain
+                            if($detail['tipe_desain'] == 'dibuatkan') {
+                                $totalBiayaDesain += $biayaDesain;
+                            }
                         }
-                        $ongkir = $pesanan['ekspedisi']['ongkos_kirim'] ?? 15000;
-                        $grandTotal = $subTotal + $ongkir;
+                        
+                        $ongkir = $pesanan['ekspedisi']['ongkos_kirim'] ?? 0;
+                        $grandTotal = $subTotal + $totalBiayaDesain + $ongkir;
                     @endphp
-                    <div class="subtotal">Subtotal: Rp {{ number_format($subTotal, 0, ',', '.') }}</div>
+                    
+                    <div class="subtotal">Subtotal Produk: Rp {{ number_format($subTotal, 0, ',', '.') }}</div>
+                    <div class="biaya-desain">Biaya Desain: Rp {{ number_format($totalBiayaDesain, 0, ',', '.') }}</div>
                     @if($pesanan['metode_pengambilan'] == 'antar')
                     <div class="ongkir">Ongkos Kirim: Rp {{ number_format($ongkir, 0, ',', '.') }}</div>
                     @endif
@@ -581,6 +603,12 @@
             <div class="detail-card">
                 <h5>Aksi Pesanan</h5>
                 
+                <!-- Tombol ini mungkin tidak ada atau tersembunyi -->
+                @if($pesanan['status'] == 'Dikonfirmasi')
+                <button type="button" class="action-btn btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#assignProductionModal">
+                    <i class="fas fa-tasks me-1"></i> Tugaskan Produksi
+                </button>
+                @endif
                 <!-- Selesaikan Produksi -->
                 @if($pesanan['status'] == 'Sedang Diproses')
                 <button type="button" class="action-btn btn-complete" data-bs-toggle="modal" data-bs-target="#completeProductionModal">

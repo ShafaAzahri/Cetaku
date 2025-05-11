@@ -29,7 +29,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{ route('admin.operators.index') }}" class="nav-link">
                 <i class="fas fa-user-tie"></i>
                 <span class="nav-text">Operator</span>
             </a>

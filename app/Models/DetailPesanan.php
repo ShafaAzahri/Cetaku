@@ -73,4 +73,5 @@ class DetailPesanan extends Model
     {
         return $this->hasOne(ProsesPesanan::class);
     }
+    
 }

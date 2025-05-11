@@ -9,6 +9,9 @@ use App\Http\Controllers\API\JenisApiController;
 use App\Http\Controllers\API\UkuranApiController;
 use App\Http\Controllers\API\BiayaDesainApiController;
 use App\Http\Controllers\API\PesananAdminController;
+use App\Http\Controllers\API\OperatorApiController;
+use App\Http\Controllers\API\MesinApiController;
+use App\Http\Controllers\API\ProsesOperatorMesinApi;
 
 /*
 |--------------------------------------------------------------------------
@@ -98,4 +101,22 @@ Route::middleware('api.admin')->group(function() {
     
     // Statistik
     Route::get('/admin/pesanan/statistics', [PesananAdminController::class, 'getStatistics']);
+    
+    // Operator API routes
+    Route::get('/operators', [OperatorApiController::class, 'index']);
+    Route::get('/operators/{id}', [OperatorApiController::class, 'show']);
+    Route::get('/operators/{id}/history', [OperatorApiController::class, 'getHistory']);
+    Route::put('/operators/{id}/status', [OperatorApiController::class, 'updateStatus']);
+    
+    // Mesin API routes
+    Route::get('/mesins', [MesinApiController::class, 'index']);
+    Route::get('/mesins/{id}', [MesinApiController::class, 'show']);
+    Route::get('/mesins/{id}/history', [MesinApiController::class, 'getHistory']);
+    Route::put('/mesins/{id}/status', [MesinApiController::class, 'updateStatus']);
+    
+    // Proses Operator & Mesin API routes
+    Route::get('/proses-produksi/aktif', [ProsesOperatorMesinApi::class, 'getActiveProcesses']);
+    Route::get('/proses-produksi/{id}', [ProsesOperatorMesinApi::class, 'show']);
+    Route::put('/proses-produksi/{id}/status', [ProsesOperatorMesinApi::class, 'updateStatus']);
+    Route::get('/proses-produksi/status/{status}', [ProsesOperatorMesinApi::class, 'getProcessesByStatus']);
 });
