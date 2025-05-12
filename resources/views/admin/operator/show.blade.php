@@ -211,24 +211,45 @@
                                         <div class="col-md-6">
                                             <h6 class="mb-3">Informasi Pesanan</h6>
                                             <div class="info-row">
-                                                <div class="info-label">Nomor Pesanan</div>
-                                                <div class="info-value">#{{ $detailPesanan['pesanan_id'] ?? '-' }}</div>
+                                                <div class="info-label">ID Pesanan</div>
+                                                <div class="info-value">
+                                                    #{{ data_get($operator, 'current_assignment.detail_pesanan.pesanan.id', '-') }}
+                                                </div>
                                             </div>
+                                            
                                             <div class="info-row">
                                                 <div class="info-label">Produk</div>
-                                                <div class="info-value">{{ $custom['item']['nama_item'] ?? '-' }}</div>
+                                                <div class="info-value">
+                                                    {{ data_get($operator, 'current_assignment.detail_pesanan.custom.item.nama_item', '-') }}
+                                                </div>
                                             </div>
+                                            
                                             <div class="info-row">
                                                 <div class="info-label">Bahan</div>
-                                                <div class="info-value">{{ $custom['bahan']['nama_bahan'] ?? '-' }}</div>
+                                                <div class="info-value">
+                                                    {{ data_get($operator, 'current_assignment.detail_pesanan.custom.bahan.nama_bahan', '-') }}
+                                                </div>
                                             </div>
+                                            
                                             <div class="info-row">
                                                 <div class="info-label">Ukuran</div>
-                                                <div class="info-value">{{ $custom['ukuran']['size'] ?? '-' }}</div>
+                                                <div class="info-value">
+                                                    {{ data_get($operator, 'current_assignment.detail_pesanan.custom.ukuran.size', '-') }}
+                                                </div>
                                             </div>
+                                            
+                                            <div class="info-row">
+                                                <div class="info-label">Jenis</div>
+                                                <div class="info-value">
+                                                    {{ data_get($operator, 'current_assignment.detail_pesanan.custom.jenis.kategori', '-') }}
+                                                </div>
+                                            </div>
+                                            
                                             <div class="info-row">
                                                 <div class="info-label">Jumlah</div>
-                                                <div class="info-value">{{ $detailPesanan['jumlah'] ?? '-' }} pcs</div>
+                                                <div class="info-value">
+                                                    {{ data_get($operator, 'current_assignment.detail_pesanan.jumlah', '-') }} pcs
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
@@ -260,10 +281,6 @@
                                     
                                     <div class="mt-3 pt-3 border-top">
                                         <div class="d-flex justify-content-between">
-                                            <a href="{{ route('admin.proses-produksi.show', $assignment['id']) }}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye me-1"></i> Detail Proses
-                                            </a>
-                                            
                                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
                                                 <i class="fas fa-edit me-1"></i> Update Status
                                             </button>

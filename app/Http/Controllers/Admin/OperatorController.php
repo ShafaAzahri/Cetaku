@@ -62,6 +62,13 @@ class OperatorController extends Controller
             
             $operator = $response['operator'] ?? [];
             
+            // Debug informasi pesanan
+            Log::debug('Data operator dari API', [
+                'operator_id' => $id,
+                'has_current_assignment' => isset($operator['current_assignment']),
+                'current_assignment_data' => $operator['current_assignment'] ?? 'Tidak ada'
+            ]);
+            
             // Ambil riwayat pekerjaan operator
             $historyResponse = $this->sendApiRequest('get', "/operators/{$id}/history");
             $history = ($historyResponse['success'] ?? false) 
@@ -78,7 +85,7 @@ class OperatorController extends Controller
                 ->with('error', 'Terjadi kesalahan saat memuat detail operator');
         }
     }
-    
+
     /**
      * Mengubah status operator
      */

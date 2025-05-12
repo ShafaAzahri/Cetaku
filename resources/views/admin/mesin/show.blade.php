@@ -244,10 +244,6 @@
                                     
                                     <div class="mt-3 pt-3 border-top">
                                         <div class="d-flex justify-content-between">
-                                            <a href="{{ route('admin.proses-produksi.show', $usage['id']) }}" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-eye me-1"></i> Detail Proses
-                                            </a>
-                                            
                                             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
                                                 <i class="fas fa-edit me-1"></i> Update Status
                                             </button>
