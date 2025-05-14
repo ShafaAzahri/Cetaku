@@ -120,3 +120,22 @@ Route::middleware('api.admin')->group(function() {
     Route::put('/proses-produksi/{id}/status', [ProsesOperatorMesinApi::class, 'updateStatus']);
     Route::get('/proses-produksi/status/{status}', [ProsesOperatorMesinApi::class, 'getProcessesByStatus']);
 });
+
+// Route untuk API Super Admin
+Route::middleware(['api.superadmin'])->prefix('superadmin')->group(function() {
+    // Admin Management Routes
+    Route::apiResource('admins', 'App\Http\Controllers\API\SuperAdmin\AdminManagementApiController');
+    Route::post('admins/{id}/reset-password', 'App\Http\Controllers\API\SuperAdmin\AdminManagementApiController@resetPassword');
+    
+    // User Management Routes
+    Route::apiResource('users', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController');
+    Route::post('users/{id}/reset-password', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController@resetPassword');
+    Route::get('users/{id}/order-history', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController@orderHistory');
+    
+    // Operator Management Routes
+    Route::apiResource('operators', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController');
+    Route::put('operators/{id}/status', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@updateStatus');
+    Route::get('operators/{id}/work-history', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@workHistory');
+
+    Route::get('dashboard/stats', 'App\Http\Controllers\API\SuperAdmin\DashboardApiController@getStats');
+});
