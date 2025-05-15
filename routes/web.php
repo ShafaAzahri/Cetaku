@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\WelcomeController;
 
 // Admin controllers
@@ -10,7 +10,6 @@ use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\PesananManagerController;
 use App\Http\Controllers\Admin\OperatorController as AdminOperatorController;
 use App\Http\Controllers\Admin\MesinController;
-use App\Http\Controllers\Admin\ProsesProduksiController;
 
 // Super Admin controllers
 use App\Http\Controllers\SuperAdmin\AdminController as SuperAdminController;
@@ -61,7 +60,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     
     // Item CRUD
     Route::post('/items', [ProductManagerController::class, 'storeItem'])->name('items.store');
-    Route::post('/items/{id}', [ProductManagerController::class, 'updateItem'])->name('items.update');
+    Route::put('/items/{id}', [ProductManagerController::class, 'updateItem'])->name('items.update');
     Route::delete('/items/{id}', [ProductManagerController::class, 'destroyItem'])->name('items.destroy');
     
     // Bahan CRUD
@@ -104,12 +103,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::get('/mesins', [MesinController::class, 'index'])->name('mesins.index');
     Route::get('/mesins/{id}', [MesinController::class, 'show'])->name('mesins.show');
     Route::put('/mesins/{id}/status', [MesinController::class, 'updateStatus'])->name('mesins.update-status');
-    
-    // Proses Produksi Management
-    Route::get('/proses-produksi', [ProsesProduksiController::class, 'index'])->name('proses-produksi.index');
-    Route::get('/proses-produksi/status/{status}', [ProsesProduksiController::class, 'showByStatus'])->name('proses-produksi.status');
-    Route::get('/proses-produksi/{id}', [ProsesProduksiController::class, 'show'])->name('proses-produksi.show');
-    Route::put('/proses-produksi/{id}/status', [ProsesProduksiController::class, 'updateStatus'])->name('proses-produksi.update-status');
 });
 
 // Super Admin specific routes
@@ -147,24 +140,3 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
     Route::put('/operator/{id}/status', [OperatorController::class, 'updateStatus'])->name('operator.update-status');
     Route::get('/operator/{id}/work-history', [OperatorController::class, 'workHistory'])->name('operator.work-history');
 });
-
-// Debug routes (only for development)
-if (env('APP_DEBUG', false)) {
-    Route::get('/debug/session', function() {
-        return response()->json(session()->all());
-    });
-    
-    Route::get('/debug/routes', function() {
-        $routes = collect(Route::getRoutes())->map(function ($route) {
-            return [
-                'method' => implode('|', $route->methods()),
-                'uri' => $route->uri(),
-                'name' => $route->getName(),
-                'action' => $route->getActionName(),
-                'middleware' => implode(', ', $route->middleware()),
-            ];
-        });
-        
-        return response()->json($routes);
-    });
-}

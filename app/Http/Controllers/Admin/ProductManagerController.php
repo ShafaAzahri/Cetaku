@@ -46,7 +46,7 @@ class ProductManagerController extends Controller
                 break;
         }
         
-        return view('admin.product-manager', $data);
+        return view('admin.product.product-manager', $data);
     }
     
     private function fetchData($endpoint)

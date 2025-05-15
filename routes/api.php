@@ -3,15 +3,15 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthApiController;
-use App\Http\Controllers\API\ItemApiController;
-use App\Http\Controllers\API\BahanApiController;
-use App\Http\Controllers\API\JenisApiController;
-use App\Http\Controllers\API\UkuranApiController;
-use App\Http\Controllers\API\BiayaDesainApiController;
-use App\Http\Controllers\API\PesananAdminController;
-use App\Http\Controllers\API\OperatorApiController;
-use App\Http\Controllers\API\MesinApiController;
-use App\Http\Controllers\API\ProsesOperatorMesinApi;
+use App\Http\Controllers\API\Admin\ItemApiController;
+use App\Http\Controllers\API\Admin\BahanApiController;
+use App\Http\Controllers\API\Admin\JenisApiController;
+use App\Http\Controllers\API\Admin\UkuranApiController;
+use App\Http\Controllers\API\Admin\BiayaDesainApiController;
+use App\Http\Controllers\API\Admin\PesananAdminController;
+use App\Http\Controllers\API\Admin\OperatorApiController;
+use App\Http\Controllers\API\Admin\MesinApiController;
+use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 
 /*
 |--------------------------------------------------------------------------
