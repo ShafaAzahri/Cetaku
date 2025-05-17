@@ -17,7 +17,7 @@ class ItemApiController extends Controller
      */
     public function index()
     {
-        $items = Item::all();
+        $items = Item::with(['jenis', 'ukurans', 'bahans'])->get();
         return response()->json([
             'success' => true,
             'items' => $items
@@ -91,8 +91,7 @@ class ItemApiController extends Controller
     public function show($id)
     {
         try {
-            $item = Item::find($id);
-
+            $item = Item::with(['jenis', 'ukurans', 'bahans'])->find($id);
             if (!$item) {
                 return response()->json([
                     'success' => false,

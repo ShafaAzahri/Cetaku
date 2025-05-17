@@ -28,6 +28,9 @@ class ProductManagerController extends Controller
         
         // Ambil data sesuai tab yang aktif
         switch ($activeTab) {
+            case 'kategori':
+                $data['kategoris'] = $this->fetchData('/kategoris');
+                break;
             case 'bahan':
                 $data['bahans'] = $this->fetchData('/bahans');
                 break;
@@ -119,6 +122,139 @@ class ProductManagerController extends Controller
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menghubungi server: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Menyimpan kategori baru
+     */
+    public function storeKategori(Request $request)
+    {
+        try {
+            // Validasi lokal terlebih dahulu
+            $request->validate([
+                'nama_kategori' => 'required|string|max:255',
+                'deskripsi' => 'nullable|string',
+                'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'item_ids' => 'nullable|array',
+                'item_ids.*' => 'exists:items,id'
+            ]);
+            
+            // Untuk upload file, kita perlu mengirim dengan pendekatan multipart
+            $token = session('api_token');
+            
+            if ($request->hasFile('gambar')) {
+                $response = Http::withToken($token)
+                    ->timeout(30)
+                    ->attach(
+                        'gambar', 
+                        file_get_contents($request->file('gambar')->getRealPath()),
+                        $request->file('gambar')->getClientOriginalName()
+                    )
+                    ->post($this->apiBaseUrl . '/kategoris', $request->except('gambar'));
+            } else {
+                $response = Http::withToken($token)
+                    ->withHeaders([
+                        'Accept' => 'application/json'
+                    ])
+                    ->post($this->apiBaseUrl . '/kategoris', $request->all());
+            }
+            
+            $responseData = $response->json();
+            
+            if ($responseData['success'] ?? false) {
+                return redirect()->route('admin.product-manager', ['tab' => 'kategori'])
+                    ->with('success', 'Kategori berhasil ditambahkan');
+            }
+            
+            return redirect()->back()
+                ->with('error', $responseData['message'] ?? 'Terjadi kesalahan saat menyimpan kategori')
+                ->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menyimpan kategori: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Memperbarui kategori
+     */
+    public function updateKategori(Request $request, $id)
+    {
+        try {
+            // Validasi lokal terlebih dahulu
+            $request->validate([
+                'nama_kategori' => 'required|string|max:255',
+                'deskripsi' => 'nullable|string',
+                'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'item_ids' => 'nullable|array',
+                'item_ids.*' => 'exists:items,id'
+            ]);
+            
+            // Untuk upload file, kita perlu mengirim dengan pendekatan multipart
+            $token = session('api_token');
+            
+            if ($request->hasFile('gambar')) {
+                $response = Http::withToken($token)
+                    ->timeout(30)
+                    ->attach(
+                        'gambar', 
+                        file_get_contents($request->file('gambar')->getRealPath()),
+                        $request->file('gambar')->getClientOriginalName()
+                    )
+                    ->post($this->apiBaseUrl . "/kategoris/{$id}?_method=PUT", $request->except('gambar', '_method'));
+            } else {
+                $response = Http::withToken($token)
+                    ->withHeaders([
+                        'Accept' => 'application/json'
+                    ])
+                    ->put($this->apiBaseUrl . "/kategoris/{$id}", $request->except('_method'));
+            }
+            
+            $responseData = $response->json();
+            
+            if ($responseData['success'] ?? false) {
+                return redirect()->route('admin.product-manager', ['tab' => 'kategori'])
+                    ->with('success', 'Kategori berhasil diperbarui');
+            }
+            
+            return redirect()->back()
+                ->with('error', $responseData['message'] ?? 'Terjadi kesalahan saat memperbarui kategori')
+                ->withInput();
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memperbarui kategori: ' . $e->getMessage())
+                ->withInput();
+        }
+    }
+
+    /**
+     * Menghapus kategori
+     */
+    public function destroyKategori($id)
+    {
+        try {
+            $token = session('api_token');
+            
+            $response = Http::withToken($token)
+                ->withHeaders([
+                    'Accept' => 'application/json'
+                ])
+                ->delete($this->apiBaseUrl . "/kategoris/{$id}");
+            
+            $responseData = $response->json();
+            
+            if ($responseData['success'] ?? false) {
+                return redirect()->route('admin.product-manager', ['tab' => 'kategori'])
+                    ->with('success', 'Kategori berhasil dihapus');
+            }
+            
+            return redirect()->back()
+                ->with('error', $responseData['message'] ?? 'Terjadi kesalahan saat menghapus kategori');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat menghapus kategori: ' . $e->getMessage());
         }
     }
     

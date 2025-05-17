@@ -65,4 +65,8 @@ class Item extends Model
     {
         return $this->hasMany(Custom::class);
     }
+    public function kategoris()
+    {
+        return $this->belongsToMany(Kategori::class, 'kategori_items');
+    }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\API\Admin\PesananAdminController;
 use App\Http\Controllers\API\Admin\OperatorApiController;
 use App\Http\Controllers\API\Admin\MesinApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
+use App\Http\Controllers\API\Admin\KategoriApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +53,10 @@ Route::get('/ukurans/{id}/items', [UkuranApiController::class, 'getItemsByUkuran
 Route::get('/biaya-desains', [BiayaDesainApiController::class, 'index']);
 Route::get('/biaya-desains/{id}', [BiayaDesainApiController::class, 'show']);
 
+Route::get('/kategoris', [KategoriApiController::class, 'index']);
+Route::get('/kategoris/{id}', [KategoriApiController::class, 'show']);
+Route::get('/kategoris/{id}/items', [KategoriApiController::class, 'getItemsByKategori']);
+
 // Route untuk health check
 Route::get('/health', function() {
     return response()->json(['status' => 'ok', 'timestamp' => now()]);
@@ -83,6 +88,10 @@ Route::middleware('api.admin')->group(function() {
     Route::post('/biaya-desains', [BiayaDesainApiController::class, 'store']);
     Route::put('/biaya-desains/{id}', [BiayaDesainApiController::class, 'update']);
     Route::delete('/biaya-desains/{id}', [BiayaDesainApiController::class, 'destroy']);
+
+    Route::post('/kategoris', [KategoriApiController::class, 'store']);
+    Route::put('/kategoris/{id}', [KategoriApiController::class, 'update']);
+    Route::delete('/kategoris/{id}', [KategoriApiController::class, 'destroy']);
     
     // Manajemen Pesanan Admin routes
     Route::get('/admin/pesanan', [PesananAdminController::class, 'index']);

@@ -29,6 +29,12 @@
             <!-- Improved Tabs -->
             <div class="product-tabs">
                 <div class="product-tab">
+                    <a href="{{ route('admin.product-manager', ['tab' => 'kategori']) }}" 
+                    class="btn {{ $activeTab == 'kategori' ? 'btn-primary' : '' }}">
+                        <i class="fas fa-folder me-2"></i> Kategori
+                    </a>
+                </div>
+                <div class="product-tab">
                     <a href="{{ route('admin.product-manager', ['tab' => 'items']) }}" 
                        class="btn {{ $activeTab == 'items' ? 'btn-primary' : '' }}">
                         <i class="fas fa-boxes me-2"></i> Items
@@ -61,7 +67,81 @@
             </div>
             
             <!-- Tab Content -->
-            @if($activeTab == 'items')
+            @if($activeTab == 'kategori')
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Kategori</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addKategoriModal">
+                        <i class="fas fa-plus me-1"></i> Tambah Kategori
+                    </button>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Gambar</th>
+                                <th>Nama Kategori</th>
+                                <th>Deskripsi</th>
+                                <th>Item Terkait</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($kategoris ?? [] as $key => $kategori)
+                            <tr>
+                                <td>{{ $key + 1 }}</td>
+                                <td>
+                                @if(isset($kategori['gambar']) && $kategori['gambar'])
+                                    <img src="{{ asset('storage/' . $kategori['gambar']) }}" class="img-product-thumbnail" alt="{{ $kategori['nama_kategori'] }}">
+                                @else
+                                    <img src="{{ asset('images/no-image.png') }}" class="img-product-thumbnail" alt="No Image">
+                                @endif
+                                </td>
+                                <td>{{ $kategori['nama_kategori'] }}</td>
+                                <td>{{ $kategori['deskripsi'] ?? '-' }}</td>
+                                <td>
+                                    @if(isset($kategori['items']) && count($kategori['items']) > 0)
+                                        @php
+                                            $itemNames = collect($kategori['items'])->pluck('nama_item')->take(3);
+                                            $extraCount = count($kategori['items']) - 3;
+                                        @endphp
+                                        {{ $itemNames->join(', ') }}
+                                        @if($extraCount > 0)
+                                            <span class="text-muted">+{{ $extraCount }} lainnya</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <button class="btn btn-info btn-action" title="Edit" 
+                                            data-bs-toggle="modal" data-bs-target="#editKategoriModal"
+                                            data-id="{{ $kategori['id'] }}"
+                                            data-nama="{{ $kategori['nama_kategori'] }}"
+                                            data-deskripsi="{{ $kategori['deskripsi'] }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form action="{{ route('admin.kategoris.destroy', $kategori['id']) }}" method="POST" class="d-inline delete-form" data-entity-type="kategori">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-danger btn-action" title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="6" class="text-center">Tidak ada data kategori</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @elseif($activeTab == 'items')
             <div>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">Daftar Item</h5>
@@ -388,6 +468,7 @@
             </div>
 
     <!-- Import semua modal -->
+    @include('admin.product.components.modals.kategori_modal')
     @include('admin.product.components.modals.item_modal')
     @include('admin.product.components.modals.bahan_modal')
     @include('admin.product.components.modals.ukuran_modal')
@@ -398,6 +479,70 @@
     @section('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
+            // Script untuk mengisi form edit Kategori
+            const editKategoriModal = document.getElementById('editKategoriModal');
+            if (editKategoriModal) {
+                editKategoriModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const id = button.getAttribute('data-id');
+                    const nama = button.getAttribute('data-nama');
+                    const deskripsi = button.getAttribute('data-deskripsi');
+                    const gambar = button.getAttribute('data-gambar');
+                    
+                    // Set action URL
+                    const form = document.getElementById('editKategoriForm');
+                    form.setAttribute('action', `{{ url('admin/kategoris') }}/${id}`);
+                    
+                    // Set nilai input
+                    document.getElementById('edit_nama_kategori').value = nama;
+                    document.getElementById('edit_deskripsi').value = deskripsi || '';
+                    
+                    // Tampilkan gambar saat ini jika ada
+                    const currentImageDiv = document.getElementById('current_image');
+                    if (gambar) {
+                        const storageUrl = "{{ asset('storage') }}";
+                        currentImageDiv.innerHTML = `
+                            <div class="text-center">
+                                <img src="${storageUrl}/${gambar}" class="img-thumbnail" style="max-height: 150px" alt="${nama}">
+                                <p class="small text-muted mt-1">Gambar kategori saat ini</p>
+                            </div>
+                        `;
+                    } else {
+                        currentImageDiv.innerHTML = '<p class="text-muted">Tidak ada gambar</p>';
+                    }
+                    
+                    // Set selected items
+                    const selectElement = document.getElementById('edit_item_ids');
+                    if (selectElement) {
+                        // Bersihkan semua pilihan
+                        Array.from(selectElement.options).forEach(option => {
+                            option.selected = false;
+                        });
+                        
+                        // Ambil item yang terhubung dengan kategori ini dari server
+                        const url = `{{ url('api/kategoris') }}/${id}`;
+                        fetch(url, {
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const itemIds = data.kategori.items ? data.kategori.items.map(item => item.id) : [];
+                                
+                                // Perbarui select element
+                                Array.from(selectElement.options).forEach(option => {
+                                    option.selected = itemIds.includes(parseInt(option.value));
+                                });
+                            }
+                        })
+                        .catch(error => console.error('Error fetching kategori items:', error));
+                    }
+                });
+            }
             // Script untuk mengisi form edit Item
             const editItemModal = document.getElementById('editItemModal');
             if (editItemModal) {

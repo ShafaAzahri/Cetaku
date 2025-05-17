@@ -57,6 +57,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     
     // Product Manager
     Route::get('/product-manager', [ProductManagerController::class, 'index'])->name('product-manager');
+
+    // Kategori CRUD
+    Route::post('/kategoris', [ProductManagerController::class, 'storeKategori'])->name('kategoris.store');
+    Route::put('/kategoris/{id}', [ProductManagerController::class, 'updateKategori'])->name('kategoris.update');
+    Route::delete('/kategoris/{id}', [ProductManagerController::class, 'destroyKategori'])->name('kategoris.destroy');
     
     // Item CRUD
     Route::post('/items', [ProductManagerController::class, 'storeItem'])->name('items.store');
