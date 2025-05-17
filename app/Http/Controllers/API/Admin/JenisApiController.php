@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Jenis;
 use App\Models\Item;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
 
 class JenisApiController extends Controller
 {
@@ -18,7 +17,6 @@ class JenisApiController extends Controller
      */
     public function index()
     {
-        Log::info('API: Request untuk daftar jenis diterima');
         $jenis = Jenis::all();
         return response()->json([
             'success' => true,
@@ -31,8 +29,6 @@ class JenisApiController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('API: Request untuk menambah jenis baru diterima', $request->all());
-        
         $validatedData = $request->validate([
             'kategori' => 'required|string|max:255',
             'biaya_tambahan' => 'required|numeric|min:0',
@@ -50,8 +46,6 @@ class JenisApiController extends Controller
             $jenis->items()->attach($request->item_ids);
         }
         
-        Log::info('API: Jenis berhasil disimpan', ['id' => $jenis->id, 'kategori' => $jenis->kategori]);
-        
         return response()->json([
             'success' => true,
             'message' => 'Jenis berhasil ditambahkan',
@@ -63,10 +57,9 @@ class JenisApiController extends Controller
     /**
      * Menampilkan jenis berdasarkan id
      */
+    // Di JenisApiController.php
     public function show($id)
     {
-        Log::info('API: Request untuk menampilkan jenis diterima', ['id' => $id]);
-        
         $jenis = Jenis::with('items')->find($id);
         
         if (!$jenis) {
@@ -88,8 +81,6 @@ class JenisApiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        Log::info('API: Request untuk memperbarui jenis diterima', ['id' => $id, 'data' => $request->all()]);
-        
         $validatedData = $request->validate([
             'kategori' => 'required|string|max:255',
             'biaya_tambahan' => 'required|numeric|min:0',
@@ -112,10 +103,13 @@ class JenisApiController extends Controller
         
         // Update relasi dengan item
         if ($request->has('item_ids')) {
+            // Tambahkan log untuk debugging
+            Log::info('Menyinkronkan item untuk jenis', [
+                'jenis_id' => $id,
+                'item_ids' => $request->item_ids
+            ]);
             $jenis->items()->sync($request->item_ids);
         }
-        
-        Log::info('API: Jenis berhasil diperbarui', ['id' => $jenis->id]);
         
         return response()->json([
             'success' => true,
@@ -131,8 +125,6 @@ class JenisApiController extends Controller
     public function destroy($id)
     {
         try {
-            Log::info('API: Request untuk menghapus jenis diterima', ['id' => $id]);
-            
             // Gunakan transaction untuk memastikan semua operasi berhasil atau tidak sama sekali
             return DB::transaction(function() use ($id) {
                 $jenis = Jenis::find($id);
@@ -147,11 +139,6 @@ class JenisApiController extends Controller
                 // Cek apakah jenis digunakan dalam Custom (produk yang mungkin sudah dipesan)
                 $customCount = DB::table('customs')->where('jenis_id', $id)->count();
                 if ($customCount > 0) {
-                    Log::warning('API: Jenis tidak dapat dihapus karena digunakan dalam tabel customs', [
-                        'jenis_id' => $id,
-                        'custom_count' => $customCount
-                    ]);
-                    
                     return response()->json([
                         'success' => false,
                         'message' => 'Jenis tidak dapat dihapus karena sudah digunakan dalam pesanan'
@@ -161,11 +148,6 @@ class JenisApiController extends Controller
                 // Cek juga apakah jenis digunakan langsung dalam tabel items
                 $itemCount = DB::table('items')->where('jenis_id', $id)->count();
                 if ($itemCount > 0) {
-                    Log::warning('API: Jenis tidak dapat dihapus karena digunakan langsung dalam tabel items', [
-                        'jenis_id' => $id,
-                        'item_count' => $itemCount
-                    ]);
-                    
                     return response()->json([
                         'success' => false,
                         'message' => 'Jenis tidak dapat dihapus karena digunakan sebagai kategori utama dalam ' . $itemCount . ' item'
@@ -173,13 +155,10 @@ class JenisApiController extends Controller
                 }
                 
                 // Hapus relasi dengan item terlebih dahulu (dari tabel pivot)
-                Log::info('API: Menghapus relasi jenis dengan item', ['jenis_id' => $id]);
                 $jenis->items()->detach();
                 
                 // Hapus jenis
                 $jenis->delete();
-                
-                Log::info('API: Jenis berhasil dihapus', ['id' => $id]);
                 
                 return response()->json([
                     'success' => true,
@@ -187,12 +166,6 @@ class JenisApiController extends Controller
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('API: Error pada destroy jenis: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menghapus jenis: ' . $e->getMessage()
@@ -205,8 +178,6 @@ class JenisApiController extends Controller
      */
     public function getItemsByJenis($id)
     {
-        Log::info('API: Request untuk mendapatkan item berdasarkan jenis', ['jenis_id' => $id]);
-        
         $jenis = Jenis::find($id);
         
         if (!$jenis) {

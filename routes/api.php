@@ -36,7 +36,7 @@ Route::get('/items/{id}', [ItemApiController::class, 'show']);
 // Route untuk bahan (GET - publik)
 Route::get('/bahans', [BahanApiController::class, 'index']);
 Route::get('/bahans/{id}', [BahanApiController::class, 'show']);
-Route::get('/bahans/{id}/items', [BahanApiController::class, 'getItemsByBahan']);
+    Route::get('/bahans/{id}/items', [BahanApiController::class, 'getItemsByBahan']);
 
 // Route untuk jenis (GET - publik)
 Route::get('/jenis', [JenisApiController::class, 'index']);
@@ -105,20 +105,11 @@ Route::middleware('api.admin')->group(function() {
     // Operator API routes
     Route::get('/operators', [OperatorApiController::class, 'index']);
     Route::get('/operators/{id}', [OperatorApiController::class, 'show']);
-    Route::get('/operators/{id}/history', [OperatorApiController::class, 'getHistory']);
-    Route::put('/operators/{id}/status', [OperatorApiController::class, 'updateStatus']);
     
     // Mesin API routes
     Route::get('/mesins', [MesinApiController::class, 'index']);
     Route::get('/mesins/{id}', [MesinApiController::class, 'show']);
-    Route::get('/mesins/{id}/history', [MesinApiController::class, 'getHistory']);
     Route::put('/mesins/{id}/status', [MesinApiController::class, 'updateStatus']);
-    
-    // Proses Operator & Mesin API routes
-    Route::get('/proses-produksi/aktif', [ProsesOperatorMesinApi::class, 'getActiveProcesses']);
-    Route::get('/proses-produksi/{id}', [ProsesOperatorMesinApi::class, 'show']);
-    Route::put('/proses-produksi/{id}/status', [ProsesOperatorMesinApi::class, 'updateStatus']);
-    Route::get('/proses-produksi/status/{status}', [ProsesOperatorMesinApi::class, 'getProcessesByStatus']);
 });
 
 // Route untuk API Super Admin

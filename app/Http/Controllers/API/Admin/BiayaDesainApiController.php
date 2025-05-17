@@ -15,7 +15,6 @@ class BiayaDesainApiController extends Controller
      */
     public function index()
     {
-        Log::info('API: Request untuk daftar biaya desain diterima');
         $biayaDesains = BiayaDesain::all();
         return response()->json([
             'success' => true,
@@ -28,8 +27,6 @@ class BiayaDesainApiController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('API: Request untuk menambah biaya desain baru diterima', $request->all());
-        
         $validatedData = $request->validate([
             'biaya' => 'required|numeric|min:0',
             'deskripsi' => 'nullable|string'
@@ -54,8 +51,6 @@ class BiayaDesainApiController extends Controller
      */
     public function show($id)
     {
-        Log::info('API: Request untuk menampilkan biaya desain diterima', ['id' => $id]);
-        
         $biayaDesain = BiayaDesain::find($id);
         
         if (!$biayaDesain) {
@@ -76,8 +71,6 @@ class BiayaDesainApiController extends Controller
      */
     public function update(Request $request, $id)
     {
-        Log::info('API: Request untuk memperbarui biaya desain diterima', ['id' => $id, 'data' => $request->all()]);
-        
         $validatedData = $request->validate([
             'biaya' => 'required|numeric|min:0',
             'deskripsi' => 'nullable|string'
@@ -95,9 +88,7 @@ class BiayaDesainApiController extends Controller
         $biayaDesain->biaya = $request->biaya;
         $biayaDesain->deskripsi = $request->deskripsi;
         $biayaDesain->save();
-        
-        Log::info('API: Biaya desain berhasil diperbarui', ['id' => $biayaDesain->id]);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Biaya desain berhasil diperbarui',
@@ -110,8 +101,6 @@ class BiayaDesainApiController extends Controller
      */
     public function destroy($id)
     {
-        Log::info('API: Request untuk menghapus biaya desain diterima', ['id' => $id]);
-        
         $biayaDesain = BiayaDesain::find($id);
         
         if (!$biayaDesain) {
@@ -122,8 +111,6 @@ class BiayaDesainApiController extends Controller
         }
         
         $biayaDesain->delete();
-        
-        Log::info('API: Biaya desain berhasil dihapus', ['id' => $id]);
         
         return response()->json([
             'success' => true,

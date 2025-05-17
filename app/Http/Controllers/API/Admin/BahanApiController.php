@@ -17,7 +17,6 @@ class BahanApiController extends Controller
     public function index()
     {
         try {
-            Log::info('API: Request untuk daftar bahan diterima');
             $bahans = Bahan::all();
             
             return response()->json([
@@ -25,7 +24,7 @@ class BahanApiController extends Controller
                 'bahans' => $bahans
             ]);
         } catch (\Exception $e) {
-            Log::error('API: Error pada index bahan: ' . $e->getMessage());
+
             
             return response()->json([
                 'success' => false,
@@ -41,8 +40,6 @@ class BahanApiController extends Controller
     public function store(Request $request)
     {
         try {
-            Log::info('API: Request untuk menambah bahan baru diterima', $request->all());
-            
             $validatedData = $request->validate([
                 'nama_bahan' => 'required|string|max:255',
                 'biaya_tambahan' => 'required|numeric|min:0',
@@ -61,11 +58,7 @@ class BahanApiController extends Controller
             if ($request->has('item_ids') && !empty($request->item_ids)) {
                 $bahan->items()->attach($request->item_ids);
             }
-            
             DB::commit();
-            
-            Log::info('API: Bahan berhasil disimpan', ['id' => $bahan->id, 'nama' => $bahan->nama_bahan]);
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Bahan berhasil ditambahkan',
@@ -74,8 +67,6 @@ class BahanApiController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('API: Error pada store bahan: ' . $e->getMessage());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menyimpan bahan',
@@ -90,8 +81,6 @@ class BahanApiController extends Controller
     public function show($id)
     {
         try {
-            Log::info('API: Request untuk menampilkan bahan diterima', ['id' => $id]);
-            
             $bahan = Bahan::with('items')->find($id);
             
             if (!$bahan) {
@@ -107,8 +96,6 @@ class BahanApiController extends Controller
                 'items' => $bahan->items
             ]);
         } catch (\Exception $e) {
-            Log::error('API: Error pada show bahan: ' . $e->getMessage());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat mengambil data bahan',
@@ -123,8 +110,6 @@ class BahanApiController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            Log::info('API: Request untuk memperbarui bahan diterima', ['id' => $id, 'data' => $request->all()]);
-            
             $validatedData = $request->validate([
                 'nama_bahan' => 'required|string|max:255',
                 'biaya_tambahan' => 'required|numeric|min:0',
@@ -153,9 +138,6 @@ class BahanApiController extends Controller
             }
             
             DB::commit();
-            
-            Log::info('API: Bahan berhasil diperbarui', ['id' => $bahan->id]);
-            
             return response()->json([
                 'success' => true,
                 'message' => 'Bahan berhasil diperbarui',
@@ -164,8 +146,6 @@ class BahanApiController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('API: Error pada update bahan: ' . $e->getMessage());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat memperbarui bahan',
@@ -180,8 +160,6 @@ class BahanApiController extends Controller
     public function destroy($id)
     {
         try {
-            Log::info('API: Request untuk menghapus bahan diterima', ['id' => $id]);
-            
             // Gunakan transaction untuk memastikan semua operasi berhasil atau tidak sama sekali
             return DB::transaction(function() use ($id) {
                 $bahan = Bahan::find($id);
@@ -208,26 +186,16 @@ class BahanApiController extends Controller
                 }
                 
                 // Hapus relasi dengan item terlebih dahulu
-                Log::info('API: Menghapus relasi bahan dengan item', ['bahan_id' => $id]);
                 $bahan->items()->detach();
                 
                 // Hapus bahan
                 $bahan->delete();
-                
-                Log::info('API: Bahan berhasil dihapus', ['id' => $id]);
-                
                 return response()->json([
                     'success' => true,
                     'message' => 'Bahan berhasil dihapus'
                 ]);
             });
         } catch (\Exception $e) {
-            Log::error('API: Error pada destroy bahan: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menghapus bahan: ' . $e->getMessage()
@@ -241,8 +209,6 @@ class BahanApiController extends Controller
     public function getItemsByBahan($id)
     {
         try {
-            Log::info('API: Request untuk mendapatkan item berdasarkan bahan', ['bahan_id' => $id]);
-            
             $bahan = Bahan::find($id);
             
             if (!$bahan) {
@@ -260,8 +226,6 @@ class BahanApiController extends Controller
                 'items' => $items
             ]);
         } catch (\Exception $e) {
-            Log::error('API: Error pada getItemsByBahan: ' . $e->getMessage());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat mengambil data item berdasarkan bahan',

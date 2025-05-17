@@ -447,6 +447,8 @@
                     const size = button.getAttribute('data-size');
                     const faktor = button.getAttribute('data-faktor');
                     
+                    console.log('Modal edit ukuran dibuka untuk ID:', id);
+                    
                     // Set action URL
                     const form = document.getElementById('editUkuranForm');
                     form.setAttribute('action', `{{ url('admin/ukurans') }}/${id}`);
@@ -458,31 +460,60 @@
                     // Set selected items
                     const selectElement = document.getElementById('edit_item_ids');
                     if (selectElement) {
-                        // Bersihkan semua pilihan
+                        // Bersihkan semua pilihan terlebih dahulu
                         Array.from(selectElement.options).forEach(option => {
                             option.selected = false;
                         });
+                        
+                        // Log untuk debugging
+                        console.log('Mengambil data item terkait untuk ukuran ID:', id);
                         
                         // Ambil item yang terhubung dengan ukuran ini dari server
                         const url = `{{ url('api/ukurans') }}/${id}`;
                         fetch(url, {
                             headers: {
                                 'Accept': 'application/json',
-                                'X-Requested-With': 'XMLHttpRequest'
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             }
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            console.log('Status response:', response.status);
+                            return response.json();
+                        })
                         .then(data => {
+                            console.log('Data dari API:', data);
+                            
                             if (data.success) {
-                                const itemIds = data.items ? data.items.map(item => item.id) : [];
-                                
-                                // Perbarui select element
-                                Array.from(selectElement.options).forEach(option => {
-                                    option.selected = itemIds.includes(parseInt(option.value));
-                                });
+                                // Pastikan data.items ada dan berupa array
+                                if (data.items && Array.isArray(data.items)) {
+                                    const itemIds = data.items.map(item => parseInt(item.id));
+                                    console.log('Item IDs yang terkait:', itemIds);
+                                    
+                                    // Perbarui select element dengan lebih eksplisit
+                                    Array.from(selectElement.options).forEach(option => {
+                                        const optionId = parseInt(option.value);
+                                        const isSelected = itemIds.includes(optionId);
+                                        option.selected = isSelected;
+                                        console.log(`Option ${option.value} (${option.text}): ${isSelected ? 'selected' : 'not selected'}`);
+                                    });
+                                    
+                                    // Trigger change event untuk memastikan UI diperbarui
+                                    if (typeof $(selectElement).trigger === 'function') {
+                                        $(selectElement).trigger('change');
+                                    }
+                                } else {
+                                    console.warn('Data items tidak valid atau kosong:', data.items);
+                                }
+                            } else {
+                                console.error('API response tidak berhasil:', data.message || 'Tidak ada pesan error');
                             }
                         })
-                        .catch(error => console.error('Error fetching ukuran items:', error));
+                        .catch(error => {
+                            console.error('Error saat fetch data ukuran items:', error);
+                        });
+                    } else {
+                        console.error('Select element #edit_item_ids tidak ditemukan!');
                     }
                 });
             }
@@ -522,12 +553,17 @@
                         })
                         .then(response => response.json())
                         .then(data => {
+                            console.log('Data jenis dari API:', data); // Tambahkan untuk debugging
                             if (data.success) {
                                 const itemIds = data.items ? data.items.map(item => item.id) : [];
+                                console.log('Item IDs:', itemIds); // Tambahkan untuk debugging
                                 
                                 // Perbarui select element
                                 Array.from(selectElement.options).forEach(option => {
-                                    option.selected = itemIds.includes(parseInt(option.value));
+                                    const optionValue = parseInt(option.value);
+                                    const isSelected = itemIds.includes(optionValue);
+                                    option.selected = isSelected;
+                                    console.log(`Option ${option.value} selected:`, isSelected); // Tambahkan untuk debugging
                                 });
                             }
                         })

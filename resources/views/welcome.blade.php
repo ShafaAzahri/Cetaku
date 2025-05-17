@@ -1,174 +1,226 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Selamat Datang | Cetaku Print</title>
-    
-    <!-- Google Font: Source Sans Pro -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            font-family: 'Source Sans Pro', sans-serif;
-        }
-        .navbar {
-            background-color: #007bff;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .main-content {
-            flex: 1;
-            padding: 2rem 0;
-        }
-        .hero-section {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://via.placeholder.com/1200x600');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            text-align: center;
-            padding: 100px 0;
-            margin-bottom: 3rem;
-        }
-        .hero-section h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-        .hero-section p {
-            font-size: 1.25rem;
-            margin-bottom: 2rem;
-        }
-        .card {
-            transition: transform 0.3s;
-            margin-bottom: 1.5rem;
-            border: none;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-        }
-        .card-img-top {
-            height: 200px;
-            object-fit: cover;
-        }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 1.5rem 0;
-            border-top: 1px solid #e9ecef;
-        }
-        .auth-buttons .btn {
-            margin-left: 10px;
-        }
-        .user-welcome {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 2rem;
-            padding: 2rem;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-        }
-        .user-welcome-info {
-            text-align: center;
-        }
-        .user-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background-color: #007bff;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            margin: 0 auto 1rem;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
+
+@extends('user.layouts.app')
+
+@section('content')
+    <!-- Hero Section -->
+    <section class="hero-section">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-print me-2"></i>CETAKU
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="#">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Layanan</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Tentang Kami</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Kontak</a>
-                    </li>
-                </ul>
-                
-                <!-- Cek apakah user sudah login -->
-                @if(session()->has('api_token') && session()->has('user'))
-                    <!-- User sudah login - tampilkan nama dan dropdown logout -->
-                    <div class="d-flex align-items-center">
-                        <div class="dropdown">
-                            <a class="text-white dropdown-toggle text-decoration-none" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user-circle me-1"></i>
-                                <span id="username-display">{{ session('user')['nama'] }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <!-- Link ke dashboard sesuai role -->
-                                @if(session('user')['role'] == 'super_admin')
-                                    <li><a class="dropdown-item" href="{{ route('superadmin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-                                @elseif(session('user')['role'] == 'admin')
-                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
-                                @endif
-                                
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Profil</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                @else
-                    <!-- User belum login - tampilkan tombol login saja -->
-                    <div class="auth-buttons">
-                        <a href="{{ route('login') }}" class="btn btn-outline-light">Login</a>
-                    </div>
-                @endif
+            <div class="row">
+                <div class="col-md-6 hero-content">
+                    <h1 class="hero-title">Desain Produk</h1>
+                    <p class="hero-text">
+                        Buat produk merchandise, kemasan, untuk kafe, kantor, startup, 
+                        protokol, merch dan produk lain yang dapat diseleksi menggunakan 
+                        mesin print terbaik. Pastikan dengan harga terjangkau dengan 
+                        kualitas bahan terbaik.
+                    </p>
+                    <a href="#" class="btn btn-primary btn-order">Pesan Sekarang <i class="fas fa-arrow-right ms-2"></i></a>
+                </div>
+                <div class="col-md-6 hero-image">
+                    <img src="{{ asset('images/banner.png') }}" alt="Hero Image" class="img-fluid">
+                </div>
+            </div>
+            <div class="hero-footer">
+                <span class="small-text">*Kaos Custom</span>
+                <a href="#" class="chat-admin">Chat Admin</a>
             </div>
         </div>
-    </nav>
+    </section>
 
-    <!-- Hero Section -->
-    <div class="hero-section">
+    <!-- Features Section -->
+    <section class="features-section">
         <div class="container">
-            <h1>Solusi Cetak Digital Terbaik</h1>
-            <p class="lead">Layanan percetakan berkualitas tinggi untuk semua kebutuhan Anda</p>
-            <a href="#layanan" class="btn btn-primary btn-lg">Lihat Layanan Kami</a>
+            <div class="row">
+                <div class="col-md-3 col-sm-6 feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h5 class="feature-title">Gratis Ongkir</h5>
+                    <p class="feature-text">Dapatkan kemudahan gratis ongkir untuk pemesanan.</p>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h5 class="feature-title">Garansi Produk</h5>
+                    <p class="feature-text">Semua produk untuk klaim garansi produk.</p>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h5 class="feature-title">Bantuan Online</h5>
+                    <p class="feature-text">24/7 siap menerima pertanyaan pelanggan.</p>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <h5 class="feature-title">Pembayaran Fleksibel</h5>
+                    <p class="feature-text">Layanan transaksi dengan beberapa pilihan platform.</p>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <!-- Best Seller Section -->
+    <section class="bestseller-section">
+        <div class="container">
+            <h2 class="section-title text-center">Terlaris</h2>
+            
+            <div class="row mt-4">
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="product-card">
+                        <div class="product-img">
+                            <img src="{{ asset('images/products/banner.png') }}" alt="Banner" class="img-fluid">
+                        </div>
+                        <div class="product-info">
+                            <h5 class="product-title">Banner</h5>
+                            <p class="product-price">Rp. 80.000</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="product-card">
+                        <div class="product-img">
+                            <img src="{{ asset('images/products/foto.png') }}" alt="Foto" class="img-fluid">
+                        </div>
+                        <div class="product-info">
+                            <h5 class="product-title">Foto</h5>
+                            <p class="product-price">Rp. 120.000</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="product-card">
+                        <div class="product-img">
+                            <img src="{{ asset('images/products/print.png') }}" alt="Print on Paper" class="img-fluid">
+                        </div>
+                        <div class="product-info">
+                            <h5 class="product-title">Print on Paper</h5>
+                            <p class="product-price">Rp. 75.000</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="product-card">
+                        <div class="product-img">
+                            <img src="{{ asset('images/products/stiker.png') }}" alt="Stiker" class="img-fluid">
+                        </div>
+                        <div class="product-info">
+                            <h5 class="product-title">Stiker</h5>
+                            <p class="product-price">Rp. 15.000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-outline-primary btn-explore">Jelajahi <i class="fas fa-arrow-right ms-2"></i></a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="categories-section">
+        <div class="container">
+            <h2 class="section-title text-center">Kategori</h2>
+            
+            <div class="row mt-4">
+                <div class="col-md-4 mb-4">
+                    <div class="category-card">
+                        <img src="{{ asset('images/categories/pakaian.jpg') }}" alt="Pakaian" class="img-fluid">
+                        <div class="category-overlay">
+                            <div class="category-name">Pakaian</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                    <div class="category-card">
+                        <img src="{{ asset('images/categories/banner.jpg') }}" alt="Banner / MMT" class="img-fluid">
+                        <div class="category-overlay">
+                            <div class="category-name">Banner / MMT</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-4">
+                    <div class="category-card">
+                        <img src="{{ asset('images/categories/print.jpg') }}" alt="Print on paper" class="img-fluid">
+                        <div class="category-overlay">
+                            <div class="category-name">Print on paper</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="category-card">
+                        <img src="{{ asset('images/categories/sticker.jpg') }}" alt="Sticker" class="img-fluid">
+                        <div class="category-overlay">
+                            <div class="category-name">Sticker</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-4">
+                    <div class="category-card">
+                        <img src="{{ asset('images/categories/fotografi.jpg') }}" alt="Fotografi" class="img-fluid">
+                        <div class="category-overlay">
+                            <div class="category-name">Fotografi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How To Order Section -->
+    <section class="how-to-order-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-5">
+                    <h2 class="section-title">Kemudahan dalam Percetakan</h2>
+                    <p class="section-description">
+                        Raih kemudahan dalam mencetak berbagai kebutuhan Anda mulai dari kaos, merchandise, poster, kartu nama, hingga banner. Kami hadir untuk Anda dengan pengerjaan cepat 1-3 hari. Kami terbuka untuk pemesanan dalam jumlah bulk baik untuk maupun untuk berbagai merk.
+                    </p>
+                    <a href="#" class="chat-admin-link">Chat Admin</a>
+                </div>
+                
+                <div class="col-md-7">
+                    <div class="steps-container">
+                        <div class="step-item">
+                            <div class="step-number">01</div>
+                            <div class="step-content">
+                                <h4 class="step-title">Tentukan Pilihanmu</h4>
+                                <p class="step-description">Temukan gaya yang kamu inginkan ke keranjang.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">02</div>
+                            <div class="step-content">
+                                <h4 class="step-title">Lakukan Transaksi Pemesanan</h4>
+                                <p class="step-description">Tentukan detail pesananmu dan lakukan transaksi.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="step-item">
+                            <div class="step-number">03</div>
+                            <div class="step-content">
+                                <h4 class="step-title">Pantau Pesananmu</h4>
+                                <p class="step-description">Tunggu pesananmu diproses hingga sampai ditanganmu.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+@endsection

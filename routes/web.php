@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\WelcomeController;
+use App\Http\Controllers\User\WelcomeController;
 
 // Admin controllers
 use App\Http\Controllers\Admin\ProductManagerController;
@@ -12,7 +12,7 @@ use App\Http\Controllers\Admin\OperatorController as AdminOperatorController;
 use App\Http\Controllers\Admin\MesinController;
 
 // Super Admin controllers
-use App\Http\Controllers\SuperAdmin\AdminController as SuperAdminController;
+use App\Http\Controllers\SuperAdmin\AdminController as ManagementAdmin;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\SuperAdmin\OperatorController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
@@ -111,14 +111,14 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
     // Admin Management
-    Route::get('/admin', [SuperAdminController::class, 'index'])->name('admin.index');
-    Route::get('/admin/create', [SuperAdminController::class, 'create'])->name('admin.create');
-    Route::post('/admin', [SuperAdminController::class, 'store'])->name('admin.store');
-    Route::get('/admin/{id}', [SuperAdminController::class, 'show'])->name('admin.show');
-    Route::get('/admin/{id}/edit', [SuperAdminController::class, 'edit'])->name('admin.edit');
-    Route::put('/admin/{id}', [SuperAdminController::class, 'update'])->name('admin.update');
-    Route::delete('/admin/{id}', [SuperAdminController::class, 'destroy'])->name('admin.destroy');
-    Route::post('/admin/{id}/reset-password', [SuperAdminController::class, 'resetPassword'])->name('admin.reset-password');
+    Route::get('/admin', [ManagementAdmin::class, 'index'])->name('admin.index');
+    Route::get('/admin/create', [ManagementAdmin::class, 'create'])->name('admin.create');
+    Route::post('/admin', [ManagementAdmin::class, 'store'])->name('admin.store');
+    Route::get('/admin/{id}', [ManagementAdmin::class, 'show'])->name('admin.show');
+    Route::get('/admin/{id}/edit', [ManagementAdmin::class, 'edit'])->name('admin.edit');
+    Route::put('/admin/{id}', [ManagementAdmin::class, 'update'])->name('admin.update');
+    Route::delete('/admin/{id}', [ManagementAdmin::class, 'destroy'])->name('admin.destroy');
+    Route::post('/admin/{id}/reset-password', [ManagementAdmin::class, 'resetPassword'])->name('admin.reset-password');
     
     // User Management
     Route::get('/user', [UserController::class, 'index'])->name('user.index');

@@ -22,7 +22,7 @@
                         <div class="form-text">Faktor pengali untuk harga dasar (1.00 = tidak ada perubahan).</div>
                     </div>
                     <div class="mb-3">
-                        <label for="item_ids" class="form-label">Pilih Item Terkait</label>
+                    <label for="item_ids" class="form-label">Pilih Item Terkait</label>
                         <select class="form-select" id="item_ids" name="item_ids[]" multiple>
                             @foreach($items ?? [] as $item)
                                 <option value="{{ $item['id'] }}">{{ $item['nama_item'] }}</option>
