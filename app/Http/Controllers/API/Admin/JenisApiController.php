@@ -17,13 +17,16 @@ class JenisApiController extends Controller
      */
     public function index()
     {
-        $jenis = Jenis::all();
+        Log::info('API: Request untuk daftar jenis diterima');
+        // Eager load relations untuk mengurangi N+1 query problem
+        $jenis = Jenis::with('items')->get();
+        
         return response()->json([
             'success' => true,
             'jenis' => $jenis
         ]);
     }
-
+    
     /**
      * Menyimpan jenis baru
      */

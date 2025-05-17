@@ -142,6 +142,7 @@
                                 <th>No</th>
                                 <th>Nama Bahan</th>
                                 <th>Biaya Tambahan</th>
+                                <th>Item Terkait</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -151,6 +152,20 @@
                                 <td>{{ $key + 1 }}</td>
                                 <td>{{ $bahan['nama_bahan'] }}</td>
                                 <td>Rp {{ number_format($bahan['biaya_tambahan'], 0, ',', '.') }}</td>
+                                <td>
+                                    @if(isset($bahan['items']) && count($bahan['items']) > 0)
+                                        @php
+                                            $itemNames = collect($bahan['items'])->pluck('nama_item')->take(3);
+                                            $extraCount = count($bahan['items']) - 3;
+                                        @endphp
+                                        {{ $itemNames->join(', ') }}
+                                        @if($extraCount > 0)
+                                            <span class="text-muted">+{{ $extraCount }} lainnya</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <button class="btn btn-info btn-action" title="Edit" 
                                             data-bs-toggle="modal" data-bs-target="#editBahanModal"
@@ -171,7 +186,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center">Tidak ada data bahan</td>
+                                <td colspan="5" class="text-center">Tidak ada data bahan</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -195,6 +210,7 @@
                                 <th>No</th>
                                 <th>Size</th>
                                 <th>Faktor Harga</th>
+                                <th>Item Terkait</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -204,6 +220,20 @@
                                 <td>{{ $key + 1 }}</td>
                                 <td>{{ $ukuran['size'] }}</td>
                                 <td>{{ $ukuran['faktor_harga'] }}x</td>
+                                <td>
+                                    @if(isset($ukuran['items']) && count($ukuran['items']) > 0)
+                                        @php
+                                            $itemNames = collect($ukuran['items'])->pluck('nama_item')->take(3);
+                                            $extraCount = count($ukuran['items']) - 3;
+                                        @endphp
+                                        {{ $itemNames->join(', ') }}
+                                        @if($extraCount > 0)
+                                            <span class="text-muted">+{{ $extraCount }} lainnya</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <button class="btn btn-info btn-action" title="Edit" 
                                             data-bs-toggle="modal" data-bs-target="#editUkuranModal"
@@ -224,7 +254,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center">Tidak ada data ukuran</td>
+                                <td colspan="5" class="text-center">Tidak ada data ukuran</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -248,6 +278,7 @@
                                 <th>No</th>
                                 <th>Kategori</th>
                                 <th>Biaya Tambahan</th>
+                                <th>Item Terkait</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -257,6 +288,20 @@
                                 <td>{{ $key + 1 }}</td>
                                 <td>{{ $jenis['kategori'] }}</td>
                                 <td>Rp {{ number_format($jenis['biaya_tambahan'], 0, ',', '.') }}</td>
+                                <td>
+                                    @if(isset($jenis['items']) && count($jenis['items']) > 0)
+                                        @php
+                                            $itemNames = collect($jenis['items'])->pluck('nama_item')->take(3);
+                                            $extraCount = count($jenis['items']) - 3;
+                                        @endphp
+                                        {{ $itemNames->join(', ') }}
+                                        @if($extraCount > 0)
+                                            <span class="text-muted">+{{ $extraCount }} lainnya</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 <td>
                                     <button class="btn btn-info btn-action" title="Edit" 
                                             data-bs-toggle="modal" data-bs-target="#editJenisModal"
@@ -277,7 +322,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center">Tidak ada data jenis</td>
+                                <td colspan="5" class="text-center">Tidak ada data jenis</td>
                             </tr>
                             @endforelse
                         </tbody>

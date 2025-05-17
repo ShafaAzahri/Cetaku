@@ -45,15 +45,22 @@ class ProductManagerController extends Controller
         return view('admin.product.product-manager', $data);
     }
     
+    /**
+     * Fetch data from API
+     */
     private function fetchData($endpoint)
     {
         try {
             $token = session('api_token');
+            
             $response = Http::withToken($token)->get($this->apiBaseUrl . $endpoint);
+            
             if ($response->successful()) {
                 $data = $response->json();
+                
                 // Handle berbagai format key berdasarkan endpoint
                 if ($endpoint === '/biaya-desains') {
+                    // Coba beberapa kemungkinan key
                     if (isset($data['biaya_desains'])) {
                         return $data['biaya_desains'];
                     } elseif (isset($data['biayaDesains'])) {
@@ -61,12 +68,16 @@ class ProductManagerController extends Controller
                     } elseif (isset($data['biaya-desains'])) {
                         return $data['biaya-desains'];
                     }
+                    
                     return [];
                 }
+                
                 // Default handling untuk endpoint lain
                 $key = basename($endpoint);
                 return $data[$key] ?? [];
+            } else {
             }
+            
             return [];
         } catch (\Exception $e) {
             return [];

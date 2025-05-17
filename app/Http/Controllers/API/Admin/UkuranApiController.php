@@ -19,7 +19,9 @@ class UkuranApiController extends Controller
     public function index()
     {
         Log::info('API: Request untuk daftar ukuran diterima');
-        $ukurans = Ukuran::all();
+        // Eager load relations untuk mengurangi N+1 query problem
+        $ukurans = Ukuran::with('items')->get();
+        
         return response()->json([
             'success' => true,
             'ukurans' => $ukurans

@@ -17,14 +17,16 @@ class BahanApiController extends Controller
     public function index()
     {
         try {
-            $bahans = Bahan::all();
+            Log::info('API: Request untuk daftar bahan diterima');
+            // Eager load relations untuk mengurangi N+1 query problem
+            $bahans = Bahan::with('items')->get();
             
             return response()->json([
                 'success' => true,
                 'bahans' => $bahans
             ]);
         } catch (\Exception $e) {
-
+            Log::error('API: Error pada index bahan: ' . $e->getMessage());
             
             return response()->json([
                 'success' => false,
