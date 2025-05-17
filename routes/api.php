@@ -32,6 +32,7 @@ Route::prefix('auth')->group(function() {
 
 // Routes untuk item (Public GET)
 Route::get('/items', [ItemApiController::class, 'index']);
+Route::get('/items/terlaris', [ItemApiController::class, 'index']);
 Route::get('/items/{id}', [ItemApiController::class, 'show']);
 
 // Route untuk bahan (GET - publik)

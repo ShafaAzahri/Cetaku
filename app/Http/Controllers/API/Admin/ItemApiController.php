@@ -15,9 +15,28 @@ class ItemApiController extends Controller
     /**
      * Menampilkan semua items
      */
-    public function index()
+    public function index(Request $request)
     {
-        $items = Item::with(['jenis', 'ukurans', 'bahans'])->get();
+        $query = Item::with(['jenis', 'ukurans', 'bahans']);
+        
+        // Filter untuk terlaris
+        if ($request->has('sort') && $request->sort === 'terlaris') {
+            $query->withSum([
+                'detailPesanans as total_terjual' => function($q) {
+                    $q->whereHas('pesanan', function($pesananQuery) {
+                        $pesananQuery->where('status', 'Selesai');
+                    });
+                }
+            ], 'jumlah')
+            ->orderBy('total_terjual', 'desc');
+            
+            if ($request->has('limit')) {
+                $query->limit($request->limit);
+            }
+        }
+        
+        $items = $query->get();
+        
         return response()->json([
             'success' => true,
             'items' => $items

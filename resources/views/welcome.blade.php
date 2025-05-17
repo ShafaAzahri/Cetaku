@@ -72,53 +72,30 @@
             <h2 class="section-title text-center">Terlaris</h2>
             
             <div class="row mt-4">
+                @forelse($terlaris as $item)
                 <div class="col-md-3 col-sm-6 mb-4">
                     <div class="product-card">
                         <div class="product-img">
-                            <img src="{{ asset('images/products/banner.png') }}" alt="Banner" class="img-fluid">
+                            @if(isset($item['gambar']) && $item['gambar'])
+                                <img src="{{ asset('storage/' . $item['gambar']) }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
+                            @else
+                                <img src="{{ asset('images/products/default.png') }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
+                            @endif
                         </div>
                         <div class="product-info">
-                            <h5 class="product-title">Banner</h5>
-                            <p class="product-price">Rp. 80.000</p>
+                            <h5 class="product-title">{{ $item['nama_item'] }}</h5>
+                            <p class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</p>
+                            @if(isset($item['total_terjual']) && $item['total_terjual'] > 0)
+                                <small class="text-muted">{{ $item['total_terjual'] }} terjual</small>
+                            @endif
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-3 col-sm-6 mb-4">
-                    <div class="product-card">
-                        <div class="product-img">
-                            <img src="{{ asset('images/products/foto.png') }}" alt="Foto" class="img-fluid">
-                        </div>
-                        <div class="product-info">
-                            <h5 class="product-title">Foto</h5>
-                            <p class="product-price">Rp. 120.000</p>
-                        </div>
-                    </div>
+                @empty
+                <div class="col-12 text-center">
+                    <p class="text-muted">Belum ada produk terlaris.</p>
                 </div>
-                
-                <div class="col-md-3 col-sm-6 mb-4">
-                    <div class="product-card">
-                        <div class="product-img">
-                            <img src="{{ asset('images/products/print.png') }}" alt="Print on Paper" class="img-fluid">
-                        </div>
-                        <div class="product-info">
-                            <h5 class="product-title">Print on Paper</h5>
-                            <p class="product-price">Rp. 75.000</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3 col-sm-6 mb-4">
-                    <div class="product-card">
-                        <div class="product-img">
-                            <img src="{{ asset('images/products/stiker.png') }}" alt="Stiker" class="img-fluid">
-                        </div>
-                        <div class="product-info">
-                            <h5 class="product-title">Stiker</h5>
-                            <p class="product-price">Rp. 15.000</p>
-                        </div>
-                    </div>
-                </div>
+                @endforelse
             </div>
             
             <div class="text-center mt-4">

@@ -69,4 +69,18 @@ class Item extends Model
     {
         return $this->belongsToMany(Kategori::class, 'kategori_items');
     }
+    /**
+     * Relasi untuk detail pesanan melalui customs
+     */
+    public function detailPesanans()
+    {
+        return $this->hasManyThrough(
+            DetailPesanan::class,
+            Custom::class,
+            'item_id',     // Foreign key di customs table
+            'custom_id',   // Foreign key di detail_pesanans table
+            'id',          // Local key di items table
+            'id'           // Local key di customs table
+        );
+    }
 }
