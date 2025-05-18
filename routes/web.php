@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Admin\PesananController;
 use App\Http\Controllers\Admin\ProsesPesananController;
+use App\Http\Controllers\Admin\PelangganController;
 use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\PesananManagerController;
 use App\Http\Controllers\Admin\OperatorController;
@@ -85,6 +86,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::post('/pesanan/{id}/confirm-pickup', [PesananManagerController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
     Route::post('/pesanan/{id}/upload-desain', [PesananManagerController::class, 'uploadDesain'])->name('pesanan.upload-desain');
     Route::post('/pesanan/{id}/cancel', [PesananManagerController::class, 'cancelOrder'])->name('pesanan.cancel');
+
+    // Pelanggan Management
+   
+    Route::get('/pelanggan', [PelangganController::class, 'index'])->name('pelanggan.index');
+    Route::get('/admin/pelanggan', [PelangganController::class, 'index'])->name('admin.pelanggan.index');
+
 
     // Operator Management
     Route::get('/operators', [OperatorController::class, 'index'])->name('operators.index');

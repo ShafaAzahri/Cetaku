@@ -27,6 +27,13 @@ class User extends Authenticatable
         'last_login_ip',
     ];
 
+
+
+    // Menambahkan relasi hasMany dengan model Pesanan
+    public function pesanan()
+    {
+        return $this->hasMany(Pesanan::class, 'user_id'); // Sesuaikan dengan nama kolom yang menghubungkan User dan Pesanan
+    }
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -69,16 +76,16 @@ class User extends Authenticatable
                 Log::debug('Token validation failed: No token', ['user_id' => $this->id]);
                 return false;
             }
-            
+
             // Check if expiry date exists
             if (empty($this->token_expires_at)) {
                 Log::debug('Token validation failed: No expiry date', ['user_id' => $this->id]);
                 return false;
             }
-            
+
             // Compare dates
             $isValid = now()->lt($this->token_expires_at);
-            
+
             Log::debug('Token validity check', [
                 'user_id' => $this->id,
                 'has_token' => (bool) $this->api_token,
@@ -86,7 +93,7 @@ class User extends Authenticatable
                 'now' => now(),
                 'is_valid' => $isValid
             ]);
-            
+
             return $isValid;
         } catch (\Exception $e) {
             Log::error('Error checking token validity: ' . $e->getMessage(), [
@@ -105,7 +112,7 @@ class User extends Authenticatable
     public function hasRole($roleName)
     {
         $hasRole = $this->role && $this->role->nama_role === $roleName;
-        
+
         Log::debug('Role check', [
             'user_id' => $this->id,
             'role_id' => $this->role_id,
@@ -113,10 +120,10 @@ class User extends Authenticatable
             'checked_role' => $roleName,
             'has_role' => $hasRole
         ]);
-        
+
         return $hasRole;
     }
-    
+
     /**
      * Check if user is a regular user
      * 
@@ -131,7 +138,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Alamat::class);
     }
-    
+
     /**
      * Check if user is an admin
      * 
@@ -141,7 +148,7 @@ class User extends Authenticatable
     {
         return $this->hasRole('admin');
     }
-    
+
     /**
      * Check if user is a super admin
      * 
@@ -151,7 +158,7 @@ class User extends Authenticatable
     {
         return $this->hasRole('super_admin');
     }
-    
+
     /**
      * Get user's redirect path after login
      * 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PelangganController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthApiController;
@@ -12,7 +13,7 @@ use App\Http\Controllers\API\PesananAdminController;
 use App\Http\Controllers\API\OperatorApiController;
 use App\Http\Controllers\API\MesinApiController;
 use App\Http\Controllers\API\ProsesOperatorMesinApi;
-
+use App\Http\Controllers\API\PelangganApiController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -51,6 +52,9 @@ Route::get('/ukurans/{id}/items', [UkuranApiController::class, 'getItemsByUkuran
 // Route untuk biaya desain (GET - publik)
 Route::get('/biaya-desains', [BiayaDesainApiController::class, 'index']);
 Route::get('/biaya-desains/{id}', [BiayaDesainApiController::class, 'show']);
+
+// Route untuk pelanggan (GET - publik)
+
 
 // Route untuk health check
 Route::get('/health', function() {
@@ -120,3 +124,5 @@ Route::middleware('api.admin')->group(function() {
     Route::put('/proses-produksi/{id}/status', [ProsesOperatorMesinApi::class, 'updateStatus']);
     Route::get('/proses-produksi/status/{status}', [ProsesOperatorMesinApi::class, 'getProcessesByStatus']);
 });
+
+// menambah route statistik pesanan
