@@ -38,13 +38,14 @@
                         @endif
                     </td>
                     <td>
-                        <button class="btn btn-info btn-action" title="Edit"
-                                data-bs-toggle="modal" data-bs-target="#editJenisModal"
-                                data-id="{{ $jenis['id'] }}"
-                                data-kategori="{{ $jenis['kategori'] }}"
-                                data-biaya="{{ $jenis['biaya_tambahan'] }}">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                    <button class="btn btn-info btn-action" title="Edit"
+                            data-bs-toggle="modal" 
+                            data-bs-target="#editJenisModal"
+                            data-id="{{ $jenis['id'] }}"
+                            data-kategori="{{ $jenis['kategori'] }}"
+                            data-biaya="{{ $jenis['biaya_tambahan'] }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
                         <form action="{{ route('admin.jenis.destroy', $jenis['id']) }}" method="POST" class="d-inline delete-form" data-entity-type="jenis">
                             @csrf
                             @method('DELETE')

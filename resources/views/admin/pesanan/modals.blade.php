@@ -37,12 +37,10 @@
                             <option value="">-- Pilih Operator --</option>
                             @foreach($operatorList ?? [] as $operator)
                             <option value="{{ $operator['id'] }}">
-                                {{ $operator['nama'] }} ({{ $operator['posisi'] }}) - 
-                                {{ $operator['status'] == 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
+                                {{ $operator['nama'] }} ({{ $operator['posisi'] }})
                             </option>
                             @endforeach
                         </select>
-                        <div class="form-text">Operator yang dipilih dengan status tidak aktif akan diubah menjadi aktif saat ditugaskan.</div>
                         @error('operator_id') <div class="text-danger mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
@@ -156,13 +154,14 @@
                         <label for="detail_pesanan_id" class="form-label">Pilih Produk</label>
                         <select name="detail_pesanan_id" id="detail_pesanan_id" class="form-select" required>
                             @foreach($pesanan['detail_pesanans'] ?? [] as $detail)
-                            <option value="{{ $detail['id'] }}">
-                                {{ $detail['custom']['item']['nama_item'] ?? 'Produk' }} 
-                                ({{ $detail['custom']['bahan']['nama_bahan'] ?? '-' }}, {{ $detail['custom']['ukuran']['size'] ?? '-' }})
-                            </option>
+                                @if(!isset($detail['proses_pesanan']))
+                                <option value="{{ $detail['id'] }}">
+                                    {{ $detail['custom']['item']['nama_item'] ?? 'Produk' }} 
+                                    ({{ $detail['custom']['bahan']['nama_bahan'] ?? '-' }}, {{ $detail['custom']['ukuran']['size'] ?? '-' }})
+                                </option>
+                                @endif
                             @endforeach
                         </select>
-                        @error('detail_pesanan_id') <div class="text-danger mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">
                         <label for="desain" class="form-label">File Desain</label>

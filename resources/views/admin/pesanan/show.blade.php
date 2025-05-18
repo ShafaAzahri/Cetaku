@@ -350,11 +350,15 @@
                             <i class="fas {{ $detail['custom']['item']['nama_item'] === 'Jaket' ? 'fa-vest' : 'fa-tshirt' }}"></i>
                             <strong>{{ $detail['custom']['item']['nama_item'] ?? 'Produk' }}</strong>
                             
-                            <!-- Indikator Desain -->
-                            @if($detail['upload_desain'] || $detail['desain_revisi'])
-                            <span class="badge bg-info ms-2" title="Memiliki desain">
-                                <i class="fas fa-image"></i>
-                            </span>
+                            <!-- Indikator Status Produksi -->
+                            @if(isset($detail['proses_pesanan']))
+                                <span class="badge bg-info ms-2">
+                                    <i class="fas fa-cogs me-1"></i>Produksi Ditugaskan
+                                </span>
+                            @else
+                                <span class="badge bg-warning ms-2">
+                                    <i class="fas fa-clock me-1"></i>Menunggu Penugasan
+                                </span>
                             @endif
                         </div>
                         <div class="d-flex align-items-center">
@@ -605,9 +609,22 @@
                 
                 <!-- Tombol ini mungkin tidak ada atau tersembunyi -->
                 @if($pesanan['status'] == 'Dikonfirmasi')
-                <button type="button" class="action-btn btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#assignProductionModal">
-                    <i class="fas fa-tasks me-1"></i> Tugaskan Produksi
-                </button>
+                    <!-- Cek apakah masih ada produk yang belum ditugaskan -->
+                    @php
+                        $unassignedExists = false;
+                        foreach($pesanan['detail_pesanans'] ?? [] as $detail) {
+                            if(!isset($detail['proses_pesanan'])) {
+                                $unassignedExists = true;
+                                break;
+                            }
+                        }
+                    @endphp
+                    
+                    @if($unassignedExists)
+                    <button type="button" class="action-btn btn-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#assignProductionModal">
+                        <i class="fas fa-tasks me-1"></i> Tugaskan Produksi
+                    </button>
+                    @endif
                 @endif
                 <!-- Selesaikan Produksi -->
                 @if($pesanan['status'] == 'Sedang Diproses')

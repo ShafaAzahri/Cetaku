@@ -66,51 +66,48 @@ class PesananManagerController extends Controller
     /**
      * Menampilkan detail pesanan
      */
-    public function show($id)
-    {
-        try {
-            // Ambil detail pesanan dari API (kode yang sudah ada)
-            $response = $this->sendApiRequest('get', "/admin/pesanan/{$id}");
-            
-            if (!($response['success'] ?? false)) {
-                return redirect()->route('admin.pesanan.index')
-                    ->with('error', $response['message'] ?? 'Pesanan tidak ditemukan');
-            }
-            
-            $pesanan = $response['pesanan'];
-            $statusOptions = $response['status_options'] ?? [];
-            
-            // Ambil data mesin dan operator (kode yang sudah ada)
-            $machineResponse = $this->sendApiRequest('get', '/admin/mesin/available');
-            $operatorResponse = $this->sendApiRequest('get', '/admin/operators');
-            
-            $mesinList = ($machineResponse['success'] ?? false) ? $machineResponse['machines'] : [];
-            $operatorList = ($operatorResponse['success'] ?? false) ? $operatorResponse['operators'] : [];
-            
-            // HANYA Ambil biaya desain
-            $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
-            $biayaDesain = 0;
-            
-            if (($biayaDesainResponse['success'] ?? false) && 
-                isset($biayaDesainResponse['biaya_desains']) && 
-                count($biayaDesainResponse['biaya_desains']) > 0) {
-                // Ambil data biaya desain pertama
-                $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
-            }
-            
-            return view('admin.pesanan.show', compact(
-                'pesanan',
-                'statusOptions',
-                'mesinList',
-                'operatorList',
-                'biayaDesain'
-            ));
-        } catch (\Exception $e) {
-            Log::error('Error pada halaman detail pesanan: ' . $e->getMessage());
+// Di PesananManagerController.php
+public function show($id)
+{
+    try {
+        // Ambil detail pesanan dari API
+        $response = $this->sendApiRequest('get', "/admin/pesanan/{$id}");
+        
+        if (!($response['success'] ?? false)) {
             return redirect()->route('admin.pesanan.index')
-                ->with('error', 'Terjadi kesalahan saat memuat detail pesanan');
+                ->with('error', $response['message'] ?? 'Pesanan tidak ditemukan');
         }
+        
+        $pesanan = $response['pesanan'];
+        $statusOptions = $response['status_options'] ?? [];
+        
+        // Ambil daftar mesin dan operator dari response API
+        $mesinList = $response['available_machines'] ?? [];
+        $operatorList = $response['active_operators'] ?? [];
+        
+        // Ambil biaya desain (kode yang sudah ada)
+        $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
+        $biayaDesain = 0;
+        
+        if (($biayaDesainResponse['success'] ?? false) && 
+            isset($biayaDesainResponse['biaya_desains']) && 
+            count($biayaDesainResponse['biaya_desains']) > 0) {
+            $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
+        }
+        
+        return view('admin.pesanan.show', compact(
+            'pesanan',
+            'statusOptions',
+            'mesinList',
+            'operatorList',
+            'biayaDesain'
+        ));
+    } catch (\Exception $e) {
+        Log::error('Error pada halaman detail pesanan: ' . $e->getMessage());
+        return redirect()->route('admin.pesanan.index')
+            ->with('error', 'Terjadi kesalahan saat memuat detail pesanan');
     }
+}
     
     /**
      * Update status pesanan

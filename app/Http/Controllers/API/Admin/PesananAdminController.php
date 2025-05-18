@@ -107,9 +107,17 @@ class PesananAdminController extends Controller
                 'detailPesanans.prosesPesanan.mesin'
             ])->findOrFail($id);
             
+            // Ambil daftar mesin yang aktif untuk ditampilkan pada modal
+            $availableMachines = Mesin::where('status', 'aktif')->get();
+            
+            // Ambil daftar operator yang tidak_aktif untuk ditampilkan pada modal
+            $activeOperators = Operator::where('status', 'tidak_aktif')->get();
+            
             return response()->json([
                 'success' => true,
                 'pesanan' => $pesanan,
+                'available_machines' => $availableMachines,
+                'active_operators' => $activeOperators,
                 'status_options' => [
                     'Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 
                     'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'
@@ -249,6 +257,18 @@ class PesananAdminController extends Controller
                 ]);
             }
             
+            // Periksa apakah detail pesanan sudah memiliki proses yang aktif
+            $existingProcess = ProsesPesanan::where('detail_pesanan_id', $request->detail_pesanan_id)
+                ->whereNull('waktu_selesai')
+                ->first();
+                
+            if ($existingProcess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk ini sudah ditugaskan ke proses produksi'
+                ], 400);
+            }
+            
             // Buat record proses pesanan
             $prosesPesanan = new ProsesPesanan();
             $prosesPesanan->detail_pesanan_id = $request->detail_pesanan_id;
@@ -263,20 +283,55 @@ class PesananAdminController extends Controller
             $mesin->status = 'digunakan';
             $mesin->save();
             
-            // Update status pesanan
-            $pesanan->status = 'Sedang Diproses';
-            $pesanan->save();
+            // Cek apakah semua detail pesanan sudah ditugaskan ke proses produksi
+            $allAssigned = true;
+            $detailPesanans = DetailPesanan::where('pesanan_id', $id)->get();
+            
+            foreach ($detailPesanans as $detail) {
+                // Jika ada detail pesanan yang belum memiliki proses produksi aktif, flag = false
+                $hasActiveProcess = ProsesPesanan::where('detail_pesanan_id', $detail->id)
+                    ->whereNull('waktu_selesai')
+                    ->exists();
+                    
+                if (!$hasActiveProcess) {
+                    $allAssigned = false;
+                    break;
+                }
+            }
+            
+            // Update status pesanan hanya jika semua produk sudah ditugaskan
+            if ($allAssigned) {
+                $pesanan->status = 'Sedang Diproses';
+                $pesanan->save();
+                
+                Log::info('Semua produk dalam pesanan ditugaskan, status diubah menjadi Sedang Diproses', [
+                    'pesanan_id' => $pesanan->id,
+                    'total_produk' => $detailPesanans->count()
+                ]);
+            } else {
+                Log::info('Pesanan masih memiliki produk yang belum ditugaskan', [
+                    'pesanan_id' => $pesanan->id,
+                    'status' => 'Dikonfirmasi'
+                ]);
+            }
             
             DB::commit();
             
             return response()->json([
                 'success' => true,
                 'message' => 'Proses produksi berhasil ditugaskan',
-                'proses_pesanan' => $prosesPesanan
+                'proses_pesanan' => $prosesPesanan,
+                'pesanan_status' => $pesanan->status,
+                'all_products_assigned' => $allAssigned
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('API Error: Gagal assign produksi - ' . $e->getMessage());
+            Log::error('API Error: Gagal assign produksi - ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan saat menugaskan proses produksi',

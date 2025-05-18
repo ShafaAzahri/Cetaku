@@ -17,13 +17,17 @@ class JenisApiController extends Controller
      */
     public function index()
     {
-        Log::info('API: Request untuk daftar jenis diterima');
-        // Eager load relations untuk mengurangi N+1 query problem
-        $jenis = Jenis::with('items')->get();
+        $jenis_list = Jenis::with('items')->get();
+        
+        // Debug output untuk memverifikasi format data
+        Log::debug('Jenis data format:', [
+            'sample' => $jenis_list->first(),
+            'biaya_format' => $jenis_list->first() ? gettype($jenis_list->first()->biaya_tambahan) : 'none'
+        ]);
         
         return response()->json([
             'success' => true,
-            'jenis' => $jenis
+            'jenis' => $jenis_list
         ]);
     }
     
@@ -60,25 +64,24 @@ class JenisApiController extends Controller
     /**
      * Menampilkan jenis berdasarkan id
      */
-    // Di JenisApiController.php
+    
     public function show($id)
-    {
-        $jenis = Jenis::with('items')->find($id);
-        
-        if (!$jenis) {
+        {
+            $jenis = Jenis::with('items')->find($id);
+            
+            if (!$jenis) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jenis tidak ditemukan'
+                ], 404);
+            }
+            
             return response()->json([
-                'success' => false,
-                'message' => 'Jenis tidak ditemukan'
-            ], 404);
+                'success' => true,
+                'jenis' => $jenis,
+                'items' => $jenis->items
+            ]);
         }
-        
-        return response()->json([
-            'success' => true,
-            'jenis' => $jenis,
-            'items' => $jenis->items
-        ]);
-    }
-
     /**
      * Memperbarui jenis berdasarkan id
      */

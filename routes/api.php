@@ -94,6 +94,9 @@ Route::middleware('api.admin')->group(function() {
     Route::put('/kategoris/{id}', [KategoriApiController::class, 'update']);
     Route::delete('/kategoris/{id}', [KategoriApiController::class, 'destroy']);
     
+    // Statistik
+    Route::get('/admin/pesanan/statistics', [PesananAdminController::class, 'getStatistics']);
+    
     // Manajemen Pesanan Admin routes
     Route::get('/admin/pesanan', [PesananAdminController::class, 'index']);
     Route::get('/admin/pesanan/{id}', [PesananAdminController::class, 'show']);
@@ -109,8 +112,6 @@ Route::middleware('api.admin')->group(function() {
     Route::get('/admin/mesin/available', [PesananAdminController::class, 'getAvailableMachines']);
     Route::get('/admin/operators', [PesananAdminController::class, 'getOperators']);
     
-    // Statistik
-    Route::get('/admin/pesanan/statistics', [PesananAdminController::class, 'getStatistics']);
     
     // Operator API routes
     Route::get('/operators', [OperatorApiController::class, 'index']);
