@@ -95,7 +95,7 @@ public function show($id)
             $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
         }
         
-        return view('admin.pesanan.show', compact(
+        return view('admin.pesanan.show.show', compact(
             'pesanan',
             'statusOptions',
             'mesinList',
