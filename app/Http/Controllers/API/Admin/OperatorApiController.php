@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Operator;
@@ -17,6 +17,10 @@ class OperatorApiController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
+
+    // Di app/Http/Controllers/API/OperatorApiController.php
+    // Pada method index
+
     public function index(Request $request)
     {
         try {
@@ -42,13 +46,21 @@ class OperatorApiController extends Controller
             
             // Untuk setiap operator, periksa apakah sedang mengerjakan pesanan
             foreach ($operators as $operator) {
-                $currentAssignment = ProsesPesanan::with(['detailPesanan.custom.item', 'mesin'])
+                $currentAssignment = ProsesPesanan::with(['detailPesanan.custom.item', 'detailPesanan.pesanan', 'mesin'])
                     ->where('operator_id', $operator->id)
                     ->whereNull('waktu_selesai')
                     ->where('status_proses', '!=', 'Selesai')
                     ->orderBy('waktu_mulai', 'desc')
                     ->first();
                 
+                // Jika tidak ada tugas aktif, pastikan status operator 'tidak_aktif'
+                if (!$currentAssignment && $operator->status == 'aktif') {
+                    // Perbaikan: Hanya update kolom status saja
+                    Operator::where('id', $operator->id)
+                        ->update(['status' => 'tidak_aktif']);
+                }
+                
+                // Attach current_assignment sebagai properti tanpa menyimpannya ke database
                 $operator->current_assignment = $currentAssignment;
             }
             
@@ -77,15 +89,35 @@ class OperatorApiController extends Controller
         try {
             $operator = Operator::findOrFail($id);
             
-            // Ambil penugasan saat ini
-            $currentAssignment = ProsesPesanan::with(['detailPesanan.custom.item', 'mesin'])
-                ->where('operator_id', $id)
-                ->whereNull('waktu_selesai')
-                ->where('status_proses', '!=', 'Selesai')
-                ->orderBy('waktu_mulai', 'desc')
-                ->first();
+            // Ambil penugasan saat ini dengan relasi yang lebih lengkap
+            $currentAssignment = ProsesPesanan::with([
+                'detailPesanan.custom.item',
+                'detailPesanan.custom.bahan',
+                'detailPesanan.custom.ukuran',
+                'detailPesanan.pesanan',
+                'mesin'
+            ])
+            ->where('operator_id', $id)
+            ->whereNull('waktu_selesai')
+            ->where('status_proses', '!=', 'Selesai')
+            ->orderBy('waktu_mulai', 'desc')
+            ->first();
             
+            // Pastikan data informasi pesanan terlampir dengan benar
             $operator->current_assignment = $currentAssignment;
+            
+            // Untuk debugging, tambahkan log
+            if ($currentAssignment) {
+                Log::debug('Informasi pesanan operator', [
+                    'operator_id' => $id,
+                    'proses_id' => $currentAssignment->id,
+                    'detail_pesanan_id' => $currentAssignment->detail_pesanan_id,
+                    'pesanan_id' => $currentAssignment->detailPesanan->pesanan_id ?? null,
+                    'has_pesanan' => isset($currentAssignment->detailPesanan->pesanan)
+                ]);
+            } else {
+                Log::debug('Operator tidak memiliki tugas aktif', ['operator_id' => $id]);
+            }
             
             return response()->json([
                 'success' => true,
@@ -210,51 +242,51 @@ class OperatorApiController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateStatus(Request $request, $id)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'status' => 'required|in:aktif,tidak_aktif',
-            ]);
-            
-            if ($validator->fails()) {
+        public function updateStatus(Request $request, $id)
+        {
+            try {
+                $validator = Validator::make($request->all(), [
+                    'status' => 'required|in:aktif,tidak_aktif',
+                ]);
+                
+                if ($validator->fails()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validasi gagal',
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+                
+                $operator = Operator::findOrFail($id);
+                
+                // Cek apakah operator sedang mengerjakan pesanan
+                $currentAssignment = ProsesPesanan::where('operator_id', $id)
+                    ->whereNull('waktu_selesai')
+                    ->where('status_proses', '!=', 'Selesai')
+                    ->first();
+                
+                if ($currentAssignment && $request->status == 'tidak_aktif') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tidak dapat menonaktifkan operator karena sedang mengerjakan pesanan'
+                    ], 400);
+                }
+                
+                $operator->status = $request->status;
+                $operator->save();
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Status operator berhasil diperbarui',
+                    'operator' => $operator
+                ]);
+            } catch (\Exception $e) {
+                Log::error('API Error: Gagal mengubah status operator - ' . $e->getMessage());
                 return response()->json([
                     'success' => false,
-                    'message' => 'Validasi gagal',
-                    'errors' => $validator->errors()
-                ], 422);
+                    'message' => 'Terjadi kesalahan saat mengubah status operator',
+                    'error' => $e->getMessage()
+                ], 500);
             }
-            
-            $operator = Operator::findOrFail($id);
-            
-            // Cek apakah operator sedang mengerjakan pesanan
-            $currentAssignment = ProsesPesanan::where('operator_id', $id)
-                ->whereNull('waktu_selesai')
-                ->where('status_proses', '!=', 'Selesai')
-                ->first();
-            
-            if ($currentAssignment && $request->status == 'tidak_aktif') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak dapat menonaktifkan operator karena sedang mengerjakan pesanan'
-                ], 400);
-            }
-            
-            $operator->status = $request->status;
-            $operator->save();
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Status operator berhasil diperbarui',
-                'operator' => $operator
-            ]);
-        } catch (\Exception $e) {
-            Log::error('API Error: Gagal mengubah status operator - ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat mengubah status operator',
-                'error' => $e->getMessage()
-            ], 500);
         }
-    }
 }

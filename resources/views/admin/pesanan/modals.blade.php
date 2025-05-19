@@ -36,9 +36,13 @@
                         <select name="operator_id" id="operator_id" class="form-select" required>
                             <option value="">-- Pilih Operator --</option>
                             @foreach($operatorList ?? [] as $operator)
-                            <option value="{{ $operator['id'] }}">{{ $operator['nama'] }} ({{ $operator['posisi'] }})</option>
+                            <option value="{{ $operator['id'] }}">
+                                {{ $operator['nama'] }} ({{ $operator['posisi'] }}) - 
+                                {{ $operator['status'] == 'aktif' ? 'Aktif' : 'Tidak Aktif' }}
+                            </option>
                             @endforeach
                         </select>
+                        <div class="form-text">Operator yang dipilih dengan status tidak aktif akan diubah menjadi aktif saat ditugaskan.</div>
                         @error('operator_id') <div class="text-danger mt-1">{{ $message }}</div> @enderror
                     </div>
                     <div class="mb-3">

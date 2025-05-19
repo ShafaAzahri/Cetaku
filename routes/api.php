@@ -4,16 +4,15 @@ use App\Http\Controllers\Admin\PelangganController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthApiController;
-use App\Http\Controllers\API\ItemApiController;
-use App\Http\Controllers\API\BahanApiController;
-use App\Http\Controllers\API\JenisApiController;
-use App\Http\Controllers\API\UkuranApiController;
-use App\Http\Controllers\API\BiayaDesainApiController;
-use App\Http\Controllers\API\PesananAdminController;
-use App\Http\Controllers\API\OperatorApiController;
-use App\Http\Controllers\API\MesinApiController;
-use App\Http\Controllers\API\ProsesOperatorMesinApi;
-use App\Http\Controllers\API\PelangganApiController;
+use App\Http\Controllers\API\Admin\ItemApiController;
+use App\Http\Controllers\API\Admin\BahanApiController;
+use App\Http\Controllers\API\Admin\JenisApiController;
+use App\Http\Controllers\API\Admin\UkuranApiController;
+use App\Http\Controllers\API\Admin\BiayaDesainApiController;
+use App\Http\Controllers\API\Admin\PesananAdminController;
+use App\Http\Controllers\API\Admin\OperatorApiController;
+use App\Http\Controllers\API\Admin\MesinApiController;
+use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -124,5 +123,20 @@ Route::middleware('api.admin')->group(function() {
     Route::put('/proses-produksi/{id}/status', [ProsesOperatorMesinApi::class, 'updateStatus']);
     Route::get('/proses-produksi/status/{status}', [ProsesOperatorMesinApi::class, 'getProcessesByStatus']);
 });
+Route::middleware(['api.superadmin'])->prefix('superadmin')->group(function() {
+    // Admin Management Routes
+    Route::apiResource('admins', 'App\Http\Controllers\API\SuperAdmin\AdminManagementApiController');
+    Route::post('admins/{id}/reset-password', 'App\Http\Controllers\API\SuperAdmin\AdminManagementApiController@resetPassword');
+    
+    // User Management Routes
+    Route::apiResource('users', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController');
+    Route::post('users/{id}/reset-password', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController@resetPassword');
+    Route::get('users/{id}/order-history', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController@orderHistory');
+    
+    // Operator Management Routes
+    Route::apiResource('operators', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController');
+    Route::put('operators/{id}/status', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@updateStatus');
+    Route::get('operators/{id}/work-history', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@workHistory');
 
-// menambah route statistik pesanan
+    Route::get('dashboard/stats', 'App\Http\Controllers\API\SuperAdmin\DashboardApiController@getStats');
+});

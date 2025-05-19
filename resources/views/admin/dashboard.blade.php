@@ -201,40 +201,30 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @foreach($pesanans as $pesanan)
                             <tr>
-                                <td>#1234</td>
-                                <td>Budi</td>
-                                <td><span class="badge bg-info">Baru</span></td>
-                                <td>Rp 250.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
+                                <td>#{{ $pesanan->id }}</td>
+                                <td>{{ $pesanan->user->name }}</td> <!-- Relasi dengan User untuk nama pelanggan -->
+                                <td>
+                                    <span class="badge
+                                        @if($pesanan->status == 'Baru') bg-info
+                                        @elseif($pesanan->status == 'Proses') bg-warning
+                                        @elseif($pesanan->status == 'Bayar') bg-success
+                                        @else bg-primary
+                                        @endif">
+                                        {{ $pesanan->status }}
+                                    </span>
+                                </td>
+                                <td>Rp {{ number_format($pesanan->total, 0, ',', '.') }}</td>
+                                <td><a href="{{ route('pesanan.show', $pesanan->id) }}" class="btn btn-sm btn-outline-primary">Lihat</a></td>
                             </tr>
-                            <tr>
-                                <td>#1233</td>
-                                <td>Citra</td>
-                                <td><span class="badge bg-warning">Proses</span></td>
-                                <td>Rp 375.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
-                            </tr>
-                            <tr>
-                                <td>#1232</td>
-                                <td>Ani</td>
-                                <td><span class="badge bg-success">Bayar</span></td>
-                                <td>Rp 180.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
-                            </tr>
-                            <tr>
-                                <td>#1231</td>
-                                <td>Dodi</td>
-                                <td><span class="badge bg-primary">Kirim</span></td>
-                                <td>Rp 420.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
-                            </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">Lihat Semua Pesanan</a>
+                <a href="{{ route('admin.pesanan.index') }}" class="text-decoration-none">Lihat Semua Pesanan</a>
             </div>
         </div>
     </div>

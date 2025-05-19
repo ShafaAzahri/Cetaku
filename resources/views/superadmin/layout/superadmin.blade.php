@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="auth-required" content="true">
-    <meta name="required-role" content="admin">
-    <title>@yield('title', 'Dashboard Admin') | Cetaku</title>
-
+    <meta name="required-role" content="super_admin">
+    <title>@yield('title', 'Dashboard Super Admin') | Cetaku</title>
+    
     <!-- Google Font: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
@@ -17,47 +16,63 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
-<<<<<<< HEAD
-
-
-
-=======
-    <link rel="stylesheet" href="{{ asset('css/admin/product/procuct.css') }}">
->>>>>>> 89f430c9847310310c204e902e2c7f4fef1db17b
     @yield('styles')
+    
+    <style>
+        /* Override untuk super admin */
+        :root {
+            --primary-color: #6366f1;
+            --primary-color-dark: #4f46e5;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #f8fafc;
+        }
+        
+        .sidebar {
+            background-color: var(--sidebar-bg);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+        }
+        
+        .sidebar .nav-link:hover:not(.active) {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        
+        .brand-logo i, .brand-text {
+            color: var(--primary-color);
+        }
+    </style>
 </head>
-
 <body>
     <!-- Sidebar Component -->
-    @include('admin.components.sidebar')
-
+    @include('superadmin.components.sidebar')
+    
     <!-- Overlay for mobile sidebar -->
     <div class="overlay" id="sidebar-overlay"></div>
-
+    
     <!-- Main Content -->
     <div class="main-content" id="main-content">
         <!-- Navbar Component -->
-        @include('admin.components.navbar')
-
+        @include('superadmin.components.navbar')
+        
         <!-- Page Content -->
         <div class="content">
             @yield('content')
         </div>
     </div>
-
+    
     <!-- Scripts -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Setup CSRF token untuk semua request API
             axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-            console.log("DOM loaded in admin.blade.php");
-
+            
             // Cek sesi saat halaman dimuat
             fetch('/debug/session')
                 .then(response => response.json())
@@ -73,19 +88,19 @@
                 .catch(error => {
                     console.error('Session check error:', error);
                 });
-
+            
             // Fungsi sidebar toggle
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const toggleBtn = document.getElementById('toggle-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
-
+            
             // Toggle sidebar when button is clicked
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', function() {
                     sidebar.classList.toggle('collapsed');
                     mainContent.classList.toggle('expanded');
-
+                    
                     // For mobile
                     if (window.innerWidth < 992) {
                         sidebar.classList.toggle('mobile-visible');
@@ -93,7 +108,7 @@
                     }
                 });
             }
-
+            
             // Close sidebar when clicking outside on mobile
             if (overlay) {
                 overlay.addEventListener('click', function() {
@@ -101,7 +116,7 @@
                     overlay.classList.remove('active');
                 });
             }
-
+            
             // Adjust sidebar on window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth < 992) {
@@ -113,11 +128,7 @@
             });
         });
     </script>
-
-
+    
     @yield('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Bootstrap 5 CSS -->
 </body>
-
 </html>

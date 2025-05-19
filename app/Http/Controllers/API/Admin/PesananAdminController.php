@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Pesanan;
@@ -26,11 +26,16 @@ class PesananAdminController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Pesanan::with(['user', 'detailPesanans.custom.item', 'admin', 'ekspedisi']);
-            
-            // Filter berdasarkan status jika ada
+            $query = Pesanan::with(['user', 'detailPesanans.custom.item', 'admin', 'ekspedisi', 'pembayaran'])
+                ->join('pembayarans', 'pesanans.id', '=', 'pembayarans.pesanan_id')
+                ->where(function($q) {
+                    $q->where('pembayarans.metode', 'COD')
+                    ->orWhere('pembayarans.status', 'Lunas');
+                });
+                
+            // Filter tambahan seperti status pesanan jika diperlukan
             if ($request->has('status') && $request->status != 'Semua Status') {
-                $query->where('status', $request->status);
+                $query->where('pesanans.status', $request->status);
             }
             
             // Filter berdasarkan periode tanggal jika ada
@@ -57,10 +62,11 @@ class PesananAdminController extends Controller
             $sortField = $request->get('sort_field', 'tanggal_dipesan');
             $sortDirection = $request->get('sort_direction', 'desc');
             $query->orderBy($sortField, $sortDirection);
+            $query->select('pesanans.*');
             
             // Pagination
             $perPage = $request->get('per_page', 10);
-            $pesanans = $query->paginate($perPage);
+            $pesanans = $query->paginate($request->get('per_page', 10));
             
             return response()->json([
                 'success' => true,
@@ -230,6 +236,17 @@ class PesananAdminController extends Controller
                     'success' => false,
                     'message' => 'Mesin tidak tersedia saat ini'
                 ], 400);
+            }
+            
+            // Dapatkan operator dan update status jika tidak aktif
+            $operator = Operator::findOrFail($request->operator_id);
+            if ($operator->status != 'aktif') {
+                $operator->status = 'aktif';
+                $operator->save();
+                Log::info('Status operator diubah menjadi aktif saat penugasan', [
+                    'operator_id' => $operator->id,
+                    'nama' => $operator->nama
+                ]);
             }
             
             // Buat record proses pesanan
@@ -636,7 +653,8 @@ class PesananAdminController extends Controller
     public function getOperators()
     {
         try {
-            $operators = Operator::where('status', 'aktif')->get();
+            // Hapus filter status untuk mengambil semua operator
+            $operators = Operator::all();
             
             return response()->json([
                 'success' => true,

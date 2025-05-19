@@ -29,6 +29,12 @@
             </a>
         </li>
         <li class="nav-item">
+            <a href="{{ route('admin.mesins.index') }}" class="nav-link">
+                <i class="fas fa-gear"></i>
+                <span class="nav-text">Mesin</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="{{ route('admin.operators.index') }}" class="nav-link">
                 <i class="fas fa-user-tie"></i>
                 <span class="nav-text">Operator</span>

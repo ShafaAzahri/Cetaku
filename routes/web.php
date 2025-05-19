@@ -2,17 +2,26 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\AdminController;
+
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\PesananController;
+use App\Http\Controllers\WelcomeController;
 use App\Http\Controllers\Admin\ProsesPesananController;
 use App\Http\Controllers\Admin\PelangganController;
+
+
+// Admin controllers
+
 use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\PesananManagerController;
-use App\Http\Controllers\Admin\OperatorController;
+use App\Http\Controllers\Admin\OperatorController as AdminOperatorController;
 use App\Http\Controllers\Admin\MesinController;
-use App\Http\Controllers\Admin\ProsesProduksiController;
-use App\Http\Controllers\SuperAdminController;
-use App\Http\Controllers\WelcomeController;
+
+// Super Admin controllers
+use App\Http\Controllers\SuperAdmin\AdminController as SuperAdminController;
+use App\Http\Controllers\SuperAdmin\UserController;
+use App\Http\Controllers\SuperAdmin\OperatorController;
+use App\Http\Controllers\SuperAdmin\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,29 +32,33 @@ use App\Http\Controllers\WelcomeController;
 // Route halaman utama (welcome page)
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
 
-// Route autentikasi
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
-Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+// Authentication routes
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+});
 
-// Logout route memerlukan autentikasi
+// Logout route (needs auth)
 Route::middleware(['auth.check'])->group(function() {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 });
 
-// Route untuk user yang sudah login
+// Regular user routes
 Route::middleware(['auth.check', 'role:user'])->group(function() {
-    // Redirects user/welcome ke halaman utama
+    // Redirect user/welcome to home page
     Route::get('/user/welcome', function() {
         return redirect()->route('welcome');
     })->name('user.welcome');
+    
+    // Add more user routes here if needed
 });
 
-// Route untuk Admin dan Super Admin
+// Admin & Super Admin shared routes
 Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
-    // Dashboard route
+    // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
     // Product Manager
@@ -94,30 +107,48 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
 
 
     // Operator Management
-    Route::get('/operators', [OperatorController::class, 'index'])->name('operators.index');
-    Route::get('/operators/{id}', [OperatorController::class, 'show'])->name('operators.show');
-    Route::put('/operators/{id}/status', [OperatorController::class, 'updateStatus'])->name('operators.update-status');
+    Route::get('/operators', [AdminOperatorController::class, 'index'])->name('operators.index');
+    Route::get('/operators/{id}', [AdminOperatorController::class, 'show'])->name('operators.show');
+    Route::put('/operators/{id}/status', [AdminOperatorController::class, 'updateStatus'])->name('operators.update-status');
     
     // Mesin Management
     Route::get('/mesins', [MesinController::class, 'index'])->name('mesins.index');
     Route::get('/mesins/{id}', [MesinController::class, 'show'])->name('mesins.show');
     Route::put('/mesins/{id}/status', [MesinController::class, 'updateStatus'])->name('mesins.update-status');
-    
-    // Proses Produksi Management
-    Route::get('/proses-produksi', [ProsesProduksiController::class, 'index'])->name('proses-produksi.index');
-    Route::get('/proses-produksi/status/{status}', [ProsesProduksiController::class, 'showByStatus'])->name('proses-produksi.status');
-    Route::get('/proses-produksi/{id}', [ProsesProduksiController::class, 'show'])->name('proses-produksi.show');
-    Route::put('/proses-produksi/{id}/status', [ProsesProduksiController::class, 'updateStatus'])->name('proses-produksi.update-status');
 });
 
-// Route untuk super admin
+// Super Admin specific routes
 Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'role:super_admin'])->group(function() {
-    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Admin Management
+    Route::get('/admin', [SuperAdminController::class, 'index'])->name('admin.index');
+    Route::get('/admin/create', [SuperAdminController::class, 'create'])->name('admin.create');
+    Route::post('/admin', [SuperAdminController::class, 'store'])->name('admin.store');
+    Route::get('/admin/{id}', [SuperAdminController::class, 'show'])->name('admin.show');
+    Route::get('/admin/{id}/edit', [SuperAdminController::class, 'edit'])->name('admin.edit');
+    Route::put('/admin/{id}', [SuperAdminController::class, 'update'])->name('admin.update');
+    Route::delete('/admin/{id}', [SuperAdminController::class, 'destroy'])->name('admin.destroy');
+    Route::post('/admin/{id}/reset-password', [SuperAdminController::class, 'resetPassword'])->name('admin.reset-password');
+    
+    // User Management
+    Route::get('/user', [UserController::class, 'index'])->name('user.index');
+    Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
+    Route::get('/user/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
+    Route::put('/user/{id}', [UserController::class, 'update'])->name('user.update');
+    Route::delete('/user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
+    Route::post('/user/{id}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
+    Route::get('/user/{id}/order-history', [UserController::class, 'orderHistory'])->name('user.order-history');
+    
+    // Operator Management
+    Route::get('/operator', [OperatorController::class, 'index'])->name('operator.index');
+    Route::get('/operator/create', [OperatorController::class, 'create'])->name('operator.create');
+    Route::post('/operator', [OperatorController::class, 'store'])->name('operator.store');
+    Route::get('/operator/{id}', [OperatorController::class, 'show'])->name('operator.show');
+    Route::get('/operator/{id}/edit', [OperatorController::class, 'edit'])->name('operator.edit');
+    Route::put('/operator/{id}', [OperatorController::class, 'update'])->name('operator.update');
+    Route::delete('/operator/{id}', [OperatorController::class, 'destroy'])->name('operator.destroy');
+    Route::put('/operator/{id}/status', [OperatorController::class, 'updateStatus'])->name('operator.update-status');
+    Route::get('/operator/{id}/work-history', [OperatorController::class, 'workHistory'])->name('operator.work-history');
 });
-
-// Route debug (hanya untuk development)
-if (env('APP_DEBUG', false)) {
-    Route::get('/debug/session', function() {
-        return response()->json(session()->all());
-    });
-}

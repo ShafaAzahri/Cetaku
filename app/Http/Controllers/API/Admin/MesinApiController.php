@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mesin;
@@ -206,26 +206,32 @@ class MesinApiController extends Controller
             
             $mesin = Mesin::findOrFail($id);
             
-            // Cek apakah mesin sedang digunakan
-            $currentUsage = ProsesPesanan::where('mesin_id', $id)
-                ->whereNull('waktu_selesai')
-                ->where('status_proses', '!=', 'Selesai')
-                ->first();
-            
-            if ($currentUsage && $request->status != 'digunakan') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak dapat mengubah status mesin karena sedang digunakan dalam proses produksi'
-                ], 400);
+            // Jika status sebelumnya digunakan dan akan diubah ke maintenance
+            // Kita perlu memeriksa apakah mesin sedang digunakan dalam proses produksi
+            if ($mesin->status == 'digunakan' && $request->status == 'maintenance') {
+                $currentUsage = ProsesPesanan::where('mesin_id', $id)
+                    ->whereNull('waktu_selesai')
+                    ->where('status_proses', '!=', 'Selesai')
+                    ->first();
+                
+                if ($currentUsage) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tidak dapat mengubah status mesin ke maintenance karena sedang digunakan dalam proses produksi'
+                    ], 400);
+                }
             }
             
-            $mesin->status = $request->status;
-            $mesin->save();
+            // Update status mesin
+            Mesin::where('id', $id)->update(['status' => $request->status]);
+            
+            // Ambil data mesin yang sudah diupdate
+            $updatedMesin = Mesin::find($id);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Status mesin berhasil diperbarui',
-                'mesin' => $mesin
+                'mesin' => $updatedMesin
             ]);
         } catch (\Exception $e) {
             Log::error('API Error: Gagal mengubah status mesin - ' . $e->getMessage());

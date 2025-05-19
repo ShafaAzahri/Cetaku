@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\API\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ProsesPesanan;
@@ -111,6 +111,7 @@ class ProsesOperatorMesinApi extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
+
     public function updateStatus(Request $request, $id)
     {
         try {
@@ -129,7 +130,7 @@ class ProsesOperatorMesinApi extends Controller
             
             DB::beginTransaction();
             
-            $process = ProsesPesanan::with(['mesin', 'detailPesanan.pesanan'])->findOrFail($id);
+            $process = ProsesPesanan::with(['mesin', 'operator', 'detailPesanan.pesanan'])->findOrFail($id);
             $oldStatus = $process->status_proses;
             $newStatus = $request->status_proses;
             
@@ -146,8 +147,23 @@ class ProsesOperatorMesinApi extends Controller
                 // Update status mesin menjadi aktif
                 $mesin = $process->mesin;
                 if ($mesin) {
-                    $mesin->status = 'aktif';
-                    $mesin->save();
+                    Mesin::where('id', $mesin->id)->update(['status' => 'aktif']);
+                }
+                
+                // Update status operator menjadi tidak_aktif
+                $operator = $process->operator;
+                if ($operator) {
+                    // Cek apakah operator memiliki tugas lain yang masih aktif
+                    $otherActiveProcesses = ProsesPesanan::where('operator_id', $operator->id)
+                        ->where('id', '!=', $process->id)
+                        ->whereNull('waktu_selesai')
+                        ->where('status_proses', '!=', 'Selesai')
+                        ->count();
+                    
+                    if ($otherActiveProcesses == 0) {
+                        $operator->status = 'tidak_aktif';
+                        $operator->save();
+                    }
                 }
                 
                 // Cek apakah semua proses untuk pesanan ini telah selesai
