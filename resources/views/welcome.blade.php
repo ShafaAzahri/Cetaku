@@ -1,4 +1,3 @@
-
 @extends('user.layouts.app')
 
 @section('content')
@@ -107,9 +106,53 @@
     <!-- Categories Section -->
     <section class="categories-section">
         <div class="container">
-            <h2 class="section-title text-center">Kategori</h2>
+            <div class="row align-items-center mb-4">
+                <div class="col">
+                    <h2 class="section-title text-center">Kategori</h2>
+                </div>
+                @if(count($kategoris) > 0)
+                <div class="col-auto">
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        Lihat Semua <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                @endif
+            </div>
             
             <div class="row mt-4">
+                @forelse($kategoris as $kategori)
+                <div class="col-md-{{ count($kategoris) >= 3 ? '4' : (count($kategoris) == 2 ? '6' : '12') }} mb-4">
+                    <a href="#" class="text-decoration-none">
+                        <div class="category-card">
+                            @if(isset($kategori['gambar']) && $kategori['gambar'])
+                                <img src="{{ asset('storage/' . $kategori['gambar']) }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                            @else
+                                <!-- Default gambar berdasarkan nama kategori -->
+                                @if(stripos($kategori['nama_kategori'], 'pakaian') !== false)
+                                    <img src="{{ asset('images/categories/pakaian.jpg') }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                                @elseif(stripos($kategori['nama_kategori'], 'banner') !== false || stripos($kategori['nama_kategori'], 'mmt') !== false)
+                                    <img src="{{ asset('images/categories/banner.jpg') }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                                @elseif(stripos($kategori['nama_kategori'], 'sticker') !== false || stripos($kategori['nama_kategori'], 'stiker') !== false)
+                                    <img src="{{ asset('images/categories/sticker.jpg') }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                                @elseif(stripos($kategori['nama_kategori'], 'print') !== false || stripos($kategori['nama_kategori'], 'paper') !== false)
+                                    <img src="{{ asset('images/categories/print.jpg') }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                                @elseif(stripos($kategori['nama_kategori'], 'fotografi') !== false || stripos($kategori['nama_kategori'], 'foto') !== false)
+                                    <img src="{{ asset('images/categories/fotografi.jpg') }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                                @else
+                                    <img src="{{ asset('images/categories/default.jpg') }}" alt="{{ $kategori['nama_kategori'] }}" class="img-fluid">
+                                @endif
+                            @endif
+                            <div class="category-overlay">
+                                <div class="category-name">{{ $kategori['nama_kategori'] }}</div>
+                                @if(isset($kategori['deskripsi']) && $kategori['deskripsi'])
+                                    <div class="category-description">{{ Str::limit($kategori['deskripsi'], 50) }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                @empty
+                <!-- Fallback ke kategori static jika tidak ada data dari API -->
                 <div class="col-md-4 mb-4">
                     <div class="category-card">
                         <img src="{{ asset('images/categories/pakaian.jpg') }}" alt="Pakaian" class="img-fluid">
@@ -136,24 +179,7 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="col-md-6 mb-4">
-                    <div class="category-card">
-                        <img src="{{ asset('images/categories/sticker.jpg') }}" alt="Sticker" class="img-fluid">
-                        <div class="category-overlay">
-                            <div class="category-name">Sticker</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6 mb-4">
-                    <div class="category-card">
-                        <img src="{{ asset('images/categories/fotografi.jpg') }}" alt="Fotografi" class="img-fluid">
-                        <div class="category-overlay">
-                            <div class="category-name">Fotografi</div>
-                        </div>
-                    </div>
-                </div>
+                @endforelse
             </div>
         </div>
     </section>

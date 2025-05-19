@@ -10,9 +10,15 @@
                 
                 <!-- Indikator Status Produksi -->
                 @if(isset($detail['proses_pesanan']))
-                    <span class="badge bg-info ms-2">
-                        <i class="fas fa-cogs me-1"></i>Produksi Ditugaskan
-                    </span>
+                    @if(isset($detail['proses_pesanan']['status_proses']) && $detail['proses_pesanan']['status_proses'] == 'Selesai')
+                        <span class="badge bg-success ms-2">
+                            <i class="fas fa-check-circle me-1"></i>Produksi Selesai
+                        </span>
+                    @else
+                        <span class="badge bg-info ms-2">
+                            <i class="fas fa-cogs me-1"></i>Produksi Ditugaskan
+                        </span>
+                    @endif
                 @else
                     <span class="badge bg-warning ms-2">
                         <i class="fas fa-clock me-1"></i>Menunggu Penugasan

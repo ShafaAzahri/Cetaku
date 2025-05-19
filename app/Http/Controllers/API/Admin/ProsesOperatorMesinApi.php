@@ -111,7 +111,6 @@ class ProsesOperatorMesinApi extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
-
     public function updateStatus(Request $request, $id)
     {
         try {
@@ -171,20 +170,42 @@ class ProsesOperatorMesinApi extends Controller
                 if ($detailPesanan) {
                     $pesanan = $detailPesanan->pesanan;
                     if ($pesanan) {
-                        $unfinishedProcesses = ProsesPesanan::whereHas('detailPesanan', function ($query) use ($pesanan) {
-                            $query->where('pesanan_id', $pesanan->id);
-                        })
-                        ->where('status_proses', '!=', 'Selesai')
-                        ->count();
+                        // Cek apakah semua detail pesanan sudah selesai diproduksi
+                        $allCompleted = true;
+                        $pesananDetails = DetailPesanan::where('pesanan_id', $pesanan->id)->get();
                         
-                        // Jika semua proses telah selesai, update status pesanan
-                        if ($unfinishedProcesses == 0) {
+                        foreach ($pesananDetails as $detail) {
+                            // Periksa apakah detail pesanan memiliki proses produksi
+                            $detailProsesPesanan = ProsesPesanan::where('detail_pesanan_id', $detail->id)->first();
+                            
+                            // Jika tidak ada proses pesanan atau proses belum selesai, tandai belum selesai semua
+                            if (!$detailProsesPesanan || $detailProsesPesanan->status_proses != 'Selesai') {
+                                $allCompleted = false;
+                                break;
+                            }
+                        }
+                        
+                        // Hanya ubah status jika semua produk selesai diproduksi
+                        if ($allCompleted) {
+                            // Cek metode pengambilan untuk menentukan status berikutnya
                             if ($pesanan->metode_pengambilan == 'ambil') {
                                 $pesanan->status = 'Menunggu Pengambilan';
                             } else {
                                 $pesanan->status = 'Sedang Dikirim';
                             }
                             $pesanan->save();
+                            
+                            Log::info('Semua produk dalam pesanan telah selesai diproduksi, status diubah', [
+                                'pesanan_id' => $pesanan->id,
+                                'new_status' => $pesanan->status,
+                                'total_produk' => $pesananDetails->count()
+                            ]);
+                        } else {
+                            Log::info('Beberapa produk dalam pesanan masih dalam proses produksi', [
+                                'pesanan_id' => $pesanan->id,
+                                'current_status' => $pesanan->status,
+                                'completed_current_detail' => $detailPesanan->id
+                            ]);
                         }
                     }
                 }

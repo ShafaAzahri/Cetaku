@@ -379,16 +379,46 @@ class PesananAdminController extends Controller
             $mesin->status = 'aktif';
             $mesin->save();
             
-            // Update status pesanan
+            // Ambil pesanan terkait
             $pesanan = $prosesPesanan->detailPesanan->pesanan;
             
-            // Cek metode pengambilan untuk menentukan status berikutnya
-            if ($pesanan->metode_pengambilan == 'ambil') {
-                $pesanan->status = 'Menunggu Pengambilan';
-            } else {
-                $pesanan->status = 'Sedang Dikirim';
+            // Cek apakah semua detail pesanan sudah selesai diproduksi
+            $allCompleted = true;
+            $pesananDetails = DetailPesanan::where('pesanan_id', $pesanan->id)->get();
+            
+            foreach ($pesananDetails as $detail) {
+                // Periksa apakah detail pesanan memiliki proses produksi
+                $detailProsesPesanan = ProsesPesanan::where('detail_pesanan_id', $detail->id)->first();
+                
+                // Jika tidak ada proses pesanan atau proses belum selesai, tandai belum selesai semua
+                if (!$detailProsesPesanan || $detailProsesPesanan->status_proses != 'Selesai') {
+                    $allCompleted = false;
+                    break;
+                }
             }
-            $pesanan->save();
+            
+            // Hanya ubah status jika semua produk selesai diproduksi
+            if ($allCompleted) {
+                // Cek metode pengambilan untuk menentukan status berikutnya
+                if ($pesanan->metode_pengambilan == 'ambil') {
+                    $pesanan->status = 'Menunggu Pengambilan';
+                } else {
+                    $pesanan->status = 'Sedang Dikirim';
+                }
+                $pesanan->save();
+                
+                Log::info('Semua produk dalam pesanan telah selesai diproduksi, status diubah', [
+                    'pesanan_id' => $pesanan->id,
+                    'new_status' => $pesanan->status,
+                    'total_produk' => $pesananDetails->count()
+                ]);
+            } else {
+                Log::info('Beberapa produk dalam pesanan masih dalam proses produksi', [
+                    'pesanan_id' => $pesanan->id,
+                    'current_status' => $pesanan->status,
+                    'completed_current_detail' => $prosesPesanan->detailPesanan->id
+                ]);
+            }
             
             DB::commit();
             
@@ -396,7 +426,8 @@ class PesananAdminController extends Controller
                 'success' => true,
                 'message' => 'Proses produksi berhasil diselesaikan',
                 'proses_pesanan' => $prosesPesanan,
-                'pesanan' => $pesanan
+                'pesanan' => $pesanan,
+                'all_completed' => $allCompleted
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

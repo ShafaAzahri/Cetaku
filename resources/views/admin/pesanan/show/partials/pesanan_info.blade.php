@@ -22,18 +22,20 @@
         </div>
         
         <div class="col-md-6">
-            <div class="info-row">
-                <div class="info-label">Ekspedisi</div>
-                <div class="info-value">{{ $pesanan['ekspedisi']['nama_ekspedisi'] ?? 'JNE' }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">Layanan</div>
-                <div class="info-value">{{ $pesanan['ekspedisi']['layanan'] ?? 'Regular' }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">Biaya Pengiriman</div>
-                <div class="info-value">Rp {{ number_format($pesanan['ekspedisi']['ongkos_kirim'] ?? 15000, 0, ',', '.') }}</div>
-            </div>
+            @if($pesanan['metode_pengambilan'] == 'antar')
+                <div class="info-row">
+                    <div class="info-label">Ekspedisi</div>
+                    <div class="info-value">{{ $pesanan['ekspedisi']['nama_ekspedisi'] ?? '-' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Layanan</div>
+                    <div class="info-value">{{ $pesanan['ekspedisi']['layanan'] ?? '-' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Biaya Pengiriman</div>
+                    <div class="info-value">Rp {{ number_format($pesanan['ekspedisi']['ongkos_kirim'] ?? 0, 0, ',', '.') }}</div>
+                </div>
+            @endif
             <div class="info-row">
                 <div class="info-label">Admin</div>
                 <div class="info-value">{{ $pesanan['admin']['nama'] ?? 'Belum ditentukan' }}</div>
