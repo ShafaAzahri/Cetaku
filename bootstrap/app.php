@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleCheck::class,
             'api.admin' => \App\Http\Middleware\ApiAdminAuth::class, // Tambahkan ini
             'api.superadmin' => \App\Http\Middleware\ApiSuperAdminAuth::class,
+            'api.auth' => \App\Http\Middleware\ApiUserAuth::class, // Middleware baru
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
