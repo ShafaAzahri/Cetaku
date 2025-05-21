@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\WelcomeController;
+use App\Http\Controllers\User\ProfileController;
 
 // Admin controllers
 use App\Http\Controllers\Admin\ProductManagerController;
@@ -47,7 +48,11 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
         return redirect()->route('welcome');
     })->name('user.welcome');
     
-    // Add more user routes here if needed
+    Route::get('/profile', [ProfileController::class, 'showProfile'])->name('user.profile');
+    // Menyimpan perubahan password
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
+    ->name('profile.update-password');
+
 });
 
 // Admin & Super Admin shared routes
