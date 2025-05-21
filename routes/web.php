@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\WelcomeController;
 use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\pesanan;
 
 // Admin controllers
 use App\Http\Controllers\Admin\ProductManagerController;
@@ -52,6 +53,11 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
     // Menyimpan perubahan password
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
     ->name('profile.update-password');
+    
+    Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
+    Route::get('/pesananx', [pesanan::class, 'indexk'])->name('keranjang');
+
+
 
 });
 

@@ -13,19 +13,24 @@
                 <li class="nav-item">
                     <a class="nav-link active" href="{{ url('/') }}">Beranda</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Layanan</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Tentang Kami</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Kontak</a>
+                <!-- Mengganti Layanan, Tentang Kami, dan Kontak dengan dropdown kategori -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Kategori
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <li><a class="dropdown-item" href="#">Kategori 1</a></li>
+                        <li><a class="dropdown-item" href="#">Kategori 2</a></li>
+                        <li><a class="dropdown-item" href="#">Kategori 3</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#">Kategori Lainnya</a></li>
+                    </ul>
                 </li>
             </ul>
             
-            <div class="search-box">
-                <form class="d-flex">
+            <div class="search-box d-flex">
+                <form class="d-flex w-100">
+                    <!-- Menambahkan kelas w-100 untuk lebar penuh -->
                     <input class="form-control me-2" type="search" placeholder="Mau cetak apa?" aria-label="Search">
                     <button class="btn search-btn" type="submit">
                         <i class="fas fa-search"></i>
@@ -35,12 +40,12 @@
             
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link notification-icon" href="#">
+                    <a class="nav-link notification-icon" href="{{ route('pesanan') }}">
                         <i class="far fa-bell"></i>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link cart-icon" href="#">
+                    <a class="nav-link cart-icon" href="{{ route('keranjang') }}">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
                     </a>
@@ -80,3 +85,17 @@
         </div>
     </div>
 </nav>
+
+<!-- Custom CSS to make search bar wider -->
+<style>
+    .search-box .form-control {
+        width: 500px; /* Atur lebar sesuai kebutuhan */
+    }
+
+    /* Optional: If you want the search bar to always expand on the page */
+    @media (max-width: 768px) {
+        .search-box .form-control {
+            width: 100%; /* Responsive search bar */
+        }
+    }
+</style>

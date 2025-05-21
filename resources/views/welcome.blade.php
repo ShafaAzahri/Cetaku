@@ -84,9 +84,9 @@
                         <div class="product-info">
                             <h5 class="product-title">{{ $item['nama_item'] }}</h5>
                             <p class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</p>
-                            @if(isset($item['total_terjual']) && $item['total_terjual'] > 0)
-                                <small class="text-muted">{{ $item['total_terjual'] }} terjual</small>
-                            @endif
+                            <small class="text-muted">
+                                {{ isset($item['total_terjual']) && $item['total_terjual'] > 0 ? $item['total_terjual'] . ' terjual' : '0 terjual' }}
+                            </small>
                         </div>
                     </div>
                 </div>
