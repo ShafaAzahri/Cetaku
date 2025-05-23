@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class UserController extends Controller
 {
@@ -38,6 +39,33 @@ class UserController extends Controller
             'pagination' => $response['pagination'] ?? null,
             'search' => $params['search']
         ]);
+    }
+
+    public function create()
+    {
+        return view('superadmin.user.create');
+    }
+
+    // Menyimpan user baru
+    public function store(Request $request)
+    {
+        // Validasi data
+        $validatedData = $request->validate([
+            'nama' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8|confirmed',
+            'role' => 'required|in:user,admin',
+        ]);
+
+        // Simpan user ke database
+        $user = User::create([
+            'nama' => $validatedData['nama'],
+            'email' => $validatedData['email'],
+            'password' => bcrypt($validatedData['password']),
+            'role' => $validatedData['role'],
+        ]);
+
+        return redirect()->route('superadmin.user.index')->with('success', 'User berhasil ditambahkan.');
     }
     
     /**

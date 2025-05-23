@@ -25,7 +25,7 @@
         <li class="nav-item">
             <a href="{{ route('admin.mesins.index') }}" class="nav-link">
                 <i class="fas fa-users"></i>
-                <span class="nav-text">Pelanggan</span>
+                <span class="nav-text">Mesin</span>
             </a>
         </li>
         <li class="nav-item">
