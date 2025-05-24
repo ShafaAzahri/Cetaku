@@ -6,6 +6,10 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\WelcomeController;
 use App\Http\Controllers\User\ProfileController;
 
+
+use App\Http\Controllers\User\pesanan;
+
+
 // Admin controllers
 use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\PesananManagerController;
@@ -33,6 +37,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+    // Tambahkan di bagian route yang tidak memerlukan auth
+    Route::get('/product/{id}', [App\Http\Controllers\User\ProductController::class, 'show'])->name('product.detail');
 });
 
 // Logout route (needs auth)
@@ -52,6 +58,13 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
     // Menyimpan perubahan password
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
     ->name('profile.update-password');
+
+
+    
+    Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
+    Route::get('/pesananx', [pesanan::class, 'indexk'])->name('keranjang');
+    Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
+
 
 });
 
