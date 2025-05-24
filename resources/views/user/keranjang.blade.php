@@ -2,6 +2,10 @@
 
 @section('title', 'Keranjang')
 
+@push('meta')
+<meta name="csrf-token" content="{{ csrf_token() }}">
+@endpush
+
 @section('custom-css')
 <style>
     .cart-container {
@@ -211,22 +215,18 @@
     @if(isset($keranjangItems) && count($keranjangItems) > 0)
         <!-- Cart Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4 class="mb-0">Keranjang Anda ({{ $summary['total_items'] }} item)</h4>
+            <h4 class="mb-0">Keranjang Anda ({{ $summary['total_items'] ?? 0 }} item)</h4>
         </div>
         
-        <!-- Select All Form -->
-        <form method="GET" action="{{ route('keranjang') }}">
-            <div class="cart-header">
-                <div class="form-check select-all">
-                    <input class="form-check-input" type="checkbox" id="selectAll" name="select_all" 
-                           {{ request('select_all') ? 'checked' : '' }}
-                           onchange="this.form.submit()">
-                    <label class="form-check-label" for="selectAll">
-                        Pilih Semua
-                    </label>
-                </div>
+        <!-- Select All Header -->
+        <div class="cart-header">
+            <div class="form-check select-all">
+                <input class="form-check-input" type="checkbox" id="selectAll">
+                <label class="form-check-label" for="selectAll">
+                    Pilih Semua
+                </label>
             </div>
-        </form>
+        </div>
         
         <div class="row">
             <!-- Cart Items -->
@@ -243,23 +243,29 @@
                                             <div class="form-check pt-4">
                                                 <input class="form-check-input" type="checkbox" 
                                                        id="item{{ $item['id'] }}" 
-                                                       {{ $item['selected'] ?? false ? 'checked' : '' }}>
+                                                       name="selected_items[]" 
+                                                       value="{{ $item['id'] }}">
                                                 <label class="form-check-label" for="item{{ $item['id'] }}"></label>
                                             </div>
                                         </div>
                                         <div class="col-auto">
-                                            <img src="{{ $item['item']['gambar'] ?? asset('images/default-product.png') }}" 
-                                                 class="item-img" alt="{{ $item['item']['nama'] }}">
+                                            @if(isset($item['item']['gambar']) && $item['item']['gambar'])
+                                                <img src="{{ asset('storage/' . $item['item']['gambar']) }}" 
+                                                     class="item-img" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
+                                            @else
+                                                <img src="{{ asset('images/products/default.png') }}" 
+                                                     class="item-img" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
+                                            @endif
                                         </div>
                                         <div class="col">
                                             <div class="item-details">
-                                                <h5>{{ $item['item']['nama'] }}</h5>
-                                                <p>Bahan: {{ $item['bahan']['nama'] ?? '-' }}</p>
-                                                <p>Ukuran: {{ $item['ukuran']['nama'] ?? '-' }}</p>
-                                                <p>Jenis: {{ $item['jenis']['nama'] ?? '-' }}</p>
+                                                <h5>{{ $item['item']['nama_item'] ?? 'Nama Produk' }}</h5>
+                                                <p>Bahan: {{ $item['bahan']['nama_bahan'] ?? '-' }}</p>
+                                                <p>Ukuran: {{ $item['ukuran']['size'] ?? '-' }}</p>
+                                                <p>Jenis: {{ $item['jenis']['kategori'] ?? '-' }}</p>
                                                 <p>
                                                     Upload Desain: 
-                                                    @if($item['upload_desain'])
+                                                    @if(isset($item['upload_desain']) && $item['upload_desain'])
                                                         <span class="upload-status status-uploaded">Sudah diupload</span>
                                                         <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" 
                                                               enctype="multipart/form-data" style="display: inline;">
@@ -300,23 +306,13 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="d-flex flex-column align-items-end h-100 justify-content-between">
-                                                <div class="item-price">Rp {{ number_format($item['harga_total'], 0, ',', '.') }}</div>
-                                                <div class="quantity-control">
-                                                    <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
-                                                          style="display: inline;">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
-                                                        <button type="submit" {{ $item['quantity'] <= 1 ? 'disabled' : '' }}>-</button>
-                                                    </form>
-                                                    <input type="text" value="{{ $item['quantity'] }}" readonly>
-                                                    <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
-                                                          style="display: inline;">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
-                                                        <button type="submit">+</button>
-                                                    </form>
+                                                <div class="item-price">Rp {{ number_format($item['total_harga'] ?? 0, 0, ',', '.') }}</div>
+                                                <div class="quantity-control" 
+                                                     data-item-id="{{ $item['id'] }}"
+                                                     data-base-price="{{ ($item['total_harga'] ?? 0) / max(1, $item['quantity'] ?? 1) }}">
+                                                    <button type="button" class="btn-decrease" {{ ($item['quantity'] ?? 1) <= 1 ? 'disabled' : '' }}>-</button>
+                                                    <input type="text" class="quantity-input" value="{{ $item['quantity'] ?? 1 }}" readonly>
+                                                    <button type="button" class="btn-increase">+</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -326,6 +322,7 @@
                         </div>
                     @endforeach
                 @else
+                    <!-- Tampilkan items tanpa grouping -->
                     @foreach($keranjangItems as $item)
                         <div class="cart-item mb-3">
                             <div class="row g-3">
@@ -333,23 +330,29 @@
                                     <div class="form-check pt-4">
                                         <input class="form-check-input" type="checkbox" 
                                                id="item{{ $item['id'] }}" 
-                                               {{ $item['selected'] ?? false ? 'checked' : '' }}>
+                                               name="selected_items[]" 
+                                               value="{{ $item['id'] }}">
                                         <label class="form-check-label" for="item{{ $item['id'] }}"></label>
                                     </div>
                                 </div>
                                 <div class="col-auto">
-                                    <img src="{{ $item['item']['gambar'] ?? asset('images/default-product.png') }}" 
-                                         class="item-img" alt="{{ $item['item']['nama'] }}">
+                                    @if(isset($item['item']['gambar']) && $item['item']['gambar'])
+                                        <img src="{{ asset('storage/' . $item['item']['gambar']) }}" 
+                                             class="item-img" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
+                                    @else
+                                        <img src="{{ asset('images/products/default.png') }}" 
+                                             class="item-img" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
+                                    @endif
                                 </div>
                                 <div class="col">
                                     <div class="item-details">
-                                        <h5>{{ $item['item']['nama'] }}</h5>
-                                        <p>Bahan: {{ $item['bahan']['nama'] ?? '-' }}</p>
-                                        <p>Ukuran: {{ $item['ukuran']['nama'] ?? '-' }}</p>
-                                        <p>Jenis: {{ $item['jenis']['nama'] ?? '-' }}</p>
+                                        <h5>{{ $item['item']['nama_item'] ?? 'Nama Produk' }}</h5>
+                                        <p>Bahan: {{ $item['bahan']['nama_bahan'] ?? '-' }}</p>
+                                        <p>Ukuran: {{ $item['ukuran']['size'] ?? '-' }}</p>
+                                        <p>Jenis: {{ $item['jenis']['kategori'] ?? '-' }}</p>
                                         <p>
                                             Upload Desain: 
-                                            @if($item['upload_desain'])
+                                            @if(isset($item['upload_desain']) && $item['upload_desain'])
                                                 <span class="upload-status status-uploaded">Sudah diupload</span>
                                                 <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" 
                                                       enctype="multipart/form-data" style="display: inline;">
@@ -390,23 +393,13 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="d-flex flex-column align-items-end h-100 justify-content-between">
-                                        <div class="item-price">Rp {{ number_format($item['harga_total'], 0, ',', '.') }}</div>
-                                        <div class="quantity-control">
-                                            <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
-                                                  style="display: inline;">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
-                                                <button type="submit" {{ $item['quantity'] <= 1 ? 'disabled' : '' }}>-</button>
-                                            </form>
-                                            <input type="text" value="{{ $item['quantity'] }}" readonly>
-                                            <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
-                                                  style="display: inline;">
-                                                @csrf
-                                                @method('PUT')
-                                                <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
-                                                <button type="submit">+</button>
-                                            </form>
+                                        <div class="item-price">Rp {{ number_format($item['total_harga'] ?? 0, 0, ',', '.') }}</div>
+                                        <div class="quantity-control" 
+                                             data-item-id="{{ $item['id'] }}"
+                                             data-base-price="{{ ($item['total_harga'] ?? 0) / max(1, $item['quantity'] ?? 1) }}">
+                                            <button type="button" class="btn-decrease" {{ ($item['quantity'] ?? 1) <= 1 ? 'disabled' : '' }}>-</button>
+                                            <input type="text" class="quantity-input" value="{{ $item['quantity'] ?? 1 }}" readonly>
+                                            <button type="button" class="btn-increase">+</button>
                                         </div>
                                     </div>
                                 </div>
@@ -421,25 +414,25 @@
                 <div class="summary-card">
                     <h5>Ringkasan Pesanan</h5>
                     
-                    <div class="summary-item">
-                        <span>Subtotal ({{ $summary['total_items'] }} produk)</span>
-                        <span>Rp {{ number_format($summary['total_harga'], 0, ',', '.') }}</span>
+                    <!-- Dynamic Summary Items -->
+                    <div id="summary-items">
+                        <!-- Items akan diisi oleh JavaScript -->
                     </div>
                     
                     <div class="summary-item">
                         <span>Biaya Desain</span>
-                        <span>Rp {{ number_format($summary['biaya_desain'] ?? 0, 0, ',', '.') }}</span>
+                        <span id="design-cost">Rp {{ number_format($summary['biaya_desain'] ?? 0, 0, ',', '.') }}</span>
                     </div>
                     
                     <div class="summary-item summary-total">
                         <span>Total</span>
-                        <span>Rp {{ number_format(($summary['total_harga'] + ($summary['biaya_desain'] ?? 0)), 0, ',', '.') }}</span>
+                        <span id="grand-total">Rp 0</span>
                     </div>
                     
-                    <a href="#" class="checkout-btn">CHECKOUT SEKARANG</a>
+                    <a href="#" class="checkout-btn" id="checkout-btn">PILIH ITEM UNTUK CHECKOUT</a>
                     
                     <form method="POST" action="{{ route('keranjang.clear') }}" class="mt-3"
-                          onsubmit="return confirm('Yakin ingin mengosongkan keranjang?')">
+                        onsubmit="return confirm('Yakin ingin mengosongkan keranjang?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-outline-danger w-100">
@@ -459,4 +452,243 @@
         </div>
     @endif
 </div>
+
+@if(isset($keranjangItems) && count($keranjangItems) > 0)
+<!-- JavaScript for Cart functionality -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('input[name="selected_items[]"]');
+    
+    // Initialize summary on page load
+    updateCartSummary();
+    
+    // Individual checkbox change
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const allChecked = Array.from(itemCheckboxes).every(cb => cb.checked);
+            const someChecked = Array.from(itemCheckboxes).some(cb => cb.checked);
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = someChecked && !allChecked;
+            }
+            
+            updateCartSummary();
+        });
+    });
+    
+    // Select all functionality
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateCartSummary();
+        });
+    }
+
+    // Real-time quantity update functionality
+    const quantityControls = document.querySelectorAll('.quantity-control');
+    
+    quantityControls.forEach(control => {
+        const decreaseBtn = control.querySelector('.btn-decrease');
+        const increaseBtn = control.querySelector('.btn-increase');
+        const quantityInput = control.querySelector('.quantity-input');
+        const itemRow = control.closest('.cart-item');
+        const itemPriceElement = itemRow.querySelector('.item-price');
+        const itemId = control.dataset.itemId;
+        const basePrice = parseFloat(control.dataset.basePrice || 0);
+        
+        function updatePriceDisplay(quantity) {
+            const totalPrice = basePrice * quantity;
+            itemPriceElement.textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+            updateCartSummary();
+        }
+        
+        function updateQuantity(newQuantity, callback) {
+            if (newQuantity < 1) return;
+            
+            decreaseBtn.disabled = true;
+            increaseBtn.disabled = true;
+            
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            fetch(`/keranjang/${itemId}/quantity`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    quantity: newQuantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    quantityInput.value = newQuantity;
+                    updatePriceDisplay(newQuantity);
+                    updateCartSummary();
+                    if (callback) callback();
+                } else {
+                    alert('Gagal mengupdate quantity: ' + (data.message || 'Terjadi kesalahan'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengupdate quantity');
+            })
+            .finally(() => {
+                decreaseBtn.disabled = newQuantity <= 1;
+                increaseBtn.disabled = false;
+            });
+        }
+        
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentQuantity = parseInt(quantityInput.value) || 1;
+                if (currentQuantity > 1) {
+                    updateQuantity(currentQuantity - 1);
+                }
+            });
+        }
+        
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const currentQuantity = parseInt(quantityInput.value) || 1;
+                updateQuantity(currentQuantity + 1);
+            });
+        }
+    });
+    
+    // Function to update cart summary dengan detail per kategori
+    function updateCartSummary() {
+        let totalItems = 0;
+        let grandTotal = 0;
+        let checkedItemsCount = 0;
+        let categoryTotals = {};
+        
+        // Ambil biaya desain original
+        const originalDesignCost = {{ $summary['biaya_desain'] ?? 0 }};
+        
+        // Hitung per kategori yang dicentang
+        document.querySelectorAll('.cart-item').forEach(item => {
+            const checkbox = item.querySelector('input[name="selected_items[]"]');
+            const quantityInput = item.querySelector('.quantity-input');
+            const priceText = item.querySelector('.item-price').textContent;
+            const itemName = item.querySelector('.item-details h5').textContent.trim();
+            
+            if (checkbox && checkbox.checked && quantityInput && priceText) {
+                const quantity = parseInt(quantityInput.value) || 0;
+                const priceOnly = priceText.replace(/[^\d]/g, '');
+                const price = parseFloat(priceOnly) || 0;
+                
+                totalItems += quantity;
+                grandTotal += price;
+                checkedItemsCount++;
+                
+                // Group by product name
+                if (categoryTotals[itemName]) {
+                    categoryTotals[itemName].quantity += quantity;
+                    categoryTotals[itemName].total += price;
+                } else {
+                    categoryTotals[itemName] = {
+                        quantity: quantity,
+                        total: price
+                    };
+                }
+            }
+        });
+        
+        // Update summary items
+        const summaryItemsContainer = document.getElementById('summary-items');
+        summaryItemsContainer.innerHTML = '';
+        
+        if (checkedItemsCount > 0) {
+            // Tampilkan detail per kategori
+            for (const [productName, data] of Object.entries(categoryTotals)) {
+                const summaryItem = document.createElement('div');
+                summaryItem.className = 'summary-item';
+                summaryItem.innerHTML = `
+                    <span>${productName} (${data.quantity} pcs)</span>
+                    <span>Rp ${data.total.toLocaleString('id-ID')}</span>
+                `;
+                summaryItemsContainer.appendChild(summaryItem);
+            }
+            
+            // Tampilkan subtotal jika ada lebih dari 1 kategori
+            if (Object.keys(categoryTotals).length > 1) {
+                const subtotalItem = document.createElement('div');
+                subtotalItem.className = 'summary-item';
+                subtotalItem.style.borderTop = '1px solid #e5e5e5';
+                subtotalItem.style.paddingTop = '10px';
+                subtotalItem.style.marginTop = '10px';
+                subtotalItem.style.fontWeight = '500';
+                subtotalItem.innerHTML = `
+                    <span>Subtotal (${totalItems} produk)</span>
+                    <span>Rp ${grandTotal.toLocaleString('id-ID')}</span>
+                `;
+                summaryItemsContainer.appendChild(subtotalItem);
+            }
+        } else {
+            // Tampilkan pesan jika tidak ada item yang dipilih
+            const emptyItem = document.createElement('div');
+            emptyItem.className = 'summary-item';
+            emptyItem.style.color = '#666';
+            emptyItem.style.fontStyle = 'italic';
+            emptyItem.innerHTML = `
+                <span>Belum ada item yang dipilih</span>
+                <span>Rp 0</span>
+            `;
+            summaryItemsContainer.appendChild(emptyItem);
+        }
+        
+        // Update biaya desain
+        const designCostElement = document.getElementById('design-cost');
+        if (designCostElement) {
+            const displayDesignCost = checkedItemsCount > 0 ? originalDesignCost : 0;
+            designCostElement.textContent = 'Rp ' + displayDesignCost.toLocaleString('id-ID');
+        }
+        
+        // Update grand total
+        const grandTotalElement = document.getElementById('grand-total');
+        if (grandTotalElement) {
+            const displayDesignCost = checkedItemsCount > 0 ? originalDesignCost : 0;
+            const finalTotal = grandTotal + displayDesignCost;
+            grandTotalElement.textContent = 'Rp ' + finalTotal.toLocaleString('id-ID');
+        }
+        
+        // Update header
+        const cartHeaderCount = document.querySelector('h4');
+        const allItems = document.querySelectorAll('.cart-item').length;
+        if (cartHeaderCount) {
+            cartHeaderCount.textContent = `Keranjang Anda (${allItems} item)`;
+        }
+        
+        // Update checkout button
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            if (checkedItemsCount > 0) {
+                checkoutBtn.style.opacity = '1';
+                checkoutBtn.style.pointerEvents = 'auto';
+                checkoutBtn.style.backgroundColor = '#4361ee';
+                checkoutBtn.textContent = `CHECKOUT SEKARANG (${checkedItemsCount} item)`;
+            } else {
+                checkoutBtn.style.opacity = '0.5';
+                checkoutBtn.style.pointerEvents = 'none';
+                checkoutBtn.style.backgroundColor = '#6c757d';
+                checkoutBtn.textContent = 'PILIH ITEM UNTUK CHECKOUT';
+            }
+        }
+        
+        console.log('Category Totals:', categoryTotals);
+        console.log(`Grand Total: ${grandTotal}, Items: ${totalItems}`);
+    }
+});
+</script>
+@endif
 @endsection

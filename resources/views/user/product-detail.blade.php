@@ -461,13 +461,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Store file temporarily (not uploaded to server yet)
+        // Store file temporarily
         uploadedFile = file;
         uploadStatus.innerHTML = `<small class="text-success"><i class="fas fa-check"></i> File "${file.name}" siap diupload.</small>`;
         uploadStatus.style.display = 'block';
     }
 
-    // Add to cart functionality
+    // Add to cart functionality - UPDATED
     document.querySelector('.btn-add-cart').addEventListener('click', function() {
         if (!isLoggedIn) {
             const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
@@ -486,26 +486,119 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Prepare data
-        const cartData = {
-            item_id: {{ $item['id'] }},
-            ukuran_id: ukuranSelect.value,
-            bahan_id: bahanSelect.value,
-            jenis_id: jenisSelect.value,
-            quantity: quantity,
-            upload_file: uploadedFile
-        };
+        // Disable button and show loading
+        const addToCartBtn = this;
+        const originalText = addToCartBtn.innerHTML;
+        addToCartBtn.disabled = true;
+        addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menambahkan...';
 
-        // Show success message for now
-        const ukuranText = ukuranSelect.selectedOptions[0].text;
-        const bahanText = bahanSelect.selectedOptions[0].text;
-        const jenisText = jenisSelect.selectedOptions[0].text;
+        // Prepare FormData
+        const formData = new FormData();
+        formData.append('item_id', {{ $item['id'] }});
+        formData.append('ukuran_id', ukuranSelect.value);
+        formData.append('bahan_id', bahanSelect.value);
+        formData.append('jenis_id', jenisSelect.value);
+        formData.append('quantity', quantity);
         
-        alert(`Berhasil menambahkan ${quantity} produk ke keranjang!\n\nDetail:\n- Ukuran: ${ukuranText}\n- Bahan: ${bahanText}\n- Jenis: ${jenisText}${uploadedFile ? '\n- Desain: ' + uploadedFile.name : ''}`);
+        if (uploadedFile) {
+            formData.append('upload_desain', uploadedFile);
+        }
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        // Send AJAX request
+        fetch('{{ route("keranjang.add") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                showNotification('success', 'Produk berhasil ditambahkan ke keranjang!');
+                
+                // Update cart count if possible
+                updateCartCount();
+                
+                // Reset form
+                resetForm();
+            } else {
+                showNotification('error', data.message || 'Gagal menambahkan ke keranjang');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Terjadi kesalahan saat menambahkan ke keranjang');
+        })
+        .finally(() => {
+            // Re-enable button
+            addToCartBtn.disabled = false;
+            addToCartBtn.innerHTML = originalText;
+        });
     });
+
+    // Helper functions
+    function showNotification(type, message) {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    function updateCartCount() {
+        // Update cart count in navbar
+        fetch('{{ route("keranjang.count") }}')
+            .then(response => response.json())
+            .then(data => {
+                const cartCountElement = document.querySelector('.cart-count');
+                if (cartCountElement) {
+                    cartCountElement.textContent = data.count || 0;
+                }
+            })
+            .catch(error => console.error('Error updating cart count:', error));
+    }
+
+    function resetForm() {
+        // Reset quantity to 1
+        quantity = 1;
+        quantityInput.value = 1;
+        
+        // Clear uploaded file
+        uploadedFile = null;
+        fileInput.value = '';
+        uploadStatus.style.display = 'none';
+        
+        // Reset upload area text
+        uploadArea.innerHTML = `
+            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+            <p class="mb-2">Klik untuk upload atau drag & drop file desain</p>
+            <small class="text-muted">Format: JPG, PNG, PDF (Max 5MB)</small>
+        `;
+    }
 
     // Initialize price calculation
     updatePrice();
+    
+    // Initialize cart count
+    updateCartCount();
 });
 </script>
 @endsection
