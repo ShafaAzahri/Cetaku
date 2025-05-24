@@ -107,6 +107,8 @@
         </div>
         @endif
 
+        @include('user.components.alert')
+
         <form action="{{ route('keranjang.add') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <input type="hidden" name="item_id" value="{{ $item['id'] }}">

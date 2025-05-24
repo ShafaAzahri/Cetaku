@@ -49,6 +49,9 @@ class KeranjangApiController extends Controller
                 return $item->item->kategoris->first()->nama_kategori ?? 'Lainnya';
             });
 
+            // TAMBAHAN: Ambil biaya desain
+            $biayaDesain = BiayaDesain::first()->biaya ?? 0;
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -57,7 +60,8 @@ class KeranjangApiController extends Controller
                     'summary' => [
                         'total_items' => $totalItems,
                         'total_harga' => $totalHarga,
-                        'count_products' => $keranjangItems->count()
+                        'count_products' => $keranjangItems->count(),
+                        'biaya_desain' => $biayaDesain // TAMBAHAN INI
                     ]
                 ]
             ]);

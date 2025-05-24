@@ -42,7 +42,8 @@ class KeranjangController extends Controller
                     'summary' => $data['data']['summary'] ?? [
                         'total_items' => 0,
                         'total_harga' => 0,
-                        'count_products' => 0
+                        'count_products' => 0,
+                        'biaya_desain' => 0 // TAMBAHAN INI
                     ]
                 ]);
             }
@@ -53,7 +54,8 @@ class KeranjangController extends Controller
                 'summary' => [
                     'total_items' => 0,
                     'total_harga' => 0,
-                    'count_products' => 0
+                    'count_products' => 0,
+                    'biaya_desain' => 0 // TAMBAHAN INI
                 ]
             ]);
 
@@ -126,26 +128,35 @@ class KeranjangController extends Controller
             $responseData = $response->json();
 
             if ($response->successful() && ($responseData['success'] ?? false)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Produk berhasil ditambahkan ke keranjang',
-                    'data' => $responseData['data'] ?? null
-                ]);
+                // Cek apakah request dari AJAX atau form
+                if ($request->expectsJson() || $request->ajax()) {
+                    // Untuk AJAX, return JSON
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Produk berhasil ditambahkan ke keranjang'
+                    ]);
+                } else {
+                    // Untuk form submission, redirect dengan session flash
+                    return redirect()->back()->with('success', 'Produk berhasil ditambahkan ke keranjang');
+                }
             }
-
-            
-
-            return response()->json([
-                'success' => false,
-                'message' => $responseData['message'] ?? 'Gagal menambahkan ke keranjang'
-            ], $response->status());
-
+    
+            // Handle error
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $responseData['message'] ?? 'Gagal menambahkan ke keranjang'
+                ]);
+            } else {
+                return redirect()->back()->with('error', $responseData['message'] ?? 'Gagal menambahkan ke keranjang');
+            }
+    
         } catch (\Exception $e) {
-            Log::error('Error adding to cart: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan sistem'
-            ], 500);
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
+            } else {
+                return redirect()->back()->with('error', 'Terjadi kesalahan sistem');
+            }
         }
     }
 
