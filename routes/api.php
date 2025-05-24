@@ -13,6 +13,7 @@ use App\Http\Controllers\API\Admin\OperatorApiController;
 use App\Http\Controllers\API\Admin\MesinApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\KategoriApiController;
+use App\Http\Controllers\API\User\ProfileApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,13 +31,19 @@ Route::prefix('auth')->group(function() {
     Route::post('/logout', [AuthApiController::class, 'logout']);
 });
 
-// Alamat API routes (dengan middleware api.auth)
-Route::middleware('api.auth')->prefix('alamats')->group(function() {
-    Route::get('/', 'App\Http\Controllers\User\AlamatApiController@index');
-    Route::post('/', 'App\Http\Controllers\API\User\AlamatApiController@store');
-    Route::get('/{id}', 'App\Http\Controllers\User\AlamatApiController@show');
-    Route::put('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@update');
-    Route::delete('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@destroy');
+// Rute untuk profil pengguna dan alamat (middleware api.user)
+Route::middleware('api.user')->group(function() {
+    // Profil pengguna
+    Route::get('/profile', [ProfileApiController::class, 'getProfile']);
+    Route::post('/profile/update', [ProfileApiController::class, 'updateProfile']);
+    Route::post('/profile/update-password', [ProfileApiController::class, 'updatePassword']);
+    
+    // Alamat pengguna
+    Route::get('/alamat', [ProfileApiController::class, 'getAlamat']);
+    Route::get('/alamat/{id}', [ProfileApiController::class, 'getAlamatDetail']);
+    Route::post('/alamat', [ProfileApiController::class, 'createAlamat']);
+    Route::put('/alamat/{id}', [ProfileApiController::class, 'updateAlamat']);
+    Route::delete('/alamat/{id}', [ProfileApiController::class, 'deleteAlamat']);
 });
 
 // Routes untuk item (Public GET)
