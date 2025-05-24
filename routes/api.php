@@ -44,6 +44,16 @@ Route::middleware('api.user')->group(function() {
     Route::post('/alamat', [ProfileApiController::class, 'createAlamat']);
     Route::put('/alamat/{id}', [ProfileApiController::class, 'updateAlamat']);
     Route::delete('/alamat/{id}', [ProfileApiController::class, 'deleteAlamat']);
+
+    Route::prefix('keranjang')->group(function() {
+        Route::get('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'index']); // GET /api/keranjang
+        Route::post('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'store']); // POST /api/keranjang
+        Route::put('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'update']); // PUT /api/keranjang/{id}
+        Route::delete('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'destroy']); // DELETE /api/keranjang/{id}
+        Route::delete('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'clear']); // DELETE /api/keranjang (clear all)
+        Route::post('/checkout', [App\Http\Controllers\API\User\KeranjangApiController::class, 'checkout']); // POST /api/keranjang/checkout
+        Route::get('/count', [App\Http\Controllers\API\User\KeranjangApiController::class, 'count']); // GET /api/keranjang/count
+    });
 });
 
 // Routes untuk item (Public GET)

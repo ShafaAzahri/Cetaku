@@ -59,6 +59,10 @@
         width: 30px;
         height: 30px;
         font-size: 16px;
+        cursor: pointer;
+    }
+    .quantity-control button:hover {
+        background: #e0e0e0;
     }
     .quantity-control input {
         width: 40px;
@@ -81,9 +85,13 @@
         border-radius: 4px;
         padding: 6px 12px;
         transition: all 0.3s;
+        text-decoration: none;
+        font-size: 12px;
     }
     .upload-btn:hover {
         background-color: #e5e5e5;
+        color: #333;
+        text-decoration: none;
     }
     .upload-status {
         font-size: 13px;
@@ -142,12 +150,43 @@
         border-radius: 6px;
         font-weight: 600;
         margin-top: 15px;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
     }
     .checkout-btn:hover {
         background-color: #3651d4;
+        color: white;
+        text-decoration: none;
     }
     .select-all {
         margin-right: 10px;
+    }
+    .empty-cart {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    .empty-cart img {
+        max-width: 200px;
+        opacity: 0.7;
+        margin-bottom: 20px;
+    }
+    .empty-cart h4 {
+        margin-bottom: 10px;
+        color: #333;
+    }
+    .empty-cart p {
+        margin-bottom: 20px;
+    }
+    .btn-primary {
+        background-color: #4361ee;
+        border-color: #4361ee;
+        padding: 10px 30px;
+    }
+    .btn-primary:hover {
+        background-color: #3651d4;
+        border-color: #3651d4;
     }
 </style>
 @endsection
@@ -158,7 +197,7 @@
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-secondary">Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('welcome') }}" class="text-decoration-none text-secondary">Home</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Keranjang</li>
             </ol>
         </nav>
@@ -169,218 +208,255 @@
     <!-- Alert -->
     @include('user.components.alert')
     
-    <!-- Cart Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">Keranjang Anda (3 item)</h4>
-    </div>
-    
-    <!-- Select All -->
-    <div class="cart-header">
-        <div class="form-check select-all">
-            <input class="form-check-input" type="checkbox" id="selectAll">
-            <label class="form-check-label" for="selectAll">
-                Pilih Semua
-            </label>
-        </div>
-    </div>
-    
-    <div class="row">
-        <!-- Cart Items -->
-        <div class="col-lg-8">
-            <!-- Banner Group -->
-            <div class="mb-4">
-                <div class="cart-group-title">Kategori: Banner</div>
-                
-                <div class="cart-item">
-                    <div class="row g-3">
-                        <div class="col-auto">
-                            <div class="form-check pt-4">
-                                <input class="form-check-input" type="checkbox" id="item1" checked>
-                                <label class="form-check-label" for="item1"></label>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <img src="{{ asset('images/banner.png') }}" class="item-img" alt="Banner">
-                        </div>
-                        <div class="col">
-                            <div class="item-details">
-                                <h5>Banner Indoor 100x200cm</h5>
-                                <p>Bahan: Flexi China</p>
-                                <p>Ukuran: 100x200cm</p>
-                                <p>Jenis: Dengan Jahitan</p>
-                                <p>
-                                    Upload Desain: 
-                                    <span class="upload-status status-pending">Belum diupload</span>
-                                    <button class="btn upload-btn btn-sm ms-2">
-                                        <i class="fas fa-upload me-1"></i> Upload Desain
-                                    </button>
-                                </p>
-                                <div class="d-block mt-1">
-                                    <a href="#" class="item-action"><i class="fas fa-trash-alt me-1"></i> Hapus</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex flex-column align-items-end h-100 justify-content-between">
-                                <div class="item-price">Rp 150.000</div>
-                                <div class="quantity-control">
-                                    <button type="button">-</button>
-                                    <input type="text" value="1" readonly>
-                                    <button type="button">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Merchandise Group -->
-            <div class="mb-4">
-                <div class="cart-group-title">Kategori: Merchandise</div>
-                
-                <div class="cart-item">
-                    <div class="row g-3">
-                        <div class="col-auto">
-                            <div class="form-check pt-4">
-                                <input class="form-check-input" type="checkbox" id="item2" checked>
-                                <label class="form-check-label" for="item2"></label>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <img src="{{ asset('images/kaos.png') }}" class="item-img" alt="Kaos">
-                        </div>
-                        <div class="col">
-                            <div class="item-details">
-                                <h5>Kaos Custom</h5>
-                                <p>Bahan: Cotton Combed 30s</p>
-                                <p>Ukuran: XL</p>
-                                <p>Jenis: Lengan Pendek</p>
-                                <p>
-                                    Upload Desain: 
-                                    <span class="upload-status status-uploaded">Sudah diupload</span>
-                                    <button class="btn upload-btn btn-sm ms-2">
-                                        <i class="fas fa-edit me-1"></i> Ganti Desain
-                                    </button>
-                                </p>
-                                <div class="d-block mt-1">
-                                    <a href="#" class="item-action"><i class="fas fa-trash-alt me-1"></i> Hapus</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex flex-column align-items-end h-100 justify-content-between">
-                                <div class="item-price">Rp 85.000</div>
-                                <div class="quantity-control">
-                                    <button type="button">-</button>
-                                    <input type="text" value="2" readonly>
-                                    <button type="button">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="cart-item">
-                    <div class="row g-3">
-                        <div class="col-auto">
-                            <div class="form-check pt-4">
-                                <input class="form-check-input" type="checkbox" id="item3">
-                                <label class="form-check-label" for="item3"></label>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <img src="{{ asset('images/mug.png') }}" class="item-img" alt="Mug">
-                        </div>
-                        <div class="col">
-                            <div class="item-details">
-                                <h5>Mug Custom</h5>
-                                <p>Bahan: Keramik</p>
-                                <p>Ukuran: Standard 300ml</p>
-                                <p>Jenis: Full Color</p>
-                                <p>
-                                    Upload Desain: 
-                                    <span class="upload-status status-pending">Belum diupload</span>
-                                    <button class="btn upload-btn btn-sm ms-2">
-                                        <i class="fas fa-upload me-1"></i> Upload Desain
-                                    </button>
-                                </p>
-                                <div class="d-block mt-1">
-                                    <a href="#" class="item-action"><i class="fas fa-trash-alt me-1"></i> Hapus</a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="d-flex flex-column align-items-end h-100 justify-content-between">
-                                <div class="item-price">Rp 45.000</div>
-                                <div class="quantity-control">
-                                    <button type="button">-</button>
-                                    <input type="text" value="1" readonly>
-                                    <button type="button">+</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    @if(isset($keranjangItems) && count($keranjangItems) > 0)
+        <!-- Cart Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">Keranjang Anda ({{ $summary['total_items'] }} item)</h4>
         </div>
         
-        <!-- Order Summary -->
-        <div class="col-lg-4">
-            <div class="summary-card">
-                <h5>Ringkasan Pesanan</h5>
-                
-                <div class="summary-item">
-                    <span>Subtotal (3 produk)</span>
-                    <span>Rp 320.000</span>
+        <!-- Select All Form -->
+        <form method="GET" action="{{ route('keranjang') }}">
+            <div class="cart-header">
+                <div class="form-check select-all">
+                    <input class="form-check-input" type="checkbox" id="selectAll" name="select_all" 
+                           {{ request('select_all') ? 'checked' : '' }}
+                           onchange="this.form.submit()">
+                    <label class="form-check-label" for="selectAll">
+                        Pilih Semua
+                    </label>
                 </div>
-                
-                <div class="summary-item">
-                    <span>Biaya Desain</span>
-                    <span>Rp 50.000</span>
+            </div>
+        </form>
+        
+        <div class="row">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                @if(isset($groupedItems) && count($groupedItems) > 0)
+                    @foreach($groupedItems as $kategori => $items)
+                        <div class="mb-4">
+                            <div class="cart-group-title">Kategori: {{ $kategori }}</div>
+                            
+                            @foreach($items as $item)
+                                <div class="cart-item">
+                                    <div class="row g-3">
+                                        <div class="col-auto">
+                                            <div class="form-check pt-4">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       id="item{{ $item['id'] }}" 
+                                                       {{ $item['selected'] ?? false ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="item{{ $item['id'] }}"></label>
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <img src="{{ $item['item']['gambar'] ?? asset('images/default-product.png') }}" 
+                                                 class="item-img" alt="{{ $item['item']['nama'] }}">
+                                        </div>
+                                        <div class="col">
+                                            <div class="item-details">
+                                                <h5>{{ $item['item']['nama'] }}</h5>
+                                                <p>Bahan: {{ $item['bahan']['nama'] ?? '-' }}</p>
+                                                <p>Ukuran: {{ $item['ukuran']['nama'] ?? '-' }}</p>
+                                                <p>Jenis: {{ $item['jenis']['nama'] ?? '-' }}</p>
+                                                <p>
+                                                    Upload Desain: 
+                                                    @if($item['upload_desain'])
+                                                        <span class="upload-status status-uploaded">Sudah diupload</span>
+                                                        <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" 
+                                                              enctype="multipart/form-data" style="display: inline;">
+                                                            @csrf
+                                                            <input type="file" name="upload_desain" id="design{{ $item['id'] }}" 
+                                                                   style="display: none;" accept=".jpeg,.png,.jpg,.pdf,.ai,.psd"
+                                                                   onchange="this.form.submit()">
+                                                            <label for="design{{ $item['id'] }}" class="upload-btn">
+                                                                <i class="fas fa-edit me-1"></i> Ganti Desain
+                                                            </label>
+                                                        </form>
+                                                    @else
+                                                        <span class="upload-status status-pending">Belum diupload</span>
+                                                        <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" 
+                                                              enctype="multipart/form-data" style="display: inline;">
+                                                            @csrf
+                                                            <input type="file" name="upload_desain" id="design{{ $item['id'] }}" 
+                                                                   style="display: none;" accept=".jpeg,.png,.jpg,.pdf,.ai,.psd"
+                                                                   onchange="this.form.submit()">
+                                                            <label for="design{{ $item['id'] }}" class="upload-btn">
+                                                                <i class="fas fa-upload me-1"></i> Upload Desain
+                                                            </label>
+                                                        </form>
+                                                    @endif
+                                                </p>
+                                                <div class="d-block mt-1">
+                                                    <form method="POST" action="{{ route('keranjang.remove', $item['id']) }}" 
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Yakin ingin menghapus item ini?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn p-0 item-action">
+                                                            <i class="fas fa-trash-alt me-1"></i> Hapus
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex flex-column align-items-end h-100 justify-content-between">
+                                                <div class="item-price">Rp {{ number_format($item['harga_total'], 0, ',', '.') }}</div>
+                                                <div class="quantity-control">
+                                                    <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
+                                                          style="display: inline;">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
+                                                        <button type="submit" {{ $item['quantity'] <= 1 ? 'disabled' : '' }}>-</button>
+                                                    </form>
+                                                    <input type="text" value="{{ $item['quantity'] }}" readonly>
+                                                    <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
+                                                          style="display: inline;">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
+                                                        <button type="submit">+</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
+                @else
+                    @foreach($keranjangItems as $item)
+                        <div class="cart-item mb-3">
+                            <div class="row g-3">
+                                <div class="col-auto">
+                                    <div class="form-check pt-4">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="item{{ $item['id'] }}" 
+                                               {{ $item['selected'] ?? false ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="item{{ $item['id'] }}"></label>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <img src="{{ $item['item']['gambar'] ?? asset('images/default-product.png') }}" 
+                                         class="item-img" alt="{{ $item['item']['nama'] }}">
+                                </div>
+                                <div class="col">
+                                    <div class="item-details">
+                                        <h5>{{ $item['item']['nama'] }}</h5>
+                                        <p>Bahan: {{ $item['bahan']['nama'] ?? '-' }}</p>
+                                        <p>Ukuran: {{ $item['ukuran']['nama'] ?? '-' }}</p>
+                                        <p>Jenis: {{ $item['jenis']['nama'] ?? '-' }}</p>
+                                        <p>
+                                            Upload Desain: 
+                                            @if($item['upload_desain'])
+                                                <span class="upload-status status-uploaded">Sudah diupload</span>
+                                                <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" 
+                                                      enctype="multipart/form-data" style="display: inline;">
+                                                    @csrf
+                                                    <input type="file" name="upload_desain" id="design{{ $item['id'] }}" 
+                                                           style="display: none;" accept=".jpeg,.png,.jpg,.pdf,.ai,.psd"
+                                                           onchange="this.form.submit()">
+                                                    <label for="design{{ $item['id'] }}" class="upload-btn">
+                                                        <i class="fas fa-edit me-1"></i> Ganti Desain
+                                                    </label>
+                                                </form>
+                                            @else
+                                                <span class="upload-status status-pending">Belum diupload</span>
+                                                <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" 
+                                                      enctype="multipart/form-data" style="display: inline;">
+                                                    @csrf
+                                                    <input type="file" name="upload_desain" id="design{{ $item['id'] }}" 
+                                                           style="display: none;" accept=".jpeg,.png,.jpg,.pdf,.ai,.psd"
+                                                           onchange="this.form.submit()">
+                                                    <label for="design{{ $item['id'] }}" class="upload-btn">
+                                                        <i class="fas fa-upload me-1"></i> Upload Desain
+                                                    </label>
+                                                </form>
+                                            @endif
+                                        </p>
+                                        <div class="d-block mt-1">
+                                            <form method="POST" action="{{ route('keranjang.remove', $item['id']) }}" 
+                                                  style="display: inline;"
+                                                  onsubmit="return confirm('Yakin ingin menghapus item ini?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn p-0 item-action">
+                                                    <i class="fas fa-trash-alt me-1"></i> Hapus
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="d-flex flex-column align-items-end h-100 justify-content-between">
+                                        <div class="item-price">Rp {{ number_format($item['harga_total'], 0, ',', '.') }}</div>
+                                        <div class="quantity-control">
+                                            <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
+                                                  style="display: inline;">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="quantity" value="{{ max(1, $item['quantity'] - 1) }}">
+                                                <button type="submit" {{ $item['quantity'] <= 1 ? 'disabled' : '' }}>-</button>
+                                            </form>
+                                            <input type="text" value="{{ $item['quantity'] }}" readonly>
+                                            <form method="POST" action="{{ route('keranjang.update-quantity', $item['id']) }}" 
+                                                  style="display: inline;">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="quantity" value="{{ $item['quantity'] + 1 }}">
+                                                <button type="submit">+</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
+            </div>
+            
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="summary-card">
+                    <h5>Ringkasan Pesanan</h5>
+                    
+                    <div class="summary-item">
+                        <span>Subtotal ({{ $summary['total_items'] }} produk)</span>
+                        <span>Rp {{ number_format($summary['total_harga'], 0, ',', '.') }}</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <span>Biaya Desain</span>
+                        <span>Rp {{ number_format($summary['biaya_desain'] ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    
+                    <div class="summary-item summary-total">
+                        <span>Total</span>
+                        <span>Rp {{ number_format(($summary['total_harga'] + ($summary['biaya_desain'] ?? 0)), 0, ',', '.') }}</span>
+                    </div>
+                    
+                    <a href="#" class="checkout-btn">CHECKOUT SEKARANG</a>
+                    
+                    <form method="POST" action="{{ route('keranjang.clear') }}" class="mt-3"
+                          onsubmit="return confirm('Yakin ingin mengosongkan keranjang?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="fas fa-trash me-1"></i> Kosongkan Keranjang
+                        </button>
+                    </form>
                 </div>
-                
-                <div class="summary-item summary-total">
-                    <span>Total</span>
-                    <span>Rp 370.000</span>
-                </div>
-                
-                <button class="checkout-btn">CHECKOUT SEKARANG</button>
             </div>
         </div>
-    </div>
-    
-    <!-- Empty Cart State (hidden by default) -->
-    <div class="text-center py-5 d-none">
-        <img src="{{ asset('images/empty-cart.png') }}" alt="Keranjang Kosong" style="max-width: 200px; opacity: 0.7;">
-        <h4 class="mt-4">Keranjang Anda kosong</h4>
-        <p class="text-muted">Anda belum menambahkan produk apapun ke keranjang</p>
-        <a href="/" class="btn btn-primary px-4 mt-2">Belanja Sekarang</a>
-    </div>
+    @else
+        <!-- Empty Cart State -->
+        <div class="empty-cart">
+            <img src="{{ asset('images/empty-cart.png') }}" alt="Keranjang Kosong">
+            <h4>Keranjang Anda kosong</h4>
+            <p class="text-muted">Anda belum menambahkan produk apapun ke keranjang</p>
+            <a href="{{ route('welcome') }}" class="btn btn-primary px-4">Belanja Sekarang</a>
+        </div>
+    @endif
 </div>
-@endsection
-
-@section('scripts')
-<script>
-    // Select All Functionality
-    document.getElementById('selectAll').addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.cart-item .form-check-input');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-    });
-    
-    // Quantity Controls
-    document.querySelectorAll('.quantity-control button').forEach(button => {
-        button.addEventListener('click', function() {
-            const input = this.parentNode.querySelector('input');
-            let value = parseInt(input.value);
-            
-            if (this.textContent === '+') {
-                input.value = value + 1;
-            } else if (value > 1) {
-                input.value = value - 1;
-            }
-        });
-    });
-</script>
 @endsection

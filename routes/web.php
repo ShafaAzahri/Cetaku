@@ -59,10 +59,16 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
     ->name('profile.update-password');
 
+    Route::get('/keranjang', [App\Http\Controllers\User\KeranjangController::class, 'index'])->name('keranjang');
+    Route::post('/keranjang/add', [App\Http\Controllers\User\KeranjangController::class, 'addToCart'])->name('keranjang.add');
+    Route::put('/keranjang/{id}/quantity', [App\Http\Controllers\User\KeranjangController::class, 'updateQuantity'])->name('keranjang.update-quantity');
+    Route::post('/keranjang/{id}/upload-design', [App\Http\Controllers\User\KeranjangController::class, 'uploadDesign'])->name('keranjang.upload-design');
+    Route::delete('/keranjang/{id}', [App\Http\Controllers\User\KeranjangController::class, 'removeItem'])->name('keranjang.remove');
+    Route::delete('/keranjang', [App\Http\Controllers\User\KeranjangController::class, 'clearCart'])->name('keranjang.clear');
+    Route::get('/keranjang/count', [App\Http\Controllers\User\KeranjangController::class, 'getCartCount'])->name('keranjang.count');
 
-    
+
     Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
-    Route::get('/pesananx', [pesanan::class, 'indexk'])->name('keranjang');
     Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
 
 
