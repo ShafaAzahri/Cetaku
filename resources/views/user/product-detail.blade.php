@@ -1,6 +1,8 @@
 @extends('user.layouts.app')
 
-@section('title', 'Detail Produk - Kaos Custom')
+@section('title')
+Detail Produk - {{ $item['nama_item'] }}
+@endsection
 
 @section('custom-css')
 <style>
@@ -76,24 +78,6 @@
         padding: 20px;
     }
     
-    .review-card {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 15px;
-        background-color: #fff;
-    }
-    
-    .review-user {
-        font-weight: 600;
-        color: #333;
-    }
-    
-    .review-date {
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-    
     .breadcrumb {
         background-color: #f8f9fa;
         padding: 15px 0;
@@ -126,6 +110,31 @@
         border-color: #4361ee;
         box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
     }
+    
+    .price-breakdown {
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .upload-area {
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        margin-top: 20px;
+        transition: border-color 0.3s;
+    }
+    
+    .upload-area:hover {
+        border-color: #4361ee;
+    }
+    
+    .upload-area.dragover {
+        border-color: #4361ee;
+        background-color: #f0f4ff;
+    }
 </style>
 @endsection
 
@@ -136,9 +145,8 @@
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="/">Home</a></li>
-                <li class="breadcrumb-item"><a href="/kategori">Jelajah</a></li>
-                <li class="breadcrumb-item"><a href="#">Produk</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Kaos Custom</li>
+                <li class="breadcrumb-item"><a href="#" onclick="history.back()">Produk</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ $item['nama_item'] }}</li>
             </ol>
         </nav>
     </div>
@@ -151,19 +159,28 @@
             <!-- Product Image -->
             <div class="col-lg-6 mb-4">
                 <div class="text-center">
-                    <img src="{{ asset('images/banner.png') }}" 
-                         alt="Kaos Custom" 
-                         class="img-fluid product-image"
-                         style="max-height: 500px; object-fit: contain;">
+                    @if(isset($item['gambar']) && $item['gambar'])
+                        <img src="{{ asset('storage/' . $item['gambar']) }}" 
+                             alt="{{ $item['nama_item'] }}" 
+                             class="img-fluid product-image"
+                             style="max-height: 500px; object-fit: contain;">
+                    @else
+                        <img src="{{ asset('images/products/default.png') }}" 
+                             alt="{{ $item['nama_item'] }}" 
+                             class="img-fluid product-image"
+                             style="max-height: 500px; object-fit: contain;">
+                    @endif
                 </div>
             </div>
 
             <!-- Product Details -->
             <div class="col-lg-6">
-                <h1 class="product-title mb-3">Kaos Custom Premium</h1>
-                <div class="product-price mb-3">Mulai dari Rp 50.000</div>
+                <h1 class="product-title mb-3">{{ $item['nama_item'] }}</h1>
+                <div class="product-price mb-3" id="currentPrice">
+                    Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}
+                </div>
 
-                <!-- Rating -->
+                <!-- Rating (Static for now) -->
                 <div class="d-flex align-items-center mb-3">
                     <div class="rating-stars me-2">
                         <i class="fas fa-star"></i>
@@ -176,49 +193,110 @@
                 </div>
 
                 <!-- Description -->
-                <p class="text-muted mb-4">
-                    Kaos custom premium dengan bahan berkualitas tinggi. Tersedia berbagai ukuran dan pilihan bahan. 
-                    Cocok untuk berbagai acara dan kebutuhan promosi. Desain dapat disesuaikan dengan keinginan Anda.
-                </p>
+                @if($item['deskripsi'])
+                <p class="text-muted mb-4">{{ $item['deskripsi'] }}</p>
+                @endif
 
                 <!-- Size Selection -->
+                @if(count($ukurans) > 0)
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Ukuran</label>
-                    <select class="form-select">
+                    <select class="form-select" id="ukuranSelect" required>
                         <option value="">Pilih Ukuran</option>
-                        <option value="s">S (Small)</option>
-                        <option value="m" selected>M (Medium)</option>
-                        <option value="l">L (Large)</option>
-                        <option value="xl">XL (Extra Large)</option>
-                        <option value="xxl">XXL (Double XL)</option>
+                        @foreach($ukurans as $key => $ukuran)
+                            <option value="{{ $ukuran['id'] }}" 
+                                    data-price="{{ $ukuran['biaya_tambahan'] }}"
+                                    {{ $key === 0 ? 'selected' : '' }}>
+                                {{ $ukuran['size'] }} 
+                                @if($ukuran['biaya_tambahan'] > 0)
+                                    (+Rp {{ number_format($ukuran['biaya_tambahan'], 0, ',', '.') }})
+                                @endif
+                            </option>
+                        @endforeach
                     </select>
                 </div>
+                @endif
 
                 <!-- Material Selection -->
+                @if(count($bahans) > 0)
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Bahan</label>
-                    <select class="form-select">
+                    <select class="form-select" id="bahanSelect" required>
                         <option value="">Pilih Bahan</option>
-                        <option value="cotton-24s">Cotton Combed 24s (+Rp 15.000)</option>
-                        <option value="cotton-30s" selected>Cotton Combed 30s (+Rp 20.000)</option>
-                        <option value="fleece">Fleece (+Rp 25.000)</option>
-                        <option value="drill">Drill (+Rp 30.000)</option>
+                        @foreach($bahans as $key => $bahan)
+                            <option value="{{ $bahan['id'] }}" 
+                                    data-price="{{ $bahan['biaya_tambahan'] }}"
+                                    {{ $key === 0 ? 'selected' : '' }}>
+                                {{ $bahan['nama_bahan'] }} 
+                                @if($bahan['biaya_tambahan'] > 0)
+                                    (+Rp {{ number_format($bahan['biaya_tambahan'], 0, ',', '.') }})
+                                @endif
+                            </option>
+                        @endforeach
                     </select>
                 </div>
+                @endif
 
                 <!-- Type Selection -->
+                @if(count($jenis) > 0)
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Jenis</label>
-                    <select class="form-select">
+                    <select class="form-select" id="jenisSelect" required>
                         <option value="">Pilih Jenis</option>
-                        <option value="lengan-pendek" selected>Lengan Pendek</option>
-                        <option value="lengan-panjang">Lengan Panjang (+Rp 10.000)</option>
-                        <option value="hoodie">Hoodie (+Rp 25.000)</option>
+                        @foreach($jenis as $key => $jenis_item)
+                            <option value="{{ $jenis_item['id'] }}" 
+                                    data-price="{{ $jenis_item['biaya_tambahan'] }}"
+                                    {{ $key === 0 ? 'selected' : '' }}>
+                                {{ $jenis_item['kategori'] }} 
+                                @if($jenis_item['biaya_tambahan'] > 0)
+                                    (+Rp {{ number_format($jenis_item['biaya_tambahan'], 0, ',', '.') }})
+                                @endif
+                            </option>
+                        @endforeach
                     </select>
+                </div>
+                @endif
+
+                <!-- Upload Design Area -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Upload Desain (Opsional)</label>
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                        <p class="mb-2">Klik untuk upload atau drag & drop file desain</p>
+                        <small class="text-muted">Format: JPG, PNG, PDF (Max 5MB)</small>
+                        <input type="file" id="designFile" accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                    </div>
+                    <div id="uploadStatus" class="mt-2" style="display: none;"></div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="price-breakdown">
+                    <h6 class="fw-semibold mb-2">Rincian Harga:</h6>
+                    <div class="d-flex justify-content-between">
+                        <span>Harga Dasar:</span>
+                        <span id="basePrice">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Biaya Ukuran:</span>
+                        <span id="ukuranPrice">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Biaya Bahan:</span>
+                        <span id="bahanPrice">Rp 0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Biaya Jenis:</span>
+                        <span id="jenisPrice">Rp 0</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Total:</span>
+                        <span id="totalPrice">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
+                    </div>
                 </div>
 
                 <!-- Quantity and Add to Cart -->
-                <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-4 mt-4">
                     <div class="quantity-control">
                         <button type="button" class="btn-decrease">-</button>
                         <input type="text" value="1" readonly class="quantity-input">
@@ -234,16 +312,8 @@
                 <div class="product-meta">
                     <div class="row">
                         <div class="col-sm-6 mb-2">
-                            <strong>Kategori:</strong> 
-                            <span class="text-muted">Pakaian Custom</span>
-                        </div>
-                        <div class="col-sm-6 mb-2">
-                            <strong>Tags:</strong> 
-                            <span class="text-muted">Kaos, Custom, Print</span>
-                        </div>
-                        <div class="col-sm-6 mb-2">
                             <strong>SKU:</strong> 
-                            <span class="text-muted">KCS-001</span>
+                            <span class="text-muted">{{ strtoupper(substr($item['nama_item'], 0, 3)) }}-{{ str_pad($item['id'], 3, '0', STR_PAD_LEFT) }}</span>
                         </div>
                         <div class="col-sm-6 mb-2">
                             <strong>Estimasi:</strong> 
@@ -251,133 +321,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Product Reviews Section -->
-<div class="container py-5">
-    <div class="row">
-        <div class="col-12">
-            <h3 class="mb-4">Ulasan Produk</h3>
-            
-            <!-- Review Summary -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="text-center p-4 bg-light rounded">
-                        <div class="display-4 fw-bold text-primary">4.8</div>
-                        <div class="rating-stars mb-2">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="text-muted">Berdasarkan 24 ulasan</div>
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <div class="mt-3">
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="me-2">5</span>
-                            <i class="fas fa-star text-warning me-2"></i>
-                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                <div class="progress-bar bg-warning" style="width: 70%"></div>
-                            </div>
-                            <span class="text-muted">17</span>
-                        </div>
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="me-2">4</span>
-                            <i class="fas fa-star text-warning me-2"></i>
-                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                <div class="progress-bar bg-warning" style="width: 20%"></div>
-                            </div>
-                            <span class="text-muted">5</span>
-                        </div>
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="me-2">3</span>
-                            <i class="fas fa-star text-warning me-2"></i>
-                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                <div class="progress-bar bg-warning" style="width: 8%"></div>
-                            </div>
-                            <span class="text-muted">2</span>
-                        </div>
-                        <div class="d-flex align-items-center mb-2">
-                            <span class="me-2">2</span>
-                            <i class="fas fa-star text-warning me-2"></i>
-                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                <div class="progress-bar bg-warning" style="width: 0%"></div>
-                            </div>
-                            <span class="text-muted">0</span>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <span class="me-2">1</span>
-                            <i class="fas fa-star text-warning me-2"></i>
-                            <div class="progress flex-grow-1 me-2" style="height: 6px;">
-                                <div class="progress-bar bg-warning" style="width: 2%"></div>
-                            </div>
-                            <span class="text-muted">0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Individual Reviews -->
-            <div class="review-card">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <div class="review-user">Ahmad Rizky</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <div class="review-date">2 hari yang lalu</div>
-                </div>
-                <p class="mb-0">Kualitas kaos sangat bagus, bahan nyaman dan hasil print rapi. Puas dengan pelayanannya, pasti order lagi!</p>
-            </div>
-
-            <div class="review-card">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <div class="review-user">Siti Nurhaliza</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                        </div>
-                    </div>
-                    <div class="review-date">5 hari yang lalu</div>
-                </div>
-                <p class="mb-0">Desain sesuai permintaan dan kualitas print tidak luntur. Pengerjaan cepat dan hasil memuaskan.</p>
-            </div>
-
-            <div class="review-card">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <div class="review-user">Budi Santoso</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="fas fa-star"></i>
-                            <i class="far fa-star"></i>
-                        </div>
-                    </div>
-                    <div class="review-date">1 minggu yang lalu</div>
-                </div>
-                <p class="mb-0">Kaos bagus, tapi ukuran sedikit kekecilan. Mungkin next time pilih size yang lebih besar. Overall oke lah.</p>
-            </div>
-
-            <!-- Load More Reviews -->
-            <div class="text-center mt-4">
-                <button class="btn btn-outline-primary">Lihat Ulasan Lainnya</button>
             </div>
         </div>
     </div>
@@ -407,6 +350,11 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Data produk
+    const basePrice = {{ $item['harga_dasar'] }};
+    const isLoggedIn = {{ $user ? 'true' : 'false' }};
+    let uploadedFile = null;
+    
     // Quantity controls
     let quantity = 1;
     const quantityInput = document.querySelector('.quantity-input');
@@ -425,57 +373,139 @@ document.addEventListener('DOMContentLoaded', function() {
         quantityInput.value = quantity;
     });
 
+    // Price calculation
+    function updatePrice() {
+        const ukuranSelect = document.getElementById('ukuranSelect');
+        const bahanSelect = document.getElementById('bahanSelect');
+        const jenisSelect = document.getElementById('jenisSelect');
+        
+        let ukuranPrice = 0;
+        let bahanPrice = 0;
+        let jenisPrice = 0;
+        
+        if (ukuranSelect && ukuranSelect.selectedOptions[0]) {
+            ukuranPrice = parseInt(ukuranSelect.selectedOptions[0].dataset.price) || 0;
+        }
+        
+        if (bahanSelect && bahanSelect.selectedOptions[0]) {
+            bahanPrice = parseInt(bahanSelect.selectedOptions[0].dataset.price) || 0;
+        }
+        
+        if (jenisSelect && jenisSelect.selectedOptions[0]) {
+            jenisPrice = parseInt(jenisSelect.selectedOptions[0].dataset.price) || 0;
+        }
+        
+        const totalPrice = basePrice + ukuranPrice + bahanPrice + jenisPrice;
+        
+        // Update display
+        document.getElementById('ukuranPrice').textContent = 'Rp ' + ukuranPrice.toLocaleString('id-ID');
+        document.getElementById('bahanPrice').textContent = 'Rp ' + bahanPrice.toLocaleString('id-ID');
+        document.getElementById('jenisPrice').textContent = 'Rp ' + jenisPrice.toLocaleString('id-ID');
+        document.getElementById('totalPrice').textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+        document.getElementById('currentPrice').textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+    }
+
+    // Add event listeners to select elements
+    ['ukuranSelect', 'bahanSelect', 'jenisSelect'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', updatePrice);
+        }
+    });
+
+    // File upload handling
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('designFile');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileUpload(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileUpload(e.target.files[0]);
+        }
+    });
+
+    function handleFileUpload(file) {
+        // Validate file
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!allowedTypes.includes(file.type)) {
+            uploadStatus.innerHTML = '<small class="text-danger">Format file tidak didukung. Gunakan JPG, PNG, atau PDF.</small>';
+            uploadStatus.style.display = 'block';
+            return;
+        }
+
+        if (file.size > maxSize) {
+            uploadStatus.innerHTML = '<small class="text-danger">Ukuran file terlalu besar. Maksimal 5MB.</small>';
+            uploadStatus.style.display = 'block';
+            return;
+        }
+
+        // Store file temporarily (not uploaded to server yet)
+        uploadedFile = file;
+        uploadStatus.innerHTML = `<small class="text-success"><i class="fas fa-check"></i> File "${file.name}" siap diupload.</small>`;
+        uploadStatus.style.display = 'block';
+    }
+
     // Add to cart functionality
     document.querySelector('.btn-add-cart').addEventListener('click', function() {
-        
         if (!isLoggedIn) {
-            // Show login modal
             const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
             loginModal.show();
             return;
         }
 
         // Get selected options
-        const size = document.querySelector('select').value;
-        const material = document.querySelectorAll('select')[1].value;
-        const type = document.querySelectorAll('select')[2].value;
+        const ukuranSelect = document.getElementById('ukuranSelect');
+        const bahanSelect = document.getElementById('bahanSelect');
+        const jenisSelect = document.getElementById('jenisSelect');
 
         // Validate selections
-        if (!size || !material || !type) {
+        if (!ukuranSelect.value || !bahanSelect.value || !jenisSelect.value) {
             alert('Mohon pilih ukuran, bahan, dan jenis terlebih dahulu.');
             return;
         }
 
-        // Add to cart logic here
-        alert(`Berhasil menambahkan ${quantity} produk ke keranjang!\n\nDetail:\n- Ukuran: ${size}\n- Bahan: ${material}\n- Jenis: ${type}`);
+        // Prepare data
+        const cartData = {
+            item_id: {{ $item['id'] }},
+            ukuran_id: ukuranSelect.value,
+            bahan_id: bahanSelect.value,
+            jenis_id: jenisSelect.value,
+            quantity: quantity,
+            upload_file: uploadedFile
+        };
+
+        // Show success message for now
+        const ukuranText = ukuranSelect.selectedOptions[0].text;
+        const bahanText = bahanSelect.selectedOptions[0].text;
+        const jenisText = jenisSelect.selectedOptions[0].text;
         
-        // Redirect to cart page (optional)
-        // window.location.href = '/keranjang';
+        alert(`Berhasil menambahkan ${quantity} produk ke keranjang!\n\nDetail:\n- Ukuran: ${ukuranText}\n- Bahan: ${bahanText}\n- Jenis: ${jenisText}${uploadedFile ? '\n- Desain: ' + uploadedFile.name : ''}`);
     });
 
-    // Update price based on selections
-    function updatePrice() {
-        let basePrice = 50000;
-        const materialSelect = document.querySelectorAll('select')[1];
-        const typeSelect = document.querySelectorAll('select')[2];
-        
-        // Add material cost
-        if (materialSelect.value === 'cotton-24s') basePrice += 15000;
-        else if (materialSelect.value === 'cotton-30s') basePrice += 20000;
-        else if (materialSelect.value === 'fleece') basePrice += 25000;
-        else if (materialSelect.value === 'drill') basePrice += 30000;
-        
-        // Add type cost
-        if (typeSelect.value === 'lengan-panjang') basePrice += 10000;
-        else if (typeSelect.value === 'hoodie') basePrice += 25000;
-        
-        document.querySelector('.product-price').textContent = 'Rp ' + basePrice.toLocaleString('id-ID');
-    }
-
-    // Add event listeners to select elements
-    document.querySelectorAll('select').forEach(select => {
-        select.addEventListener('change', updatePrice);
-    });
+    // Initialize price calculation
+    updatePrice();
 });
 </script>
 @endsection
