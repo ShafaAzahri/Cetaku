@@ -13,7 +13,7 @@
                         mesin print terbaik. Pastikan dengan harga terjangkau dengan 
                         kualitas bahan terbaik.
                     </p>
-                    <a href="#" class="btn btn-primary btn-order">Pesan Sekarang <i class="fas fa-arrow-right ms-2"></i></a>
+                    <a href="{{ route('item-detail') }}" class="btn btn-primary btn-order">Pesan Sekarang <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
                 <div class="col-md-6 hero-image">
                     <img src="{{ asset('images/banner.png') }}" alt="Hero Image" class="img-fluid">
@@ -98,7 +98,7 @@
             </div>
             
             <div class="text-center mt-4">
-                <a href="#" class="btn btn-outline-primary btn-explore">Jelajahi <i class="fas fa-arrow-right ms-2"></i></a>
+                <a href="{{ route('produk-all') }}" class="btn btn-outline-primary btn-explore">Jelajahi <i class="fas fa-arrow-right ms-2"></i></a>
             </div>
         </div>
     </section>
@@ -193,7 +193,7 @@
                     <p class="section-description">
                         Raih kemudahan dalam mencetak berbagai kebutuhan Anda mulai dari kaos, merchandise, poster, kartu nama, hingga banner. Kami hadir untuk Anda dengan pengerjaan cepat 1-3 hari. Kami terbuka untuk pemesanan dalam jumlah bulk baik untuk maupun untuk berbagai merk.
                     </p>
-                    <a href="#" class="chat-admin-link">Chat Admin</a>
+                    <a href="" class="chat-admin-link">Chat Admin</a>
                 </div>
                 
                 <div class="col-md-7">

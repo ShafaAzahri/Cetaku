@@ -56,8 +56,8 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
     
     Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
     Route::get('/pesananx', [pesanan::class, 'indexk'])->name('keranjang');
-
-
+    Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
+    Route::get('/produk-detail', [pesanan::class, 'itemdetail'])->name('item-detail');
 
 });
 

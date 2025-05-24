@@ -14,4 +14,13 @@ class pesanan extends Controller
     {
         return view('user.keranjang');
     }
+
+    public function allproduk()
+    {
+        return view('user.produk-all');
+    }
+    public function detailproduk()
+    {
+        return view('user.product-detail');
+    }
 }
