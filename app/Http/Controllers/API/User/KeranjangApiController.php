@@ -82,26 +82,48 @@ class KeranjangApiController extends Controller
                 'bahan_id' => 'required|exists:bahans,id',
                 'jenis_id' => 'required|exists:jenis,id',
                 'quantity' => 'required|integer|min:1|max:100',
-                'upload_desain' => 'nullable|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240' // 10MB
+                'tipe_desain' => 'required|in:sendiri,toko',
+                'upload_desain' => 'nullable|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240'
             ]);
 
             if ($validator->fails()) {
+                // DEBUG: Log validation errors
+                Log::error('Validation failed:', $validator->errors()->toArray());
+                
                 return response()->json([
                     'success' => false,
                     'message' => 'Validasi gagal',
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
+                    'received_data' => $request->all() // DEBUG: kirim data yang diterima
                 ], 422);
             }
 
             $user = $request->authenticated_user;
 
-            // Cek apakah kombinasi item sudah ada di keranjang
+            // Validasi: jika tipe_desain sendiri, harus ada file
+            if ($request->tipe_desain === 'sendiri' && !$request->hasFile('upload_desain')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Untuk desain sendiri, mohon upload file desain'
+                ], 422);
+            }
+
+            // Validasi: jika tipe_desain toko, tidak perlu file
+            if ($request->tipe_desain === 'toko' && $request->hasFile('upload_desain')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Untuk desain toko, tidak perlu upload file'
+                ], 422);
+            }
+
+            // Cek existing item dengan kombinasi lengkap termasuk tipe_desain
             $existingItem = Keranjang::where([
                 'user_id' => $user->id,
                 'item_id' => $request->item_id,
                 'ukuran_id' => $request->ukuran_id,
                 'bahan_id' => $request->bahan_id,
                 'jenis_id' => $request->jenis_id,
+                'tipe_desain' => $request->tipe_desain,
             ])->first();
 
             DB::beginTransaction();
@@ -109,7 +131,7 @@ class KeranjangApiController extends Controller
             if ($existingItem) {
                 // Update quantity jika kombinasi sudah ada
                 $existingItem->quantity += $request->quantity;
-                $existingItem->save(); // auto-recalculate harga karena ada boot method
+                $existingItem->save();
                 $keranjangItem = $existingItem;
             } else {
                 // Buat item keranjang baru
@@ -119,11 +141,12 @@ class KeranjangApiController extends Controller
                 $keranjangItem->ukuran_id = $request->ukuran_id;
                 $keranjangItem->bahan_id = $request->bahan_id;
                 $keranjangItem->jenis_id = $request->jenis_id;
+                $keranjangItem->tipe_desain = $request->tipe_desain;
                 $keranjangItem->quantity = $request->quantity;
                 
                 // Load relasi untuk perhitungan harga
                 $keranjangItem->load(['item', 'ukuran', 'bahan', 'jenis']);
-                $keranjangItem->save(); // auto-calculate harga
+                $keranjangItem->save();
             }
 
             // Handle upload desain jika ada

@@ -74,6 +74,7 @@ class KeranjangController extends Controller
                 'ukuran_id' => 'required|integer',
                 'bahan_id' => 'required|integer',
                 'jenis_id' => 'required|integer',
+                'tipe_desain' => 'required|in:sendiri,toko',
                 'quantity' => 'required|integer|min:1|max:100',
                 'upload_desain' => 'nullable|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240'
             ]);
@@ -101,6 +102,7 @@ class KeranjangController extends Controller
                 'ukuran_id' => $request->ukuran_id,
                 'bahan_id' => $request->bahan_id,
                 'jenis_id' => $request->jenis_id,
+                'tipe_desain' => $request->tipe_desain,
                 'quantity' => $request->quantity
             ];
 
@@ -130,6 +132,8 @@ class KeranjangController extends Controller
                     'data' => $responseData['data'] ?? null
                 ]);
             }
+
+            
 
             return response()->json([
                 'success' => false,

@@ -35,35 +35,42 @@ class ProductController extends Controller
                 return redirect()->route('welcome')->with('error', 'Produk tidak ditemukan');
             }
 
-            // Ambil data bahan yang tersedia untuk item ini
+            // Ambil data bahan, jenis, ukuran (kode yang sudah ada)
             $bahansResponse = Http::timeout(10)->get($this->apiBaseUrl . '/bahans');
             $allBahans = $bahansResponse->successful() ? ($bahansResponse->json()['bahans'] ?? []) : [];
             
-            // Filter bahan yang terkait dengan item ini
             $availableBahans = collect($allBahans)->filter(function($bahan) use ($item) {
                 $itemIds = collect($bahan['items'] ?? [])->pluck('id')->toArray();
                 return in_array($item['id'], $itemIds);
             })->values()->toArray();
 
-            // Ambil data jenis yang tersedia untuk item ini
             $jenisResponse = Http::timeout(10)->get($this->apiBaseUrl . '/jenis');
             $allJenis = $jenisResponse->successful() ? ($jenisResponse->json()['jenis'] ?? []) : [];
             
-            // Filter jenis yang terkait dengan item ini
             $availableJenis = collect($allJenis)->filter(function($jenis) use ($item) {
                 $itemIds = collect($jenis['items'] ?? [])->pluck('id')->toArray();
                 return in_array($item['id'], $itemIds);
             })->values()->toArray();
 
-            // Ambil data ukuran yang tersedia untuk item ini
             $ukuransResponse = Http::timeout(10)->get($this->apiBaseUrl . '/ukurans');
             $allUkurans = $ukuransResponse->successful() ? ($ukuransResponse->json()['ukurans'] ?? []) : [];
             
-            // Filter ukuran yang terkait dengan item ini
             $availableUkurans = collect($allUkurans)->filter(function($ukuran) use ($item) {
                 $itemIds = collect($ukuran['items'] ?? [])->pluck('id')->toArray();
                 return in_array($item['id'], $itemIds);
             })->values()->toArray();
+
+            // TAMBAHAN: Ambil biaya desain dari API
+            $biayaDesainResponse = Http::timeout(10)->get($this->apiBaseUrl . '/biaya-desains');
+            $biayaDesain = 0;
+            
+            if ($biayaDesainResponse->successful()) {
+                $biayaDesains = $biayaDesainResponse->json()['biaya_desains'] ?? [];
+                if (!empty($biayaDesains)) {
+                    // Ambil biaya desain pertama (atau bisa disesuaikan logic-nya)
+                    $biayaDesain = $biayaDesains[0]['biaya'] ?? 0;
+                }
+            }
 
             // Cek apakah pengguna sudah login
             $user = session()->has('user') ? session('user') : null;
@@ -73,6 +80,7 @@ class ProductController extends Controller
                 'bahans' => $availableBahans,
                 'jenis' => $availableJenis,
                 'ukurans' => $availableUkurans,
+                'biaya_desain' => $biayaDesain, // TAMBAHAN INI
                 'user' => $user
             ]);
             

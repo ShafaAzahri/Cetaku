@@ -1,604 +1,326 @@
 @extends('user.layouts.app')
 
-@section('title')
-Detail Produk - {{ $item['nama_item'] }}
-@endsection
+@section('title', 'Detail Produk - ' . $item['nama_item'])
 
 @section('custom-css')
 <style>
-    .product-image {
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    .product-section { padding: 30px 0; }
+    .product-image { border-radius: 8px; max-height: 400px; object-fit: contain; }
+    .product-title { color: #333; font-weight: 600; margin-bottom: 15px; }
+    .product-price { color: #4361ee; font-weight: 700; font-size: 1.8rem; margin-bottom: 20px; }
+    
+    .form-select, .form-control { border-radius: 6px; padding: 10px 15px; margin-bottom: 15px; }
+    .form-select:focus, .form-control:focus { border-color: #4361ee; box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25); }
+    
+    .design-option { 
+        border: 2px solid #e5e5e5; 
+        border-radius: 8px; 
+        padding: 20px; 
+        margin-bottom: 15px; 
+        cursor: pointer; 
+        transition: all 0.3s;
+        position: relative;
+    }
+    .design-option input[type="radio"] { display: none; }
+    .design-option input[type="radio"]:checked + .design-content { border-color: #4361ee; background-color: #f8f9ff; }
+    .design-content { 
+        border: 2px solid transparent; 
+        border-radius: 6px; 
+        padding: 15px; 
+        transition: all 0.3s;
+    }
+    .design-option h6 { margin-bottom: 5px; font-weight: 600; }
+    .design-option p { margin: 0; color: #666; font-size: 14px; }
+    .design-price { color: #28a745; font-weight: 500; }
+    .design-extra { color: #ffc107; font-weight: 500; }
+    
+    .upload-area { 
+        border: 2px dashed #ddd; 
+        border-radius: 8px; 
+        padding: 30px; 
+        text-align: center; 
+        margin-top: 15px;
+        background-color: #f9f9f9;
     }
     
-    .product-title {
-        color: #333;
-        font-weight: 600;
+    .quantity-control { 
+        display: flex; 
+        align-items: center; 
+        border: 1px solid #ddd; 
+        border-radius: 6px; 
+        overflow: hidden; 
+        width: fit-content; 
     }
-    
-    .product-price {
-        color: #4361ee;
-        font-weight: 700;
-        font-size: 1.5rem;
+    .quantity-control button { 
+        border: none; 
+        background: #f8f9fa; 
+        width: 40px; 
+        height: 40px; 
+        font-size: 18px; 
+        cursor: pointer; 
     }
+    .quantity-control button:hover { background: #e9ecef; }
+    .quantity-control input { width: 60px; text-align: center; border: none; height: 40px; }
     
-    .rating-stars {
-        color: #ffc107;
+    .btn-add-cart { 
+        background-color: #4361ee; 
+        border-color: #4361ee; 
+        padding: 12px 30px; 
+        font-weight: 600; 
+        border-radius: 6px; 
     }
+    .btn-add-cart:hover { background-color: #3651d4; }
     
-    .quantity-control {
-        display: flex;
-        align-items: center;
-        border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        overflow: hidden;
-        width: fit-content;
-    }
-    
-    .quantity-control button {
-        border: none;
-        background: #f8f9fa;
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-        font-weight: bold;
-        transition: background-color 0.2s;
-    }
-    
-    .quantity-control button:hover {
-        background: #e9ecef;
-    }
-    
-    .quantity-control input {
-        width: 60px;
-        text-align: center;
-        border: none;
-        border-left: 1px solid #e0e0e0;
-        border-right: 1px solid #e0e0e0;
-        font-weight: 500;
-        height: 40px;
-    }
-    
-    .btn-add-cart {
-        background-color: #4361ee;
-        border-color: #4361ee;
-        padding: 12px 30px;
-        font-weight: 600;
-        font-size: 16px;
-    }
-    
-    .btn-add-cart:hover {
-        background-color: #3651d4;
-        border-color: #3651d4;
-    }
-    
-    .product-meta {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-    }
-    
-    .breadcrumb {
-        background-color: #f8f9fa;
-        padding: 15px 0;
-    }
-    
-    .breadcrumb-item a {
-        color: #6c757d;
-        text-decoration: none;
-    }
-    
-    .breadcrumb-item a:hover {
-        color: #4361ee;
-    }
-    
-    .breadcrumb-item.active {
-        color: #333;
-    }
-    
-    .product-section {
-        padding: 40px 0;
-    }
-    
-    .form-select, .form-control {
-        border-radius: 6px;
-        border: 1px solid #e0e0e0;
-        padding: 10px 15px;
-    }
-    
-    .form-select:focus, .form-control:focus {
-        border-color: #4361ee;
-        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-    }
-    
-    .price-breakdown {
-        background-color: #f8f9fa;
-        border-radius: 6px;
-        padding: 15px;
+    .price-info { 
+        background: #f8f9fa; 
+        border-radius: 8px; 
+        padding: 15px; 
         margin-top: 20px;
+        font-size: 14px;
     }
-    
-    .upload-area {
-        border: 2px dashed #ddd;
-        border-radius: 8px;
-        padding: 20px;
-        text-align: center;
-        margin-top: 20px;
-        transition: border-color 0.3s;
-    }
-    
-    .upload-area:hover {
-        border-color: #4361ee;
-    }
-    
-    .upload-area.dragover {
-        border-color: #4361ee;
-        background-color: #f0f4ff;
-    }
+    .price-info strong { color: #4361ee; }
 </style>
 @endsection
 
 @section('content')
 <!-- Breadcrumb -->
-<div class="breadcrumb">
+<div class="bg-light py-3">
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/">Home</a></li>
-                <li class="breadcrumb-item"><a href="#" onclick="history.back()">Produk</a></li>
-                <li class="breadcrumb-item active" aria-current="page">{{ $item['nama_item'] }}</li>
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item"><a href="#" onclick="history.back()" class="text-decoration-none">Produk</a></li>
+                <li class="breadcrumb-item active">{{ $item['nama_item'] }}</li>
             </ol>
         </nav>
     </div>
 </div>
 
-<!-- Product Detail Section -->
+<!-- Product Detail -->
 <div class="product-section">
     <div class="container">
-        <div class="row">
-            <!-- Product Image -->
-            <div class="col-lg-6 mb-4">
-                <div class="text-center">
-                    @if(isset($item['gambar']) && $item['gambar'])
-                        <img src="{{ asset('storage/' . $item['gambar']) }}" 
-                             alt="{{ $item['nama_item'] }}" 
-                             class="img-fluid product-image"
-                             style="max-height: 500px; object-fit: contain;">
-                    @else
-                        <img src="{{ asset('images/products/default.png') }}" 
-                             alt="{{ $item['nama_item'] }}" 
-                             class="img-fluid product-image"
-                             style="max-height: 500px; object-fit: contain;">
+        @if(!$user)
+        <!-- Login Alert -->
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Info:</strong> Silakan <a href="{{ route('login') }}" class="alert-link">login</a> untuk menambahkan produk ke keranjang.
+        </div>
+        @endif
+
+        <form action="{{ route('keranjang.add') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <input type="hidden" name="item_id" value="{{ $item['id'] }}">
+            
+            <div class="row">
+                <!-- Product Image -->
+                <div class="col-lg-6 mb-4">
+                    <div class="text-center">
+                        <img src="{{ isset($item['gambar']) && $item['gambar'] ? asset('storage/' . $item['gambar']) : asset('images/products/default.png') }}" alt="{{ $item['nama_item'] }}" class="img-fluid product-image">
+                    </div>
+                </div>
+
+                <!-- Product Details -->
+                <div class="col-lg-6">
+                    <h1 class="product-title">{{ $item['nama_item'] }}</h1>
+                    <div class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</div>
+                    
+                    @if($item['deskripsi'])
+                    <p class="text-muted mb-4">{{ $item['deskripsi'] }}</p>
                     @endif
-                </div>
-            </div>
 
-            <!-- Product Details -->
-            <div class="col-lg-6">
-                <h1 class="product-title mb-3">{{ $item['nama_item'] }}</h1>
-                <div class="product-price mb-3" id="currentPrice">
-                    Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}
-                </div>
-
-                <!-- Rating (Static for now) -->
-                <div class="d-flex align-items-center mb-3">
-                    <div class="rating-stars me-2">
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
-                        <i class="fas fa-star"></i>
+                    <!-- Selections -->
+                    @if(count($ukurans) > 0)
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Ukuran <span class="text-danger">*</span></label>
+                        <select class="form-select" name="ukuran_id" required onchange="updateTotalPrice()">
+                            <option value="">Pilih Ukuran</option>
+                            @foreach($ukurans as $ukuran)
+                                <option value="{{ $ukuran['id'] }}" data-price="{{ $ukuran['biaya_tambahan'] }}">
+                                    {{ $ukuran['size'] }} 
+                                    @if($ukuran['biaya_tambahan'] > 0) 
+                                        (+Rp {{ number_format($ukuran['biaya_tambahan'], 0, ',', '.') }}) 
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                    <span class="text-muted">(4.8/5 - 24 Reviews)</span>
-                </div>
+                    @endif
 
-                <!-- Description -->
-                @if($item['deskripsi'])
-                <p class="text-muted mb-4">{{ $item['deskripsi'] }}</p>
-                @endif
-
-                <!-- Size Selection -->
-                @if(count($ukurans) > 0)
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Ukuran</label>
-                    <select class="form-select" id="ukuranSelect" required>
-                        <option value="">Pilih Ukuran</option>
-                        @foreach($ukurans as $key => $ukuran)
-                            <option value="{{ $ukuran['id'] }}" 
-                                    data-price="{{ $ukuran['biaya_tambahan'] }}"
-                                    {{ $key === 0 ? 'selected' : '' }}>
-                                {{ $ukuran['size'] }} 
-                                @if($ukuran['biaya_tambahan'] > 0)
-                                    (+Rp {{ number_format($ukuran['biaya_tambahan'], 0, ',', '.') }})
-                                @endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-
-                <!-- Material Selection -->
-                @if(count($bahans) > 0)
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Bahan</label>
-                    <select class="form-select" id="bahanSelect" required>
-                        <option value="">Pilih Bahan</option>
-                        @foreach($bahans as $key => $bahan)
-                            <option value="{{ $bahan['id'] }}" 
-                                    data-price="{{ $bahan['biaya_tambahan'] }}"
-                                    {{ $key === 0 ? 'selected' : '' }}>
-                                {{ $bahan['nama_bahan'] }} 
-                                @if($bahan['biaya_tambahan'] > 0)
-                                    (+Rp {{ number_format($bahan['biaya_tambahan'], 0, ',', '.') }})
-                                @endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-
-                <!-- Type Selection -->
-                @if(count($jenis) > 0)
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Jenis</label>
-                    <select class="form-select" id="jenisSelect" required>
-                        <option value="">Pilih Jenis</option>
-                        @foreach($jenis as $key => $jenis_item)
-                            <option value="{{ $jenis_item['id'] }}" 
-                                    data-price="{{ $jenis_item['biaya_tambahan'] }}"
-                                    {{ $key === 0 ? 'selected' : '' }}>
-                                {{ $jenis_item['kategori'] }} 
-                                @if($jenis_item['biaya_tambahan'] > 0)
-                                    (+Rp {{ number_format($jenis_item['biaya_tambahan'], 0, ',', '.') }})
-                                @endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                @endif
-
-                <!-- Upload Design Area -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Upload Desain (Opsional)</label>
-                    <div class="upload-area" id="uploadArea">
-                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-                        <p class="mb-2">Klik untuk upload atau drag & drop file desain</p>
-                        <small class="text-muted">Format: JPG, PNG, PDF (Max 5MB)</small>
-                        <input type="file" id="designFile" accept=".jpg,.jpeg,.png,.pdf" style="display: none;">
+                    @if(count($bahans) > 0)
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Bahan <span class="text-danger">*</span></label>
+                        <select class="form-select" name="bahan_id" required onchange="updateTotalPrice()">
+                            <option value="">Pilih Bahan</option>
+                            @foreach($bahans as $bahan)
+                                <option value="{{ $bahan['id'] }}" data-price="{{ $bahan['biaya_tambahan'] }}">
+                                    {{ $bahan['nama_bahan'] }} 
+                                    @if($bahan['biaya_tambahan'] > 0) 
+                                        (+Rp {{ number_format($bahan['biaya_tambahan'], 0, ',', '.') }}) 
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div id="uploadStatus" class="mt-2" style="display: none;"></div>
-                </div>
+                    @endif
 
-                <!-- Price Breakdown -->
-                <div class="price-breakdown">
-                    <h6 class="fw-semibold mb-2">Rincian Harga:</h6>
-                    <div class="d-flex justify-content-between">
-                        <span>Harga Dasar:</span>
-                        <span id="basePrice">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
+                    @if(count($jenis) > 0)
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Jenis <span class="text-danger">*</span></label>
+                        <select class="form-select" name="jenis_id" required onchange="updateTotalPrice()">
+                            <option value="">Pilih Jenis</option>
+                            @foreach($jenis as $jenis_item)
+                                <option value="{{ $jenis_item['id'] }}" data-price="{{ $jenis_item['biaya_tambahan'] }}">
+                                    {{ $jenis_item['kategori'] }} 
+                                    @if($jenis_item['biaya_tambahan'] > 0) 
+                                        (+Rp {{ number_format($jenis_item['biaya_tambahan'], 0, ',', '.') }}) 
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="d-flex justify-content-between">
-                        <span>Biaya Ukuran:</span>
-                        <span id="ukuranPrice">Rp 0</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span>Biaya Bahan:</span>
-                        <span id="bahanPrice">Rp 0</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span>Biaya Jenis:</span>
-                        <span id="jenisPrice">Rp 0</span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between fw-bold">
-                        <span>Total:</span>
-                        <span id="totalPrice">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
-                    </div>
-                </div>
+                    @endif
 
-                <!-- Quantity and Add to Cart -->
-                <div class="d-flex align-items-center gap-3 mb-4 mt-4">
-                    <div class="quantity-control">
-                        <button type="button" class="btn-decrease">-</button>
-                        <input type="text" value="1" readonly class="quantity-input">
-                        <button type="button" class="btn-increase">+</button>
-                    </div>
-                    <button class="btn btn-primary btn-add-cart flex-grow-1">
-                        <i class="fas fa-shopping-cart me-2"></i>
-                        Tambah ke Keranjang
-                    </button>
-                </div>
-
-                <!-- Product Meta -->
-                <div class="product-meta">
-                    <div class="row">
-                        <div class="col-sm-6 mb-2">
-                            <strong>SKU:</strong> 
-                            <span class="text-muted">{{ strtoupper(substr($item['nama_item'], 0, 3)) }}-{{ str_pad($item['id'], 3, '0', STR_PAD_LEFT) }}</span>
+                    <!-- Design Options -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Pilih Jenis Desain <span class="text-danger">*</span></label>
+                        
+                        <!-- Upload Sendiri -->
+                        <div class="design-option">
+                            <input type="radio" name="tipe_desain" value="sendiri" id="designSendiri" checked onchange="updateDesignUI()">
+                            <label for="designSendiri" class="design-content w-100">
+                                <h6>🎨 Upload Desain Sendiri</h6>
+                                <p>Upload file desain Anda sendiri</p>
+                                <div class="design-price">Gratis</div>
+                            </label>
                         </div>
-                        <div class="col-sm-6 mb-2">
-                            <strong>Estimasi:</strong> 
-                            <span class="text-muted">1-3 Hari Kerja</span>
+                        
+                        <!-- Desain Toko -->
+                        <div class="design-option">
+                            <input type="radio" name="tipe_desain" value="toko" id="designToko" onchange="updateDesignUI()">
+                            <label for="designToko" class="design-content w-100">
+                                <h6>🏪 Minta Dibuatkan Desain</h6>
+                                <p>Tim desainer kami akan membuatkan desain untuk Anda</p>
+                                <div class="design-extra">+Rp {{ number_format($biaya_desain, 0, ',', '.') }}</div>
+                            </label>
                         </div>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div id="uploadArea" class="mb-4">
+                        <label class="form-label fw-semibold">Upload Desain</label>
+                        <div class="upload-area">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                            <p class="mb-2">Pilih file desain Anda</p>
+                            <input type="file" name="upload_desain" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
+                            <small class="text-muted">Format: JPG, PNG, PDF (Max 5MB)</small>
+                        </div>
+                    </div>
+
+                    <!-- Quantity -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Jumlah</label>
+                        <div class="quantity-control">
+                            <button type="button" onclick="changeQuantity(-1)">-</button>
+                            <input type="number" name="quantity" value="1" min="1" max="100" readonly>
+                            <button type="button" onclick="changeQuantity(1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Price Info -->
+                    <div class="price-info">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Harga Produk:</span>
+                            <span>Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Biaya Desain:</span>
+                            <span id="designCostDisplay">Rp 0</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total Harga:</strong>
+                            <strong id="totalPrice">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</strong>
+                        </div>
+                    </div>
+
+                    <!-- Add to Cart Button -->
+                    <div class="mt-4">
+                        @if($user)
+                            <button type="submit" class="btn btn-primary btn-add-cart w-100">
+                                <i class="fas fa-shopping-cart me-2"></i>Tambah ke Keranjang
+                            </button>
+                        @else
+                            <a href="{{ route('login') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login untuk Pesan
+                            </a>
+                        @endif
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
-<!-- Login Modal -->
-<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="loginModalLabel">Silakan Login</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <i class="fas fa-user-circle fa-3x text-primary mb-3"></i>
-                <p class="text-muted mb-4">Untuk menambahkan produk ke keranjang, Anda harus login terlebih dahulu.</p>
-            </div>
-            <div class="modal-footer justify-content-center">
-                <a href="{{ route('login') }}" class="btn btn-primary px-4">Login</a>
-                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Batal</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
-@section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Data produk
-    const basePrice = {{ $item['harga_dasar'] }};
-    const isLoggedIn = {{ $user ? 'true' : 'false' }};
-    let uploadedFile = null;
-    
-    // Quantity controls
-    let quantity = 1;
-    const quantityInput = document.querySelector('.quantity-input');
-    const decreaseBtn = document.querySelector('.btn-decrease');
-    const increaseBtn = document.querySelector('.btn-increase');
+// Function to change the quantity
+function changeQuantity(delta) {
+    const input = document.querySelector('input[name="quantity"]');
+    const currentValue = parseInt(input.value) || 1;
+    const newValue = currentValue + delta;
 
-    decreaseBtn.addEventListener('click', function() {
-        if (quantity > 1) {
-            quantity--;
-            quantityInput.value = quantity;
-        }
-    });
-
-    increaseBtn.addEventListener('click', function() {
-        quantity++;
-        quantityInput.value = quantity;
-    });
-
-    // Price calculation
-    function updatePrice() {
-        const ukuranSelect = document.getElementById('ukuranSelect');
-        const bahanSelect = document.getElementById('bahanSelect');
-        const jenisSelect = document.getElementById('jenisSelect');
-        
-        let ukuranPrice = 0;
-        let bahanPrice = 0;
-        let jenisPrice = 0;
-        
-        if (ukuranSelect && ukuranSelect.selectedOptions[0]) {
-            ukuranPrice = parseInt(ukuranSelect.selectedOptions[0].dataset.price) || 0;
-        }
-        
-        if (bahanSelect && bahanSelect.selectedOptions[0]) {
-            bahanPrice = parseInt(bahanSelect.selectedOptions[0].dataset.price) || 0;
-        }
-        
-        if (jenisSelect && jenisSelect.selectedOptions[0]) {
-            jenisPrice = parseInt(jenisSelect.selectedOptions[0].dataset.price) || 0;
-        }
-        
-        const totalPrice = basePrice + ukuranPrice + bahanPrice + jenisPrice;
-        
-        // Update display
-        document.getElementById('ukuranPrice').textContent = 'Rp ' + ukuranPrice.toLocaleString('id-ID');
-        document.getElementById('bahanPrice').textContent = 'Rp ' + bahanPrice.toLocaleString('id-ID');
-        document.getElementById('jenisPrice').textContent = 'Rp ' + jenisPrice.toLocaleString('id-ID');
-        document.getElementById('totalPrice').textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
-        document.getElementById('currentPrice').textContent = 'Rp ' + totalPrice.toLocaleString('id-ID');
+    if (newValue >= 1 && newValue <= 100) {
+        input.value = newValue;
+        updateTotalPrice();  // Update price when quantity changes
     }
+}
 
-    // Add event listeners to select elements
-    ['ukuranSelect', 'bahanSelect', 'jenisSelect'].forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.addEventListener('change', updatePrice);
-        }
-    });
-
-    // File upload handling
+// Update design UI based on selected design type
+function updateDesignUI() {
     const uploadArea = document.getElementById('uploadArea');
-    const fileInput = document.getElementById('designFile');
-    const uploadStatus = document.getElementById('uploadStatus');
-
-    uploadArea.addEventListener('click', () => fileInput.click());
-
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('dragover');
-    });
-
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('dragover');
-    });
-
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileUpload(files[0]);
-        }
-    });
-
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length > 0) {
-            handleFileUpload(e.target.files[0]);
-        }
-    });
-
-    function handleFileUpload(file) {
-        // Validate file
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-        const maxSize = 5 * 1024 * 1024; // 5MB
-
-        if (!allowedTypes.includes(file.type)) {
-            uploadStatus.innerHTML = '<small class="text-danger">Format file tidak didukung. Gunakan JPG, PNG, atau PDF.</small>';
-            uploadStatus.style.display = 'block';
-            return;
-        }
-
-        if (file.size > maxSize) {
-            uploadStatus.innerHTML = '<small class="text-danger">Ukuran file terlalu besar. Maksimal 5MB.</small>';
-            uploadStatus.style.display = 'block';
-            return;
-        }
-
-        // Store file temporarily
-        uploadedFile = file;
-        uploadStatus.innerHTML = `<small class="text-success"><i class="fas fa-check"></i> File "${file.name}" siap diupload.</small>`;
-        uploadStatus.style.display = 'block';
-    }
-
-    // Add to cart functionality - UPDATED
-    document.querySelector('.btn-add-cart').addEventListener('click', function() {
-        if (!isLoggedIn) {
-            const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-            loginModal.show();
-            return;
-        }
-
-        // Get selected options
-        const ukuranSelect = document.getElementById('ukuranSelect');
-        const bahanSelect = document.getElementById('bahanSelect');
-        const jenisSelect = document.getElementById('jenisSelect');
-
-        // Validate selections
-        if (!ukuranSelect.value || !bahanSelect.value || !jenisSelect.value) {
-            alert('Mohon pilih ukuran, bahan, dan jenis terlebih dahulu.');
-            return;
-        }
-
-        // Disable button and show loading
-        const addToCartBtn = this;
-        const originalText = addToCartBtn.innerHTML;
-        addToCartBtn.disabled = true;
-        addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Menambahkan...';
-
-        // Prepare FormData
-        const formData = new FormData();
-        formData.append('item_id', {{ $item['id'] }});
-        formData.append('ukuran_id', ukuranSelect.value);
-        formData.append('bahan_id', bahanSelect.value);
-        formData.append('jenis_id', jenisSelect.value);
-        formData.append('quantity', quantity);
-        
-        if (uploadedFile) {
-            formData.append('upload_desain', uploadedFile);
-        }
-
-        // Get CSRF token
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        // Send AJAX request
-        fetch('{{ route("keranjang.add") }}', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message
-                showNotification('success', 'Produk berhasil ditambahkan ke keranjang!');
-                
-                // Update cart count if possible
-                updateCartCount();
-                
-                // Reset form
-                resetForm();
-            } else {
-                showNotification('error', data.message || 'Gagal menambahkan ke keranjang');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('error', 'Terjadi kesalahan saat menambahkan ke keranjang');
-        })
-        .finally(() => {
-            // Re-enable button
-            addToCartBtn.disabled = false;
-            addToCartBtn.innerHTML = originalText;
-        });
-    });
-
-    // Helper functions
-    function showNotification(type, message) {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-        notification.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
-    }
-
-    function updateCartCount() {
-        // Update cart count in navbar
-        fetch('{{ route("keranjang.count") }}')
-            .then(response => response.json())
-            .then(data => {
-                const cartCountElement = document.querySelector('.cart-count');
-                if (cartCountElement) {
-                    cartCountElement.textContent = data.count || 0;
-                }
-            })
-            .catch(error => console.error('Error updating cart count:', error));
-    }
-
-    function resetForm() {
-        // Reset quantity to 1
-        quantity = 1;
-        quantityInput.value = 1;
-        
-        // Clear uploaded file
-        uploadedFile = null;
-        fileInput.value = '';
-        uploadStatus.style.display = 'none';
-        
-        // Reset upload area text
-        uploadArea.innerHTML = `
-            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
-            <p class="mb-2">Klik untuk upload atau drag & drop file desain</p>
-            <small class="text-muted">Format: JPG, PNG, PDF (Max 5MB)</small>
-        `;
-    }
-
-    // Initialize price calculation
-    updatePrice();
+    const designCostDisplay = document.getElementById('designCostDisplay');
+    const designType = document.querySelector('input[name="tipe_desain"]:checked').value;
     
-    // Initialize cart count
-    updateCartCount();
+    if (designType === 'sendiri') {
+        uploadArea.style.display = 'block';
+        designCostDisplay.textContent = 'Rp 0';
+    } else {
+        uploadArea.style.display = 'none';
+        designCostDisplay.textContent = 'Rp {{ number_format($biaya_desain, 0, ',', '.') }}';
+    }
+
+    updateTotalPrice(); // Update total price immediately after design selection
+}
+
+// Update the total price based on selections
+function updateTotalPrice() {
+    let basePrice = {{ $item['harga_dasar'] }};
+    let totalPrice = basePrice;
+
+    const quantity = parseInt(document.querySelector('input[name="quantity"]').value) || 1;
+
+    // Calculate additional costs
+    document.querySelectorAll('select').forEach(select => {
+        const price = parseInt(select.selectedOptions[0].getAttribute('data-price')) || 0;
+        totalPrice += price;
+    });
+
+    // Add design cost if applicable
+    const designType = document.querySelector('input[name="tipe_desain"]:checked').value;
+    if (designType === 'toko') {
+        totalPrice += {{ $biaya_desain }};
+    }
+
+    // Multiply by quantity
+    totalPrice *= quantity;
+
+    // Update price display
+    document.getElementById('totalPrice').textContent = `Rp ${totalPrice.toLocaleString('id-ID')}`;
+}
+
+// Initialize UI on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDesignUI();
+    updateTotalPrice();
 });
 </script>
 @endsection

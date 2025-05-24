@@ -24,6 +24,7 @@ class Keranjang extends Model
         'ukuran_id',
         'bahan_id',
         'jenis_id',
+        'tipe_desain', 
         'quantity',
         'upload_desain',
         'harga_satuan',
