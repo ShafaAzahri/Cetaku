@@ -14,15 +14,15 @@
                         <input type="text" class="form-control" id="size" name="size" required>
                     </div>
                     <div class="mb-3">
-                        <label for="faktor_harga" class="form-label">Faktor Harga</label>
+                        <label for="biaya_tambahan" class="form-label">Biaya Tambahan</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="faktor_harga" name="faktor_harga" required min="0" step="0.01" value="1.00">
-                            <span class="input-group-text">x</span>
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="biaya_tambahan" name="biaya_tambahan" required min="0" step="1000" value="0">
                         </div>
-                        <div class="form-text">Faktor pengali untuk harga dasar (1.00 = tidak ada perubahan).</div>
+                        <div class="form-text">Biaya tambahan untuk ukuran ini (0 = tidak ada biaya tambahan).</div>
                     </div>
                     <div class="mb-3">
-                    <label for="item_ids" class="form-label">Pilih Item Terkait</label>
+                        <label for="item_ids" class="form-label">Pilih Item Terkait</label>
                         <select class="form-select" id="item_ids" name="item_ids[]" multiple>
                             @foreach($items ?? [] as $item)
                                 <option value="{{ $item['id'] }}">{{ $item['nama_item'] }}</option>
@@ -57,12 +57,12 @@
                         <input type="text" class="form-control" id="edit_size" name="size" required>
                     </div>
                     <div class="mb-3">
-                        <label for="edit_faktor_harga" class="form-label">Faktor Harga</label>
+                        <label for="edit_biaya_tambahan" class="form-label">Biaya Tambahan</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="edit_faktor_harga" name="faktor_harga" required min="0" step="0.01">
-                            <span class="input-group-text">x</span>
+                            <span class="input-group-text">Rp</span>
+                            <input type="number" class="form-control" id="edit_biaya_tambahan" name="biaya_tambahan" required min="0" step="1000">
                         </div>
-                        <div class="form-text">Faktor pengali untuk harga dasar (1.00 = tidak ada perubahan).</div>
+                        <div class="form-text">Biaya tambahan untuk ukuran ini (0 = tidak ada biaya tambahan).</div>
                     </div>
                     <div class="mb-3">
                         <label for="edit_item_ids" class="form-label">Pilih Item Terkait</label>

@@ -27,16 +27,11 @@ class Ukuran extends Model
      */
     protected $fillable = [
         'size',
-        'faktor_harga'
+        'biaya_tambahan'  // ganti dari 'faktor_harga'
     ];
     
-    /**
-     * Atribut yang harus dikonversi ke tipe data khusus.
-     *
-     * @var array
-     */
     protected $casts = [
-        'faktor_harga' => 'decimal:2',
+        'biaya_tambahan' => 'decimal:2',  // ganti dari 'faktor_harga'
     ];
     
     /**

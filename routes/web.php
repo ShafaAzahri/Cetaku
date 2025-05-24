@@ -34,6 +34,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+    // Tambahkan di bagian route yang tidak memerlukan auth
+    Route::get('/product/{id}', [App\Http\Controllers\User\ProductController::class, 'show'])->name('product.detail');
 });
 
 // Logout route (needs auth)
@@ -57,7 +59,6 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
     Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
     Route::get('/pesananx', [pesanan::class, 'indexk'])->name('keranjang');
     Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
-    Route::get('/produk-detail', [pesanan::class, 'itemdetail'])->name('item-detail');
 
 });
 

@@ -13,7 +13,7 @@
                         mesin print terbaik. Pastikan dengan harga terjangkau dengan 
                         kualitas bahan terbaik.
                     </p>
-                    <a href="{{ route('item-detail') }}" class="btn btn-primary btn-order">Pesan Sekarang <i class="fas fa-arrow-right ms-2"></i></a>
+                    <a href="#" class="btn btn-primary btn-order">Pesan Sekarang <i class="fas fa-arrow-right ms-2"></i></a>
                 </div>
                 <div class="col-md-6 hero-image">
                     <img src="{{ asset('images/banner.png') }}" alt="Hero Image" class="img-fluid">
@@ -71,23 +71,26 @@
             <h2 class="section-title text-center">Terlaris</h2>
             
             <div class="row mt-4">
+                <!-- Di bagian Best Seller Section -->
                 @forelse($terlaris as $item)
                 <div class="col-md-3 col-sm-6 mb-4">
                     <div class="product-card">
-                        <div class="product-img">
-                            @if(isset($item['gambar']) && $item['gambar'])
-                                <img src="{{ asset('storage/' . $item['gambar']) }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
-                            @else
-                                <img src="{{ asset('images/products/default.png') }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
-                            @endif
-                        </div>
-                        <div class="product-info">
-                            <h5 class="product-title">{{ $item['nama_item'] }}</h5>
-                            <p class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</p>
-                            <small class="text-muted">
-                                {{ isset($item['total_terjual']) && $item['total_terjual'] > 0 ? $item['total_terjual'] . ' terjual' : '0 terjual' }}
-                            </small>
-                        </div>
+                        <a href="{{ route('product.detail', $item['id']) }}" class="text-decoration-none">
+                            <div class="product-img">
+                                @if(isset($item['gambar']) && $item['gambar'])
+                                    <img src="{{ asset('storage/' . $item['gambar']) }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
+                                @else
+                                    <img src="{{ asset('images/products/default.png') }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
+                                @endif
+                            </div>
+                            <div class="product-info">
+                                <h5 class="product-title">{{ $item['nama_item'] }}</h5>
+                                <p class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</p>
+                                <small class="text-muted">
+                                    {{ isset($item['total_terjual']) && $item['total_terjual'] > 0 ? $item['total_terjual'] . ' terjual' : '0 terjual' }}
+                                </small>
+                            </div>
+                        </a>
                     </div>
                 </div>
                 @empty
