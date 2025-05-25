@@ -10,268 +10,476 @@
 <style>
     .cart-container {
         padding: 20px 0;
+        background-color: #f8f9fa;
     }
-    .cart-item, .summary-card {
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        padding: 15px;
-        margin-bottom: 15px;
-        background-color: #fff;
+    
+    .cart-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        padding: 20px;
     }
-    .item-img {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 5px;
-    }
-    .item-details h5 {
-        font-size: 16px;
-        margin-bottom: 5px;
+    
+    .section-title {
+        font-size: 18px;
         font-weight: 600;
+        margin-bottom: 15px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
+    
+    .select-all {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .cart-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+        position: relative;
+    }
+    
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+    
+    .item-checkbox {
+        position: absolute;
+        top: 15px;
+        left: -5px;
+    }
+    
+    .item-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-left: 20px;
+    }
+    
+    .item-details {
+        flex: 1;
+        margin-left: 10px;
+    }
+    
+    .item-name {
+        font-weight: 600;
+        margin-bottom: 5px;
+        font-size: 16px;
+        color: #333;
+    }
+    
+    .item-specs {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.4;
+        margin-bottom: 8px;
+    }
+    
+    .item-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+    
+    .status-uploaded {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .item-actions {
+        margin-top: 8px;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-small {
+        padding: 4px 8px;
+        font-size: 11px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-upload {
+        background: #4361ee;
+        color: white;
+    }
+    
+    .btn-delete {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .item-price-section {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+        min-width: 120px;
+    }
+    
     .item-price {
         font-weight: 600;
         color: #4361ee;
+        font-size: 16px;
     }
+    
     .quantity-control {
         display: flex;
         align-items: center;
         border: 1px solid #e0e0e0;
-        border-radius: 4px;
-        margin-top: 10px;
+        border-radius: 6px;
+        margin-top: 8px;
     }
+    
     .quantity-control button {
         border: none;
-        background: #f5f5f5;
-        width: 30px;
+        background: #f8f9fa;
+        width: 28px;
+        height: 28px;
         cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
+    
     .quantity-control input {
         width: 40px;
         text-align: center;
         border: none;
+        height: 28px;
+        font-size: 14px;
     }
-    .upload-status {
-        font-size: 13px;
-        padding: 3px 8px;
-        border-radius: 50px;
-        display: inline-block;
-    }
-    .status-uploaded {
-        background-color: #d4edda;
-        color: #155724;
-    }
-    .status-pending {
-        background-color: #fff3cd;
-        color: #856404;
-    }
+    
     .summary-card {
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         padding: 20px;
+        position: sticky;
+        top: 20px;
     }
-    .summary-item {
+    
+    .summary-row {
         display: flex;
         justify-content: space-between;
+        padding: 8px 0;
+        font-size: 14px;
     }
-    .btn {
-        border: none;
-        border-radius: 6px;
-        padding: 10px 15px;
-        color: white;
+    
+    .summary-row.total {
+        border-top: 1px solid #e5e5e5;
+        padding-top: 15px;
+        margin-top: 10px;
         font-weight: 600;
+        font-size: 16px;
     }
-    .btn-primary {
-        background-color: #4361ee;
-        text-align: center;
-        width: 100%;
-    }
-    .btn-danger {
-        background-color: #dc3545;
+    
+    .btn-checkout {
+        background: #4361ee;
         color: white;
-        text-align: center;
+        border: none;
+        padding: 15px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 16px;
         width: 100%;
+        margin-top: 15px;
+        transition: all 0.3s ease;
     }
-    .btn:hover {
-        opacity: 0.8;
+    
+    .btn-checkout:hover {
+        background: #3651d4;
+    }
+    
+    .btn-checkout:disabled,
+    .btn-checkout[style*="pointer-events: none"] {
+        background: #e9ecef !important;
+        color: #6c757d !important;
+        cursor: not-allowed;
+    }
+    
+    .btn-clear {
+        background: transparent;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+        padding: 10px 15px;
+        border-radius: 6px;
+        font-size: 14px;
+        width: 100%;
+        margin-top: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-clear:hover {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .empty-cart {
+        text-align: center;
+        padding: 60px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .empty-cart img {
+        width: 120px;
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+    
+    .empty-cart h4 {
+        color: #666;
+        margin-bottom: 10px;
+    }
+    
+    .empty-cart p {
+        color: #999;
+        margin-bottom: 20px;
+    }
+    
+    .btn-shop {
+        background: #4361ee;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-shop:hover {
+        background: #3651d4;
+        color: white;
+        text-decoration: none;
+    }
+    
+    @media (max-width: 768px) {
+        .cart-item {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .item-image {
+            width: 60px;
+            height: 60px;
+            margin-left: 20px;
+        }
+        
+        .item-price-section {
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            min-width: auto;
+        }
+        
+        .quantity-control {
+            margin-top: 0;
+        }
     }
 </style>
 @endsection
 
 @section('content')
-<div class="bg-light py-3 fw-medium">
+<!-- Breadcrumb -->
+<div class="bg-light py-3">
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('welcome') }}" class="text-decoration-none text-secondary">Home</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Keranjang</li>
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item active">Keranjang</li>
             </ol>
         </nav>
     </div>
 </div>
 
-<div class="container cart-container">
-    @include('user.components.alert')
-    
-    @if(isset($keranjangItems) && count($keranjangItems) > 0)
-        <h4 class="mb-0">Keranjang Anda ({{ $summary['total_items'] ?? 0 }} item)</h4>
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="cart-header mb-3">
-                    <div class="form-check select-all">
-                        <input class="form-check-input" type="checkbox" id="selectAll">
-                        <label class="form-check-label" for="selectAll">Pilih Semua</label>
-                    </div>
-                </div>
+<div class="cart-container">
+    <div class="container">
+        @include('user.components.alert')
+        
+        @if(isset($keranjangItems) && count($keranjangItems) > 0)
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="cart-card">
+                        <h5 class="section-title">
+                            <i class="fas fa-shopping-cart"></i>
+                            Keranjang Anda
+                        </h5>
+                        
+                        <div class="select-all">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="selectAll">
+                                <label class="form-check-label fw-semibold" for="selectAll">
+                                    Pilih Semua (<span id="total-items">{{ $summary['count_products'] ?? 0 }}</span> produk)
+                                </label>
+                            </div>
+                        </div>
 
-                @foreach($keranjangItems as $item)
-                    <div class="cart-item">
-                        <div class="row g-3">
-                            <div class="col-auto">
-                                <div class="form-check pt-4">
-                                    <input class="form-check-input" type="checkbox" id="item{{ $item['id'] }}" name="selected_items[]" value="{{ $item['id'] }}">
-                                    <label class="form-check-label" for="item{{ $item['id'] }}"></label>
-                                </div>
-                            </div>
-                            <div class="col-auto">
+                        @foreach($keranjangItems as $item)
+                            <div class="cart-item" data-item-id="{{ $item['id'] }}">
+                                <input class="form-check-input item-checkbox" type="checkbox" name="selected_items[]" value="{{ $item['id'] }}">
+                                
                                 @if(isset($item['item']['gambar']) && $item['item']['gambar'])
-                                    <img src="{{ asset('storage/' . $item['item']['gambar']) }}" class="item-img" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
+                                    <img src="{{ asset('storage/' . $item['item']['gambar']) }}" class="item-image" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
                                 @else
-                                    <img src="{{ asset('images/products/default.png') }}" class="item-img" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
+                                    <img src="{{ asset('images/products/default.png') }}" class="item-image" alt="{{ $item['item']['nama_item'] ?? 'Produk' }}">
                                 @endif
-                            </div>
-                            <div class="col">
+                                
                                 <div class="item-details">
-                                    <h5>{{ $item['item']['nama_item'] ?? 'Nama Produk' }}</h5>
-                                    <p>Bahan: {{ $item['bahan']['nama_bahan'] ?? '-' }}</p>
-                                    <p>Ukuran: {{ $item['ukuran']['size'] ?? '-' }}</p>
-                                    <p>Jenis: {{ $item['jenis']['kategori'] ?? '-' }}</p>
-                                    <p>
-                                        Upload Desain: 
+                                    <div class="item-name">{{ $item['item']['nama_item'] ?? 'Nama Produk' }}</div>
+                                    <div class="item-specs">
+                                        {{ $item['bahan']['nama_bahan'] ?? '-' }} • {{ $item['ukuran']['size'] ?? '-' }} • {{ $item['jenis']['kategori'] ?? '-' }}
+                                    </div>
+                                    <div class="mb-2">
                                         @if(isset($item['upload_desain']) && $item['upload_desain'])
-                                            <span class="upload-status status-uploaded">Sudah diupload</span>
+                                            <span class="item-status status-uploaded">Desain Ready</span>
+                                        @else
+                                            <span class="item-status status-pending">Perlu Upload</span>
+                                        @endif
+                                    </div>
+                                    <div class="item-actions">
+                                        @if(isset($item['upload_desain']) && $item['upload_desain'])
                                             <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" enctype="multipart/form-data" style="display: inline;">
                                                 @csrf
                                                 <input type="file" name="upload_desain" id="design{{ $item['id'] }}" style="display: none;" accept=".jpeg,.png,.jpg,.pdf,.ai,.psd" onchange="this.form.submit()">
-                                                <label for="design{{ $item['id'] }}" class="btn btn-primary"><i class="fas fa-edit me-1"></i> Ganti Desain</label>
+                                                <label for="design{{ $item['id'] }}" class="btn-small btn-upload">Ganti</label>
                                             </form>
                                         @else
-                                            <span class="upload-status status-pending">Belum diupload</span>
                                             <form method="POST" action="{{ route('keranjang.upload-design', $item['id']) }}" enctype="multipart/form-data" style="display: inline;">
                                                 @csrf
                                                 <input type="file" name="upload_desain" id="design{{ $item['id'] }}" style="display: none;" accept=".jpeg,.png,.jpg,.pdf,.ai,.psd" onchange="this.form.submit()">
-                                                <label for="design{{ $item['id'] }}" class="btn btn-primary"><i class="fas fa-upload me-1"></i> Upload Desain</label>
+                                                <label for="design{{ $item['id'] }}" class="btn-small btn-upload">Upload</label>
                                             </form>
                                         @endif
-                                    </p>
-                                    <div class="d-flex mt-1">
-                                        <form method="POST" action="{{ route('keranjang.remove', $item['id']) }}" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus item ini?')">
+                                        
+                                        <form method="POST" action="{{ route('keranjang.remove', $item['id']) }}" style="display: inline;" onsubmit="return confirm('Hapus item ini?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn item-action btn-danger">
-                                                <i class="fas fa-trash-alt me-1"></i> Hapus
-                                            </button>
+                                            <button type="submit" class="btn-small btn-delete">Hapus</button>
                                         </form>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="d-flex flex-column align-items-end">
+                                
+                                <div class="item-price-section">
                                     <div class="item-price">Rp {{ number_format($item['total_harga'] ?? 0, 0, ',', '.') }}</div>
-                                    <div class="quantity-control" data-item-id="{{ $item['id'] }}" data-base-price="{{ ($item['total_harga'] ?? 0) / max(1, $item['quantity'] ?? 1) }}">
-                                        <button type="button" class="btn-decrease" {{ ($item['quantity'] ?? 1) <= 1 ? 'disabled' : '' }}>-</button>
+                                    <div class="quantity-control" data-item-id="{{ $item['id'] }}" data-unit-price="{{ ($item['total_harga'] ?? 0) / max(1, $item['quantity'] ?? 1) }}">
+                                        <button type="button" class="btn-decrease" {{ ($item['quantity'] ?? 1) <= 1 ? 'disabled' : '' }}>−</button>
                                         <input type="text" class="quantity-input" value="{{ $item['quantity'] ?? 1 }}" readonly>
                                         <button type="button" class="btn-increase">+</button>
                                     </div>
                                 </div>
                             </div>
+                        @endforeach
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="summary-card">
+                        <h6 class="fw-semibold mb-3">Ringkasan Belanja</h6>
+                        
+                        <div id="summary-items">
+                            <!-- Dynamic content -->
                         </div>
+                        
+                        <div class="summary-row">
+                            <span>Biaya Desain</span>
+                            <span>Rp {{ number_format($summary['biaya_desain'] ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                        
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="grand-total">Rp 0</span>
+                        </div>
+                        
+                        <a href="{{ route('checkout') }}" class="btn-checkout" id="checkout-btn" style="text-decoration: none; display: block; text-align: center; pointer-events: none; opacity: 0.6;">
+                            Checkout (<span id="selected-count">0</span> item)
+                        </a>
+                        
+                        <form method="POST" action="{{ route('keranjang.clear') }}" onsubmit="return confirm('Kosongkan keranjang?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn-clear">Kosongkan Keranjang</button>
+                        </form>
                     </div>
-                @endforeach
-            </div>
-            
-            <div class="col-lg-4">
-                <div class="summary-card">
-                    <h5>Ringkasan Pesanan</h5>
-                    <div id="summary-items"></div>
-                    <div class="summary-item">
-                        <span>Biaya Desain</span>
-                        <span id="design-cost">Rp {{ number_format($summary['biaya_desain'] ?? 0, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="summary-item summary-total">
-                        <span>Total</span>
-                        <span id="grand-total">Rp 0</span>
-                    </div>
-                    <a href="#" class="checkout-btn btn btn-primary" id="checkout-btn">CHECKOUT SEKARANG ({{ $summary['total_items'] ?? 0 }} item)</a>
-                    <form method="POST" action="{{ route('keranjang.clear') }}" class="mt-3" onsubmit="return confirm('Yakin ingin mengosongkan keranjang?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i> Kosongkan Keranjang</button>
-                    </form>
                 </div>
             </div>
-        </div>
-    @else
-        <div class="empty-cart">
-            <img src="{{ asset('images/empty-cart.png') }}" alt="Keranjang Kosong">
-            <h4>Keranjang Anda kosong</h4>
-            <p class="text-muted">Anda belum menambahkan produk apapun ke keranjang</p>
-            <a href="{{ route('welcome') }}" class="btn btn-primary px-4">Belanja Sekarang</a>
-        </div>
-    @endif
+        @else
+            <div class="empty-cart">
+                <img src="{{ asset('images/empty-cart.png') }}" alt="Keranjang Kosong">
+                <h4>Keranjang Masih Kosong</h4>
+                <p>Yuk mulai belanja dan temukan produk favoritmu!</p>
+                <a href="{{ route('welcome') }}" class="btn-shop">Mulai Belanja</a>
+            </div>
+        @endif
+    </div>
 </div>
 
 @if(isset($keranjangItems) && count($keranjangItems) > 0)
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('selectAll');
-    const itemCheckboxes = document.querySelectorAll('input[name="selected_items[]"]');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
     const quantityControls = document.querySelectorAll('.quantity-control');
+    const biayaDesain = {{ $summary['biaya_desain'] ?? 0 }};
 
     updateCartSummary();
     
-    // Individual checkbox change
+    // Checkbox handlers
     itemCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', updateCartSummary);
     });
     
-    // Select all functionality
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            itemCheckboxes.forEach(checkbox => {
-                checkbox.checked = selectAllCheckbox.checked;
-            });
-            updateCartSummary();
+    selectAllCheckbox.addEventListener('change', function() {
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
         });
-    }
+        updateCartSummary();
+    });
 
-    // Real-time quantity update functionality
+    // Quantity controls
     quantityControls.forEach(control => {
         const decreaseBtn = control.querySelector('.btn-decrease');
         const increaseBtn = control.querySelector('.btn-increase');
         const quantityInput = control.querySelector('.quantity-input');
         const itemId = control.dataset.itemId;
-        const basePrice = parseFloat(control.dataset.basePrice || 0);
         
-        decreaseBtn.addEventListener('click', function() {
+        decreaseBtn.addEventListener('click', () => {
             const currentQuantity = parseInt(quantityInput.value) || 1;
-            updateQuantity(itemId, Math.max(currentQuantity - 1, 1));
+            if (currentQuantity > 1) updateQuantity(itemId, currentQuantity - 1);
         });
         
-        increaseBtn.addEventListener('click', function() {
+        increaseBtn.addEventListener('click', () => {
             const currentQuantity = parseInt(quantityInput.value) || 1;
             updateQuantity(itemId, currentQuantity + 1);
         });
     });
 
     function updateQuantity(itemId, newQuantity) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
         fetch(`/keranjang/${itemId}/quantity`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json'
             },
             body: JSON.stringify({ quantity: newQuantity })
@@ -281,6 +489,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 const quantityInput = document.querySelector(`.quantity-control[data-item-id="${itemId}"] .quantity-input`);
                 quantityInput.value = newQuantity;
+                
+                const unitPrice = parseFloat(document.querySelector(`.quantity-control[data-item-id="${itemId}"]`).dataset.unitPrice);
+                const newTotalPrice = unitPrice * newQuantity;
+                const priceElement = document.querySelector(`[data-item-id="${itemId}"] .item-price`);
+                priceElement.textContent = `Rp ${newTotalPrice.toLocaleString('id-ID')}`;
+                
+                const control = document.querySelector(`.quantity-control[data-item-id="${itemId}"]`);
+                control.querySelector('.btn-decrease').disabled = newQuantity <= 1;
+                
                 updateCartSummary();
             }
         })
@@ -289,31 +506,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateCartSummary() {
         let totalItems = 0;
-        let grandTotal = 0;
+        let subtotal = 0;
+        const summaryHtml = [];
         
-        itemCheckboxes.forEach(item => {
-            if (item.checked) {
-                const quantityInput = item.closest('.cart-item').querySelector('.quantity-input');
-                const priceText = item.closest('.cart-item').querySelector('.item-price').textContent;
+        itemCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const cartItem = checkbox.closest('.cart-item');
+                const itemName = cartItem.querySelector('.item-name').textContent;
+                const quantityInput = cartItem.querySelector('.quantity-input');
+                const priceElement = cartItem.querySelector('.item-price');
                 
                 const quantity = parseInt(quantityInput.value) || 0;
-                const priceOnly = priceText.replace(/[^\d]/g, '');
-                const price = parseFloat(priceOnly) || 0;
+                const price = parseFloat(priceElement.textContent.replace(/[^\d]/g, '')) || 0;
                 
                 totalItems += quantity;
-                grandTotal += price * quantity;  // Update total based on quantity
+                subtotal += price;
+                
+                summaryHtml.push(`
+                    <div class="summary-row">
+                        <span>${itemName} (${quantity}x)</span>
+                        <span>Rp ${price.toLocaleString('id-ID')}</span>
+                    </div>
+                `);
             }
         });
         
-        document.getElementById('grand-total').textContent = 'Rp ' + grandTotal.toLocaleString('id-ID');
-        const cartHeaderCount = document.querySelector('h4');
-        cartHeaderCount.textContent = `Keranjang Anda (${totalItems} item)`;
+        document.getElementById('summary-items').innerHTML = summaryHtml.join('');
+        
+        const grandTotal = subtotal + (totalItems > 0 ? biayaDesain : 0);
+        document.getElementById('grand-total').textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
+        document.getElementById('selected-count').textContent = totalItems;
+        document.getElementById('total-items').textContent = itemCheckboxes.length;
         
         const checkoutBtn = document.getElementById('checkout-btn');
-        if (checkoutBtn) {
-            checkoutBtn.style.pointerEvents = totalItems > 0 ? 'auto' : 'none';
-            checkoutBtn.textContent = totalItems > 0 ? `CHECKOUT SEKARANG (${totalItems} item)` : 'PILIH ITEM UNTUK CHECKOUT';
+        if (totalItems === 0) {
+            checkoutBtn.style.pointerEvents = 'none';
+            checkoutBtn.style.opacity = '0.6';
+        } else {
+            checkoutBtn.style.pointerEvents = 'auto';
+            checkoutBtn.style.opacity = '1';
         }
+        
+        const checkedCount = Array.from(itemCheckboxes).filter(cb => cb.checked).length;
+        selectAllCheckbox.checked = checkedCount === itemCheckboxes.length && itemCheckboxes.length > 0;
+        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < itemCheckboxes.length;
     }
 });
 </script>

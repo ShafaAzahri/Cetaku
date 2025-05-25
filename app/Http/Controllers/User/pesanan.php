@@ -23,4 +23,8 @@ class pesanan extends Controller
     {
         return view('user.product-detail');
     }
+    public function co()
+    {
+        return view('user.checkout');
+    }
 }

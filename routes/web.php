@@ -70,6 +70,7 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
 
     Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
     Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
+    Route::get('/checkout', [pesanan::class, 'co'])->name('checkout');
 
 
 });
