@@ -29,7 +29,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{ route('superadmin.laporan.index') }}" class="nav-link {{ request()->routeIs('superadmin.laporan.*') ? 'active' : '' }}">
                 <i class="fas fa-chart-pie"></i>
                 <span class="nav-text">Laporan</span>
             </a>

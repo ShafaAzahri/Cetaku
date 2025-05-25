@@ -13,6 +13,7 @@ use App\Http\Controllers\API\Admin\OperatorApiController;
 use App\Http\Controllers\API\Admin\MesinApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\KategoriApiController;
+use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,4 +150,5 @@ Route::middleware(['api.superadmin'])->prefix('superadmin')->group(function() {
     Route::get('operators/{id}/work-history', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@workHistory');
 
     Route::get('dashboard/stats', 'App\Http\Controllers\API\SuperAdmin\DashboardApiController@getStats');
+    Route::get('/superadmin/sales', [LaporanApiController::class, 'getSalesData']);
 });

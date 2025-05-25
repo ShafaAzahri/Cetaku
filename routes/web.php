@@ -16,6 +16,7 @@ use App\Http\Controllers\SuperAdmin\AdminController as ManagementAdmin;
 use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\SuperAdmin\OperatorController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
+use App\Http\Controllers\SuperAdmin\LaporanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,18 +36,18 @@ Route::middleware('guest')->group(function () {
 });
 
 // Logout route (needs auth)
-Route::middleware(['auth.check'])->group(function() {
+Route::middleware(['auth.check'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 });
 
 // Regular user routes
-Route::middleware(['auth.check', 'role:user'])->group(function() {
+Route::middleware(['auth.check', 'role:user'])->group(function () {
     // Redirect user/welcome to home page
-    Route::get('/user/welcome', function() {
+    Route::get('/user/welcome', function () {
         return redirect()->route('welcome');
     })->name('user.welcome');
-    
+
     // Add more user routes here if needed
 });
 
@@ -54,7 +55,7 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
 Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    
+
     // Product Manager
     Route::get('/product-manager', [ProductManagerController::class, 'index'])->name('product-manager');
 
@@ -62,32 +63,32 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::post('/kategoris', [ProductManagerController::class, 'storeKategori'])->name('kategoris.store');
     Route::put('/kategoris/{id}', [ProductManagerController::class, 'updateKategori'])->name('kategoris.update');
     Route::delete('/kategoris/{id}', [ProductManagerController::class, 'destroyKategori'])->name('kategoris.destroy');
-    
+
     // Item CRUD
     Route::post('/items', [ProductManagerController::class, 'storeItem'])->name('items.store');
     Route::put('/items/{id}', [ProductManagerController::class, 'updateItem'])->name('items.update');
     Route::delete('/items/{id}', [ProductManagerController::class, 'destroyItem'])->name('items.destroy');
-    
+
     // Bahan CRUD
     Route::post('/bahans', [ProductManagerController::class, 'storeBahan'])->name('bahans.store');
     Route::put('/bahans/{id}', [ProductManagerController::class, 'updateBahan'])->name('bahans.update');
     Route::delete('/bahans/{id}', [ProductManagerController::class, 'destroyBahan'])->name('bahans.destroy');
-    
+
     // Jenis CRUD
     Route::post('/jenis', [ProductManagerController::class, 'storeJenis'])->name('jenis.store');
     Route::put('/jenis/{id}', [ProductManagerController::class, 'updateJenis'])->name('jenis.update');
     Route::delete('/jenis/{id}', [ProductManagerController::class, 'destroyJenis'])->name('jenis.destroy');
-    
+
     // Ukuran CRUD
     Route::post('/ukurans', [ProductManagerController::class, 'storeUkuran'])->name('ukurans.store');
     Route::put('/ukurans/{id}', [ProductManagerController::class, 'updateUkuran'])->name('ukurans.update');
     Route::delete('/ukurans/{id}', [ProductManagerController::class, 'destroyUkuran'])->name('ukurans.destroy');
-    
+
     // Biaya Desain CRUD
     Route::post('/biaya-desains', [ProductManagerController::class, 'storeBiayaDesain'])->name('biaya-desains.store');
     Route::put('/biaya-desains/{id}', [ProductManagerController::class, 'updateBiayaDesain'])->name('biaya-desains.update');
     Route::delete('/biaya-desains/{id}', [ProductManagerController::class, 'destroyBiayaDesain'])->name('biaya-desains.destroy');
-    
+
     // Pesanan Management
     Route::get('/pesanan', [PesananManagerController::class, 'index'])->name('pesanan.index');
     Route::get('/pesanan/{id}', [PesananManagerController::class, 'show'])->name('pesanan.show');
@@ -103,7 +104,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::get('/operators', [AdminOperatorController::class, 'index'])->name('operators.index');
     Route::get('/operators/{id}', [AdminOperatorController::class, 'show'])->name('operators.show');
     Route::put('/operators/{id}/status', [AdminOperatorController::class, 'updateStatus'])->name('operators.update-status');
-    
+
     // Mesin Management
     Route::get('/mesins', [MesinController::class, 'index'])->name('mesins.index');
     Route::get('/mesins/{id}', [MesinController::class, 'show'])->name('mesins.show');
@@ -111,10 +112,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
 });
 
 // Super Admin specific routes
-Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'role:super_admin'])->group(function() {
+Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'role:super_admin'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Admin Management
     Route::get('/admin', [ManagementAdmin::class, 'index'])->name('admin.index');
     Route::get('/admin/create', [ManagementAdmin::class, 'create'])->name('admin.create');
@@ -124,16 +125,17 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
     Route::put('/admin/{id}', [ManagementAdmin::class, 'update'])->name('admin.update');
     Route::delete('/admin/{id}', [ManagementAdmin::class, 'destroy'])->name('admin.destroy');
     Route::post('/admin/{id}/reset-password', [ManagementAdmin::class, 'resetPassword'])->name('admin.reset-password');
-    
+
     // User Management
     Route::get('/user', [UserController::class, 'index'])->name('user.index');
+    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
     Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
     Route::get('/user/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
     Route::put('/user/{id}', [UserController::class, 'update'])->name('user.update');
     Route::delete('/user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
     Route::post('/user/{id}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
     Route::get('/user/{id}/order-history', [UserController::class, 'orderHistory'])->name('user.order-history');
-    
+
     // Operator Management
     Route::get('/operator', [OperatorController::class, 'index'])->name('operator.index');
     Route::get('/operator/create', [OperatorController::class, 'create'])->name('operator.create');
@@ -144,4 +146,14 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
     Route::delete('/operator/{id}', [OperatorController::class, 'destroy'])->name('operator.destroy');
     Route::put('/operator/{id}/status', [OperatorController::class, 'updateStatus'])->name('operator.update-status');
     Route::get('/operator/{id}/work-history', [OperatorController::class, 'workHistory'])->name('operator.work-history');
+
+    // laporan management
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
+    // Export PDF and Excel
+    Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPDF'])->name('laporan.export.pdf');
+    Route::get('/laporan/export/excel', [LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
+
+    // routes/web.php
+
+
 });
