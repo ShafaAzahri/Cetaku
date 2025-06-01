@@ -167,4 +167,10 @@ class User extends Authenticatable
             return '/user/welcome';
         }
     }
+
+    public function hasOrderHistory()
+    {
+        return false; // atau true kalau ingin simulasi ada histori
+    }
+
 }

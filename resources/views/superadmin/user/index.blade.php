@@ -96,31 +96,28 @@
 @endsection
 
 @section('content')
-  <div class="container-fluid">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-  <h4 class="mb-0">Manajemen User</h4>
-  <a href="{{ route('superadmin.user.create') }}" class="btn btn-primary"> 
-    <i class="fas fa-plus me-1"></i> Tambah User
-  </a>
-  </div>
+    <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Manajemen User</h4>
+    </div>
 
-  <!-- Alert Messages -->
-  @if(session('success'))
-  <div class="alert alert-success alert-dismissible fade show" role="alert">
-  {{ session('success') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-  @endif
+    <!-- Alert Messages -->
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
-  @if(session('error'))
-  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-  {{ session('error') }}
-  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-  @endif
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
-  <div class="user-card">
-  <div class="card-header">
+    <div class="user-card">
+    <div class="card-header">
     <form action="{{ route('superadmin.user.index') }}" method="GET">
     <div class="row g-3 align-items-center">
     <div class="col-md-8">
@@ -140,8 +137,8 @@
     </div>
     </div>
     </form>
-  </div>
-  <div class="card-body">
+    </div>
+    <div class="card-body">
     <div class="table-responsive">
     <table class="table user-table">
     <thead>
@@ -180,12 +177,7 @@
     title="Edit">
     <i class="fas fa-edit"></i>
     </a>
-    <button type="button" class="btn btn-primary btn-action" title="Reset Password"
-    onclick="resetPassword({{ $user['id'] }}, '{{ $user['nama'] }}')">
-    <i class="fas fa-key"></i>
-    </button>
-    <button type="button" class="btn btn-danger btn-action" title="Hapus"
-    onclick="confirmDelete({{ $user['id'] }}, '{{ $user['nama'] }}')">
+    <button type="button" class="btn btn-danger btn-action" title="Hapus" onclick="confirmDelete({{ $user['id'] }}, '{{ $user['nama'] }}')">
     <i class="fas fa-trash"></i>
     </button>
     </td>
@@ -197,6 +189,30 @@
     @endforelse
     </tbody>
     </table>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+        <h5 class="modal-title" id="deleteModalLabel">Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus user <strong id="delete-user-name"></strong>?</p>
+        <p class="text-danger">Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <form id="delete-form" method="POST">
+          @csrf
+          @method('DELETE')
+          <button type="submit" class="btn btn-danger">Hapus</button>
+        </form>
+        </div>
+      </div>
+      </div>
     </div>
 
     <!-- Pagination -->
@@ -242,25 +258,26 @@
     </ul>
     </nav>
     </div>
-  @endif
-  </div>
-  </div>
-  </div>
+    @endif
+    </div>
+    </div>
+    </div>
 
 @endsection
 
 @section('scripts')
-  <script>
+    <script>
     function confirmDelete(id, name) {
-    document.getElementById('delete-user-name').textContent = name;
-    document.getElementById('delete-form').action = "{{ route('superadmin.user.index') }}/" + id;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-    }
+      document.getElementById('delete-user-name').textContent = name;
+      const deleteUrl = "{{ url('superadmin/user') }}/" + id;
+      document.getElementById('delete-form').action = deleteUrl;
+      new bootstrap.Modal(document.getElementById('deleteModal')).show();
+      }
 
     function resetPassword(id, name) {
     document.getElementById('reset-user-name').textContent = name;
     document.getElementById('reset-password-form').action = "{{ route('superadmin.user.index') }}/" + id + "/reset-password";
     new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
     }
-  </script>
+    </script>
 @endsection
