@@ -30,6 +30,15 @@ Route::prefix('auth')->group(function() {
     Route::post('/logout', [AuthApiController::class, 'logout']);
 });
 
+// Alamat API routes (dengan middleware api.auth)
+Route::middleware('api.auth')->prefix('alamats')->group(function() {
+    Route::get('/', 'App\Http\Controllers\User\AlamatApiController@index');
+    Route::post('/', 'App\Http\Controllers\API\User\AlamatApiController@store');
+    Route::get('/{id}', 'App\Http\Controllers\User\AlamatApiController@show');
+    Route::put('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@update');
+    Route::delete('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@destroy');
+});
+
 // Routes untuk item (Public GET)
 Route::get('/items', [ItemApiController::class, 'index']);
 Route::get('/items/terlaris', [ItemApiController::class, 'index']);
