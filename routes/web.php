@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ProductManagerController;
 use App\Http\Controllers\Admin\PesananManagerController;
 use App\Http\Controllers\Admin\OperatorController as AdminOperatorController;
 use App\Http\Controllers\Admin\MesinController;
+use App\Http\Controllers\Admin\EkspedisiController;
 
 // Super Admin controllers
 use App\Http\Controllers\SuperAdmin\AdminController as ManagementAdmin;
@@ -17,6 +18,7 @@ use App\Http\Controllers\SuperAdmin\UserController;
 use App\Http\Controllers\SuperAdmin\OperatorController;
 use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\SuperAdmin\LaporanController;
+use App\Http\Controllers\SuperAdmin\PengaturanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,6 +111,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::get('/mesins', [MesinController::class, 'index'])->name('mesins.index');
     Route::get('/mesins/{id}', [MesinController::class, 'show'])->name('mesins.show');
     Route::put('/mesins/{id}/status', [MesinController::class, 'updateStatus'])->name('mesins.update-status');
+    
+    Route::get('/ekspedisi', [EkspedisiController::class, 'index'])->name('ekspedisi.index');
+    
+    
 });
 
 // Super Admin specific routes
@@ -128,7 +134,8 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
 
     // User Management
     Route::get('/user', [UserController::class, 'index'])->name('user.index');
-    Route::get('/user/create', [UserController::class, 'create'])->name('user.create');
+    Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
+    Route::post('/user/create', [UserController::class, 'create'])->name('user.create');
     Route::get('/user/{id}', [UserController::class, 'show'])->name('user.show');
     Route::get('/user/{id}/edit', [UserController::class, 'edit'])->name('user.edit');
     Route::put('/user/{id}', [UserController::class, 'update'])->name('user.update');
@@ -149,11 +156,9 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
 
     // laporan management
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');
-    // Export PDF and Excel
-    Route::get('/laporan/export/pdf', [LaporanController::class, 'exportPDF'])->name('laporan.export.pdf');
-    Route::get('/laporan/export/excel', [LaporanController::class, 'exportExcel'])->name('laporan.export.excel');
+    Route::get('/laporan/export', [LaporanController::class, 'exportExcel'])->name('laporan.export');
 
-    // routes/web.php
-
-
+    // pengaturan
+    Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
+    Route::post('pengaturan/update', [PengaturanController::class, 'update'])->name('pengaturan.update');;
 });

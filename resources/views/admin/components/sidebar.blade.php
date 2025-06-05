@@ -1,7 +1,7 @@
 <aside class="sidebar" id="sidebar">
     <div class="brand-logo">
         <i class="fas fa-print"></i>
-        <span class="brand-text">CETAKU</span>
+        <span class="brand-text">{{ $tokoInfo->nama ?? 'CETAKU' }}</span>
     </div>
     <ul class="nav-list">
         <li class="nav-item">
@@ -23,29 +23,29 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{{ route('admin.mesins.index') }}" class="nav-link">
+            <a href="{{ route('admin.mesins.index') }}" class="nav-link {{ request()->routeIs('admin.mesins.*') ? 'active' : '' }}">
                 <i class="fas fa-users"></i>
-                <span class="nav-text">Pelanggan</span>
+                <span class="nav-text">Mesin</span>
             </a>
         </li>
         <li class="nav-item">
-            <a href="{{ route('admin.operators.index') }}" class="nav-link">
+            <a href="{{ route('admin.operators.index') }}" class="nav-link {{ request()->routeIs('admin.operators.*') ? 'active' : '' }}">
                 <i class="fas fa-user-tie"></i>
                 <span class="nav-text">Operator</span>
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{ route('admin.ekspedisi.index') }}" class="nav-link {{ request()->routeIs('admin.ekspedisi.*') ? 'active' : '' }}">
                 <i class="fas fa-truck"></i>
                 <span class="nav-text">Ekspedisi</span>
             </a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
             <a href="#" class="nav-link">
                 <i class="fas fa-history"></i>
                 <span class="nav-text">Riwayat</span>
             </a>
-        </li>
+        </li> -->
         <li class="nav-item">
             <form action="{{ route('logout') }}" method="POST" id="logout-form" style="display: none;">
                 @csrf

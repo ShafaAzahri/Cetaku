@@ -12,9 +12,9 @@
     }
     .status-pemesanan { background-color: #e2e8f0; color: #1a202c; }
     .status-dikonfirmasi { background-color: #90cdf4; color: #2c5282; }
-    .status-diproses { background-color: #fbd38d; color: #744210; }
-    .status-menunggu { background-color: #fbd38d; color: #744210; }
-    .status-dikirim { background-color: #90cdf4; color: #2c5282; }
+    .status-sedang-diproses { background-color: #fbd38d; color: #744210; }
+    .status-menunggu-pengambilan { background-color: #fbd38d; color: #744210; }
+    .status-sedang-dikirim { background-color: #90cdf4; color: #2c5282; }
     .status-selesai { background-color: #9ae6b4; color: #22543d; }
     .status-dibatalkan { background-color: #feb2b2; color: #822727; }
     
@@ -199,7 +199,7 @@
                         @empty
                         <tr>
                             <td colspan="8" class="text-center py-4">Tidak ada data pesanan</td>
-                        </tr>
+                        </tr>  
                         @endforelse
                     </tbody>
                 </table>

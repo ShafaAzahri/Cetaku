@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class UserController extends Controller
 {
@@ -38,6 +39,33 @@ class UserController extends Controller
             'pagination' => $response['pagination'] ?? null,
             'search' => $params['search']
         ]);
+    }
+
+    public function create()
+    {
+        return view('superadmin.user.create');
+    }
+
+    // Menyimpan user baru
+    public function store(Request $request)
+    {
+        // Validasi data
+        $validatedData = $request->validate([
+            'nama' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8|confirmed',
+            'role' => 'required|in:user,admin',
+        ]);
+
+        // Simpan user ke database
+        $user = User::create([
+            'nama' => $validatedData['nama'],
+            'email' => $validatedData['email'],
+            'password' => bcrypt($validatedData['password']),
+            'role' => $validatedData['role'],
+        ]);
+
+        return redirect()->route('superadmin.user.index')->with('success', 'User berhasil ditambahkan.');
     }
     
     /**
@@ -102,17 +130,27 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        $response = $this->sendApiRequest('delete', "/users/{$id}");
-        
-        if (!($response['success'] ?? false)) {
+        try {
+            $response = $this->sendApiRequest('delete', "/users/{$id}");
+
+            //dd($response);
+
+            if (!($response['success'] ?? false)) {
+                return redirect()->back()
+                    ->with('error', $response['message'] ?? 'Failed to delete user');
+            }
+
+            return redirect()->route('superadmin.user.index')
+                ->with('success', 'User deleted successfully');
+
+        } catch (\Exception $e) {
+            // Tangkap error dari API atau error tidak terduga
             return redirect()->back()
-                ->with('error', $response['message'] ?? 'Failed to delete user');
+                ->with('error', 'Error deleting user: ' . $e->getMessage());
         }
-        
-        return redirect()->route('superadmin.user.index')
-            ->with('success', 'User deleted successfully');
     }
-    
+
+
     /**
      * Reset user password
      */

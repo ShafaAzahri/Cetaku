@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Pesanan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -15,10 +16,50 @@ class PesananManagerController extends Controller
     {
         $this->apiBaseUrl = rtrim(env('API_URL', config('app.url')), '/');
     }
-    
+
     /**
      * Menampilkan halaman daftar pesanan
      */
+    public function getPesananStats()
+    {
+        try {
+            // Ambil bulan dan tahun saat ini
+            $currentMonth = now()->month;
+            $currentYear = now()->year;
+
+            // Cek apakah bulan dan tahun saat ini masih sama
+            $pesananBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->count();
+
+            $pesananSelesaiBulanIni = Pesanan::whereMonth('waktu_pengambilan', $currentMonth)
+                ->whereYear('waktu_pengambilan', $currentYear)
+                ->where('status', 'Selesai')
+                ->count();
+
+            $pesananBerjalan = Pesanan::whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->where('status', '!=', 'Selesai')
+                ->count();
+
+            return view('admin.dashboard', compact(
+                'pesananBulanIni',
+                'pesananSelesaiBulanIni',
+                'pesananBerjalan'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error calculating stats: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching statistics',
+            ], 500);
+        }
+    }
+
+
+
+
+
     public function index(Request $request)
     {
         try {
@@ -27,7 +68,7 @@ class PesananManagerController extends Controller
             $dariTanggal = $request->get('dari_tanggal', '');
             $sampaiTanggal = $request->get('sampai_tanggal', '');
             $perPage = $request->get('per_page', 10);
-            
+
             // Ambil data dari API
             $response = $this->sendApiRequest('get', '/admin/pesanan', [
                 'status' => $status,
@@ -36,20 +77,20 @@ class PesananManagerController extends Controller
                 'sampai_tanggal' => $sampaiTanggal,
                 'per_page' => $perPage
             ]);
-            
+
             if (!($response['success'] ?? false)) {
                 return redirect()->back()->with('error', $response['message'] ?? 'Gagal memuat data pesanan');
             }
-            
+
             $pesanans = $response['pesanans'];
             $statusOptions = $response['status_options'] ?? ['Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
-            
+
             // Ambil data statistik
             $statsResponse = $this->sendApiRequest('get', '/admin/pesanan/statistics');
             $stats = ($statsResponse['success'] ?? false) ? $statsResponse['statistics'] : null;
-            
+
             return view('admin.pesanan.index', compact(
-                'pesanans', 
+                'pesanans',
                 'status',
                 'search',
                 'dariTanggal',
@@ -62,53 +103,54 @@ class PesananManagerController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat data');
         }
     }
-    
+
     /**
      * Menampilkan detail pesanan
      */
-// Di PesananManagerController.php
-public function show($id)
-{
-    try {
-        // Ambil detail pesanan dari API
-        $response = $this->sendApiRequest('get', "/admin/pesanan/{$id}");
-        
-        if (!($response['success'] ?? false)) {
+    // Di PesananManagerController.php
+    public function show($id)
+    {
+        try {
+            // Ambil detail pesanan dari API
+            $response = $this->sendApiRequest('get', "/admin/pesanan/{$id}");
+
+            if (!($response['success'] ?? false)) {
+                return redirect()->route('admin.pesanan.index')
+                    ->with('error', $response['message'] ?? 'Pesanan tidak ditemukan');
+            }
+
+            $pesanan = $response['pesanan'];
+            $statusOptions = $response['status_options'] ?? [];
+
+            // Ambil daftar mesin dan operator dari response API
+            $mesinList = $response['available_machines'] ?? [];
+            $operatorList = $response['active_operators'] ?? [];
+
+            // Ambil biaya desain (kode yang sudah ada)
+            $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
+            $biayaDesain = 0;
+
+            if (($biayaDesainResponse['success'] ?? false) &&
+                isset($biayaDesainResponse['biaya_desains']) &&
+                count($biayaDesainResponse['biaya_desains']) > 0
+            ) {
+                $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
+            }
+
+            return view('admin.pesanan.show.show', compact(
+                'pesanan',
+                'statusOptions',
+                'mesinList',
+                'operatorList',
+                'biayaDesain'
+            ));
+        } catch (\Exception $e) {
+            Log::error('Error pada halaman detail pesanan: ' . $e->getMessage());
             return redirect()->route('admin.pesanan.index')
-                ->with('error', $response['message'] ?? 'Pesanan tidak ditemukan');
+                ->with('error', 'Terjadi kesalahan saat memuat detail pesanan');
         }
-        
-        $pesanan = $response['pesanan'];
-        $statusOptions = $response['status_options'] ?? [];
-        
-        // Ambil daftar mesin dan operator dari response API
-        $mesinList = $response['available_machines'] ?? [];
-        $operatorList = $response['active_operators'] ?? [];
-        
-        // Ambil biaya desain (kode yang sudah ada)
-        $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
-        $biayaDesain = 0;
-        
-        if (($biayaDesainResponse['success'] ?? false) && 
-            isset($biayaDesainResponse['biaya_desains']) && 
-            count($biayaDesainResponse['biaya_desains']) > 0) {
-            $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
-        }
-        
-        return view('admin.pesanan.show.show', compact(
-            'pesanan',
-            'statusOptions',
-            'mesinList',
-            'operatorList',
-            'biayaDesain'
-        ));
-    } catch (\Exception $e) {
-        Log::error('Error pada halaman detail pesanan: ' . $e->getMessage());
-        return redirect()->route('admin.pesanan.index')
-            ->with('error', 'Terjadi kesalahan saat memuat detail pesanan');
     }
-}
-    
+
     /**
      * Update status pesanan
      */
@@ -119,20 +161,20 @@ public function show($id)
                 'status' => 'required|string',
                 'catatan' => 'nullable|string'
             ]);
-            
+
             $response = $this->sendApiRequest('put', "/admin/pesanan/{$id}/status", $request->all());
-            
+
             if ($response['success'] ?? false) {
                 return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui');
             }
-            
+
             return redirect()->back()->with('error', $response['message'] ?? 'Gagal memperbarui status pesanan');
         } catch (\Exception $e) {
             Log::error('Error pada update status pesanan: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status');
         }
     }
-    
+
     /**
      * Menugaskan proses produksi
      */
@@ -145,20 +187,20 @@ public function show($id)
                 'operator_id' => 'required',
                 'catatan' => 'nullable|string'
             ]);
-            
+
             $response = $this->sendApiRequest('post', "/admin/pesanan/{$id}/assign-production", $request->all());
-            
+
             if ($response['success'] ?? false) {
                 return redirect()->back()->with('success', 'Proses produksi berhasil ditugaskan');
             }
-            
+
             return redirect()->back()->with('error', $response['message'] ?? 'Gagal menugaskan proses produksi');
         } catch (\Exception $e) {
             Log::error('Error pada assign produksi: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menugaskan proses produksi');
         }
     }
-    
+
     /**
      * Menyelesaikan proses produksi
      */
@@ -169,20 +211,20 @@ public function show($id)
                 'proses_pesanan_id' => 'required',
                 'catatan' => 'nullable|string'
             ]);
-            
+
             $response = $this->sendApiRequest('post', "/admin/pesanan/{$id}/complete-production", $request->all());
-            
+
             if ($response['success'] ?? false) {
                 return redirect()->back()->with('success', 'Proses produksi berhasil diselesaikan');
             }
-            
+
             return redirect()->back()->with('error', $response['message'] ?? 'Gagal menyelesaikan proses produksi');
         } catch (\Exception $e) {
             Log::error('Error pada complete produksi: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menyelesaikan proses produksi');
         }
     }
-    
+
     /**
      * Konfirmasi pengiriman pesanan
      */
@@ -194,20 +236,20 @@ public function show($id)
                 'nomor_resi' => 'nullable|string|max:100',
                 'catatan' => 'nullable|string'
             ]);
-            
+
             $response = $this->sendApiRequest('post', "/admin/pesanan/{$id}/confirm-shipment", $request->all());
-            
+
             if ($response['success'] ?? false) {
                 return redirect()->back()->with('success', 'Pengiriman pesanan berhasil dikonfirmasi');
             }
-            
+
             return redirect()->back()->with('error', $response['message'] ?? 'Gagal mengkonfirmasi pengiriman');
         } catch (\Exception $e) {
             Log::error('Error pada konfirmasi pengiriman: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengkonfirmasi pengiriman');
         }
     }
-    
+
     /**
      * Konfirmasi pengambilan pesanan
      */
@@ -215,18 +257,18 @@ public function show($id)
     {
         try {
             $response = $this->sendApiRequest('post', "/admin/pesanan/{$id}/confirm-pickup");
-            
+
             if ($response['success'] ?? false) {
                 return redirect()->back()->with('success', 'Pengambilan pesanan berhasil dikonfirmasi');
             }
-            
+
             return redirect()->back()->with('error', $response['message'] ?? 'Gagal mengkonfirmasi pengambilan');
         } catch (\Exception $e) {
             Log::error('Error pada konfirmasi pengambilan: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengkonfirmasi pengambilan');
         }
     }
-    
+
     /**
      * Upload desain
      */
@@ -238,10 +280,10 @@ public function show($id)
                 'desain' => 'required|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240',
                 'tipe' => 'required|in:desain_toko,revisi'
             ]);
-            
+
             // Untuk upload file, kita perlu mengirim dengan pendekatan multipart
             $token = session('api_token');
-            
+
             $response = Http::withToken($token)
                 ->timeout(30)
                 ->attach(
@@ -253,20 +295,20 @@ public function show($id)
                     'detail_pesanan_id' => $request->detail_pesanan_id,
                     'tipe' => $request->tipe
                 ]);
-            
+
             $responseData = $response->json();
-            
+
             if ($responseData['success'] ?? false) {
                 return redirect()->back()->with('success', 'Desain berhasil diupload');
             }
-            
+
             return redirect()->back()->with('error', $responseData['message'] ?? 'Gagal mengupload desain');
         } catch (\Exception $e) {
             Log::error('Error pada upload desain: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengupload desain');
         }
     }
-    
+
     /**
      * Batalkan pesanan
      */
@@ -276,20 +318,20 @@ public function show($id)
             $request->validate([
                 'alasan_batal' => 'nullable|string'
             ]);
-            
+
             $response = $this->sendApiRequest('post', "/admin/pesanan/{$id}/cancel", $request->all());
-            
+
             if ($response['success'] ?? false) {
                 return redirect()->route('admin.pesanan.index')->with('success', 'Pesanan berhasil dibatalkan');
             }
-            
+
             return redirect()->back()->with('error', $response['message'] ?? 'Gagal membatalkan pesanan');
         } catch (\Exception $e) {
             Log::error('Error pada pembatalan pesanan: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat membatalkan pesanan');
         }
     }
-    
+
     /**
      * Helper: Mengirim permintaan API dengan token otentikasi
      *
@@ -302,26 +344,26 @@ public function show($id)
     {
         try {
             $token = session('api_token');
-            
+
             Log::debug('Mengirim permintaan API', [
                 'method' => $method,
                 'endpoint' => $endpoint,
                 'has_token' => !empty($token)
             ]);
-            
+
             $response = Http::withToken($token)
                 ->withHeaders([
                     'Accept' => 'application/json'
                 ])
                 ->$method($this->apiBaseUrl . $endpoint, $data);
-            
+
             return $response->json();
         } catch (\Exception $e) {
             Log::error('Error mengirim permintaan API: ' . $e->getMessage(), [
                 'method' => $method,
                 'endpoint' => $endpoint
             ]);
-            
+
             return [
                 'success' => false,
                 'message' => 'Terjadi kesalahan komunikasi dengan server'

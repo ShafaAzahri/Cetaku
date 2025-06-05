@@ -32,7 +32,7 @@
                     <div class="col">
                         <div class="card border-0 bg-light h-100">
                             <div class="card-body text-center">
-                                <h3 class="text-primary mb-2">30</h3>
+                                <h3 class="text-primary mb-2">{{ $pesananBulanIni }}</h3>
                                 <p class="card-text mb-0">Pesanan</p>
                                 <small class="text-muted">Bulan Ini</small>
                             </div>
@@ -41,7 +41,7 @@
                     <div class="col">
                         <div class="card border-0 bg-light h-100">
                             <div class="card-body text-center">
-                                <h3 class="text-success mb-2">12</h3>
+                                <h3 class="text-success mb-2">{{ $pesananSelesaiBulanIni }}</h3>
                                 <p class="card-text mb-0">Selesai</p>
                                 <small class="text-muted">Bulan Ini</small>
                             </div>
@@ -50,8 +50,8 @@
                     <div class="col">
                         <div class="card border-0 bg-light h-100">
                             <div class="card-body text-center">
-                                <h3 class="text-warning mb-2">8</h3>
-                                <p class="card-text mb-0">Pending</p>
+                                <h3 class="text-warning mb-2">{{ $pesananBerjalan }}</h3>
+                                <p class="card-text mb-0">Berjalan</p>
                                 <small class="text-muted">Saat Ini</small>
                             </div>
                         </div>
@@ -60,8 +60,9 @@
             </div>
         </div>
     </div>
-</div>
 
+
+</div>
 <!-- Statistik dan Grafik -->
 <div class="row">
     <!-- Statistik Penjualan -->
@@ -88,7 +89,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Total Penjualan -->
     <div class="col-md-6 mb-4">
         <div class="card h-100 shadow-sm">
@@ -106,8 +107,8 @@
                 </div>
             </div>
             <div class="card-body text-center">
-                <h3 class="text-primary mb-3">2.000.000,00 IDR</h3>
-                <p class="mb-3">30 Pesanan</p>
+                <h3 class="text-primary mb-3">{{ number_format($totalPenjualan, 0, ',', '.') }} IDR</h3>
+                <p class="mb-3">{{ $pesananBulanIni }} Pesanan</p>
                 <div style="height: 200px; max-width: 200px; margin: 0 auto;">
                     <canvas id="doughnutChart"></canvas>
                 </div>
@@ -116,74 +117,10 @@
     </div>
 </div>
 
-<!-- Aktivitas Terbaru dan Pesanan Terbaru -->
+<!-- Pesanan Terbaru dan Riwayat Pesanan -->
 <div class="row">
-    <!-- Aktivitas Terbaru -->
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="card-title mb-0">Aktivitas Terbaru</h5>
-            </div>
-            <div class="card-body p-0">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex align-items-center py-3">
-                        <div class="me-3">
-                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-shopping-cart"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Pesanan Baru #1234</h6>
-                            <p class="mb-0 text-muted small">Budi telah membuat pesanan baru</p>
-                            <small class="text-muted">2 jam yang lalu</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center py-3">
-                        <div class="me-3">
-                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-check"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Pesanan Selesai #1230</h6>
-                            <p class="mb-0 text-muted small">Pesanan telah selesai diproses</p>
-                            <small class="text-muted">4 jam yang lalu</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center py-3">
-                        <div class="me-3">
-                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-money-bill-wave"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Pembayaran Masuk #1232</h6>
-                            <p class="mb-0 text-muted small">Ani telah melakukan pembayaran</p>
-                            <small class="text-muted">6 jam yang lalu</small>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex align-items-center py-3">
-                        <div class="me-3">
-                            <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h6 class="mb-1">Pesanan Dibatalkan #1228</h6>
-                            <p class="mb-0 text-muted small">Deni membatalkan pesanan</p>
-                            <small class="text-muted">8 jam yang lalu</small>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">Lihat Semua Aktivitas</a>
-            </div>
-        </div>
-    </div>
-    
     <!-- Pesanan Terbaru -->
-    <div class="col-md-6 mb-4">
+    <div class="col-md-12 mb-0">
         <div class="card shadow-sm">
             <div class="card-header bg-white">
                 <h5 class="card-title mb-0">Pesanan Terbaru</h5>
@@ -193,67 +130,105 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
-                                <th>Pelanggan</th>
-                                <th>Status</th>
-                                <th>Total</th>
-                                <th>Aksi</th>
+                                <th class="text-center">ID</th>
+                                <th class="text-center">Pelanggan</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
+                            @foreach($pesananTerbaru as $pesanan)
                             <tr>
-                                <td>#1234</td>
-                                <td>Budi</td>
-                                <td><span class="badge bg-info">Baru</span></td>
-                                <td>Rp 250.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
+                                <td class="text-center">#{{ $pesanan->pesanan_id }}</td>
+                                <td class="text-center">{{ $pesanan->pelanggan }}</td>
+                                <td class="text-center">
+                                    <span class="badge 
+                                    @if($pesanan->status == 'Pemesanan') bg-secondary
+                                    @elseif($pesanan->status == 'Dikonfirmasi') bg-info
+                                    @elseif($pesanan->status == 'Sedang Diproses') bg-warning
+                                    @elseif($pesanan->status == 'Menunggu Pengambilan') bg-warning
+                                    @elseif($pesanan->status == 'Sedang Dikirim') bg-primary
+                                    @elseif($pesanan->status == 'Selesai') bg-success
+                                    @elseif($pesanan->status == 'Dibatalkan') bg-danger
+                                    @endif">{{ $pesanan->status }}</span>
+                                </td>
+                                <td class="text-center">Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</td>
+                                <td class="text-center">
+                                    <a href="#" class="btn btn-sm btn-outline-primary">Lihat</a>
+                                </td>
                             </tr>
-                            <tr>
-                                <td>#1233</td>
-                                <td>Citra</td>
-                                <td><span class="badge bg-warning">Proses</span></td>
-                                <td>Rp 375.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
-                            </tr>
-                            <tr>
-                                <td>#1232</td>
-                                <td>Ani</td>
-                                <td><span class="badge bg-success">Bayar</span></td>
-                                <td>Rp 180.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
-                            </tr>
-                            <tr>
-                                <td>#1231</td>
-                                <td>Dodi</td>
-                                <td><span class="badge bg-primary">Kirim</span></td>
-                                <td>Rp 420.000</td>
-                                <td><a href="#" class="btn btn-sm btn-outline-primary">Lihat</a></td>
-                            </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">Lihat Semua Pesanan</a>
+                <a href="{{ route('admin.pesanan.index') }}" class="text-decoration-none">Lihat Semua Pesanan</a>
             </div>
         </div>
     </div>
+
+
+    <!-- Riwayat Pesanan -->
+    <div class="col-md-12 mb-0">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Riwayat Pesanan</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">No</th>
+                                <th class="text-center">Tanggal</th>
+                                <th class="text-center">Pesanan ID</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Info</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($riwayatPesanan as $key => $pesanan)
+                            <tr>
+                                <td class="text-center">{{ $key + 1 }}</td>
+                                <td class="text-center">{{ $pesanan->created_at->format('Y-m-d') }}</td>
+                                <td class="text-center">{{ str_pad($pesanan->id, 4, '0', STR_PAD_LEFT) }}</td>
+                                <td class="text-center">
+                                    <span class="badge 
+                                        @if($pesanan->status == 'Selesai') bg-success
+                                        @elseif($pesanan->status == 'Dibatalkan') bg-danger
+                                        @endif">{{ $pesanan->status }}</span>
+                                </td>
+                                <td class="text-center"><a href="#" class="btn btn-sm btn-outline-primary">Lihat Riwayat</a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Ensure Chart.js is included -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Sales Chart
         const salesCtx = document.getElementById('salesChart');
+        const pesananPerTanggal = @json($pesananPerTanggal); // Passing the PHP variable to JS
+
         if (salesCtx) {
             const salesChart = new Chart(salesCtx, {
                 type: 'line',
                 data: {
-                    labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'],
+                    labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'], // Period labels
                     datasets: [{
                         label: 'Pesanan',
-                        data: [12, 14, 15, 17, 19, 25],
+                        data: pesananPerTanggal, // Data from PHP
                         borderColor: '#007bff',
                         tension: 0.1,
                         fill: false
@@ -279,20 +254,19 @@
                 }
             });
         }
-        
+
         // Doughnut Chart
         const doughnutCtx = document.getElementById('doughnutChart');
         if (doughnutCtx) {
             const doughnutChart = new Chart(doughnutCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pemesanan', 'Selesai', 'Gagal'],
+                    labels: ['Pemesanan', 'Selesai'],
                     datasets: [{
-                        data: [20, 8, 2],
+                        data: [{{ $pesananBulanIni }}, {{ $pesananSelesaiBulanIni }}], // Dynamic PHP variables
                         backgroundColor: [
-                            '#007bff',
-                            '#28a745',
-                            '#dc3545'
+                            '#007bff', // Pemesanan color
+                            '#28a745'  // Selesai color
                         ]
                     }]
                 },

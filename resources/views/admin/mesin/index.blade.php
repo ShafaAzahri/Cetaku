@@ -166,7 +166,7 @@
 </div>
 
 <!-- Status Modals -->
-@foreach($mesins as $mesin)tus -->
+@foreach($mesins as $mesin)
 <div class="modal fade" id="statusModal{{ $mesin['id'] }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

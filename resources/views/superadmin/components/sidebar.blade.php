@@ -1,7 +1,7 @@
 <aside class="sidebar" id="sidebar">
     <div class="brand-logo">
         <i class="fas fa-print"></i>
-        <span class="brand-text">CETAKU</span>
+        <span class="brand-text">{{ $tokoInfo->nama ?? 'CETAKU' }}</span>
     </div>
     <ul class="nav-list">
         <li class="nav-item">
@@ -35,7 +35,7 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="#" class="nav-link">
+            <a href="{{ route('superadmin.pengaturan.index') }}" class="nav-link {{ request()->routeIs('superadmin.pengaturan.*') ? 'active' : '' }}">
                 <i class="fas fa-cog"></i>
                 <span class="nav-text">Pengaturan</span>
             </a>

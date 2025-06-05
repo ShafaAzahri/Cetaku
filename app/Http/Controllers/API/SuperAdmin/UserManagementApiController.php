@@ -118,6 +118,7 @@ class UserManagementApiController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\JsonResponse
      */
+
     public function update(Request $request, $id)
     {
         try {
@@ -205,7 +206,7 @@ class UserManagementApiController extends Controller
             if ($user->hasOrderHistory()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'User cannot be deleted because they have order history'
+                    'message' => 'User has order history and cannot be deleted'
                 ], 400);
             }
             

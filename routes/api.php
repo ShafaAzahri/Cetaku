@@ -14,6 +14,7 @@ use App\Http\Controllers\API\Admin\MesinApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\KategoriApiController;
 use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
+use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +76,9 @@ Route::get('/health', function() {
 
 // Route yang memerlukan autentikasi admin
 Route::middleware('api.admin')->group(function() {
+    // dashboard
+    Route::get('/pesanan/stats', [PesananAdminController::class, 'getPesananStats']);
+
     // Item routes (admin only)
     Route::post('/items', [ItemApiController::class, 'store']);
     Route::put('/items/{id}', [ItemApiController::class, 'update']);
@@ -151,4 +155,7 @@ Route::middleware(['api.superadmin'])->prefix('superadmin')->group(function() {
 
     Route::get('dashboard/stats', 'App\Http\Controllers\API\SuperAdmin\DashboardApiController@getStats');
     Route::get('/superadmin/sales', [LaporanApiController::class, 'getSalesData']);
+
+    // pengaturan route
+    Route::get('/toko-info', [PengaturanApiController::class, 'getTokoInfo']);
 });
