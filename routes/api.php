@@ -15,6 +15,7 @@ use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\KategoriApiController;
 use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
 use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
+// use App\Http\Controllers\PaymentController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -40,7 +41,11 @@ Route::middleware('api.auth')->prefix('alamats')->group(function() {
     Route::put('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@update');
     Route::delete('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@destroy');
 });
-
+// Route::middleware('api.auth')->prefix('payments')->group(function() {
+//     Route::post('/qris', [PaymentController::class, 'createQrisPayment']);
+//     // Anda bisa menambahkan rute pembayaran lain di sini nanti, misal:
+//     // Route::post('/credit-card', [PaymentController::class, 'createCreditCardPayment']);
+// });
 // Routes untuk item (Public GET)
 Route::get('/items', [ItemApiController::class, 'index']);
 Route::get('/items/terlaris', [ItemApiController::class, 'index']);
