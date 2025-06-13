@@ -8,7 +8,7 @@ use App\Http\Controllers\User\ProfileController;
 
 
 use App\Http\Controllers\User\pesanan;
-
+use App\Http\Controllers\User\CheckoutController;
 
 // Admin controllers
 use App\Http\Controllers\Admin\ProductManagerController;
@@ -70,9 +70,8 @@ Route::middleware(['auth.check', 'role:user'])->group(function() {
 
     Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
     Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
-    Route::get('/checkout', [pesanan::class, 'co'])->name('checkout');
-
-
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout/payment', [CheckoutController::class, 'checkoutTerpilih'])->name('checkout.terpilih');
 });
 
 // Admin & Super Admin shared routes

@@ -127,6 +127,14 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Tambahkan di array channels
+        'midtrans' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/midtrans.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
+
     ],
 
 ];

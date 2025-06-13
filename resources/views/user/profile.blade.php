@@ -71,25 +71,25 @@
                 </div>
             </div>
 
-            <!-- Address Section -->
             <div class="border rounded-3 p-4 mt-4 bg-white">
                 <div class="fw-medium mb-4">Alamat Anda</div>
                 <div>
                     @forelse ($addresses as $address)
                         <div class="mb-3 pb-3 border-bottom">
-                            <span class="badge bg-secondary me-2">{{ $address['type'] ?? '-' }}</span>
-                            <span class="fw-bold me-2">{{ $address['type'] ?? '-' }}</span>
-                            <span class="text-muted">{{ $address['phone'] ?? '-' }}</span>
+                            <!-- Label + Nama User + Nomor HP -->
+                            <span class="badge bg-secondary me-2">{{ $address['label'] ?? $address['type'] ?? '-' }}</span>
+                            <span class="fw-bold me-2">{{ $profile['nama'] ?? '-' }}</span>
+                            <span class="text-muted">{{ $address['nomor_hp'] ?? $address['phone'] ?? '-' }}</span>
                             <div class="d-inline float-end">
                                 <a href="#" class="text-primary me-2" style="text-decoration:none;" tabindex="-1">Ubah</a>
                                 <a href="#" class="text-danger" style="text-decoration:none;" tabindex="-1">Hapus</a>
                             </div>
                             <div class="text-muted small mt-1">
-                                {{ $address['address'] ?? '-' }},
-                                {{ $address['kecamatan'] ?? '' }},
-                                {{ $address['kota'] ?? '' }},
-                                {{ $address['provinsi'] ?? '' }},
-                                {{ $address['kode_pos'] ?? '' }}
+                                {{ $address['provinsi'] ?? '-' }},
+                                {{ $address['kota'] ?? '-' }},
+                                {{ $address['kecamatan'] ?? '-' }},
+                                {{ $address['kelurahan'] ?? '-' }},
+                                {{ $address['kode_pos'] ?? '-' }}
                             </div>
                         </div>
                     @empty
@@ -100,6 +100,7 @@
                     + Tambah Alamat
                 </button>
             </div>
+
 
             <!-- Logout Button -->
             <div class="mt-4 text-end">

@@ -14,6 +14,7 @@ use App\Http\Controllers\API\Admin\MesinApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\KategoriApiController;
 use App\Http\Controllers\API\User\ProfileApiController;
+use App\Http\Controllers\API\User\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,8 +52,8 @@ Route::middleware('api.user')->group(function() {
         Route::put('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'update']); // PUT /api/keranjang/{id}
         Route::delete('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'destroy']); // DELETE /api/keranjang/{id}
         Route::delete('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'clear']); // DELETE /api/keranjang (clear all)
-        Route::post('/checkout', [App\Http\Controllers\API\User\KeranjangApiController::class, 'checkout']); // POST /api/keranjang/checkout
         Route::get('/count', [App\Http\Controllers\API\User\KeranjangApiController::class, 'count']); // GET /api/keranjang/count
+
     });
 });
 

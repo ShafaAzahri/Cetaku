@@ -1,12 +1,12 @@
 <?php
 
 namespace App\Http\Controllers\User;
-
 use App\Http\Controllers\Controller;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class KeranjangController extends Controller
 {
@@ -24,43 +24,48 @@ class KeranjangController extends Controller
     {
         try {
             $token = session('api_token');
-            
             if (!$token) {
                 return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu');
             }
 
             // Ambil data keranjang dari API
-            $response = Http::withToken($token)
-                ->get($this->apiBaseUrl . '/keranjang');
+            $response = Http::withToken($token)->get($this->apiBaseUrl . '/keranjang');
 
-            if ($response->successful()) {
-                $data = $response->json();
-                
+            if (!$response->successful()) {
                 return view('user.keranjang', [
-                    'keranjangItems' => $data['data']['items'] ?? [],
-                    'groupedItems' => $data['data']['grouped_items'] ?? [],
-                    'summary' => $data['data']['summary'] ?? [
+                    'keranjangItems' => [],
+                    'groupedItems' => [],
+                    'summary' => [
                         'total_items' => 0,
+                        'total_harga_produk' => 0,
+                        'biaya_desain' => 0,
                         'total_harga' => 0,
                         'count_products' => 0,
-                        'biaya_desain' => 0 // TAMBAHAN INI
                     ]
                 ]);
             }
 
-            return view('user.keranjang', [
-                'keranjangItems' => [],
-                'groupedItems' => [],
-                'summary' => [
-                    'total_items' => 0,
-                    'total_harga' => 0,
-                    'count_products' => 0,
-                    'biaya_desain' => 0 // TAMBAHAN INI
-                ]
+            $data = $response->json();
+            $keranjangItems = $data['data']['items'] ?? [];
+            $groupedItems = $data['data']['grouped_items'] ?? [];
+            $summary = $data['data']['summary'] ?? [
+                'total_items' => 0,
+                'total_harga_produk' => 0,
+                'biaya_desain' => 0,
+                'total_harga' => 0,
+                'count_products' => 0,
+            ];
+
+            // Log untuk debugging
+            Log::info('Data keranjang dari API:', [
+                'jumlah_items' => count($keranjangItems),
+                'summary' => $summary
             ]);
 
+            return view('user.keranjang', compact('keranjangItems', 'groupedItems', 'summary'));
+
         } catch (\Exception $e) {
-            Log::error('Error loading keranjang page: ' . $e->getMessage());
+            Log::error('Error loading cart: ' . $e->getMessage());
             return view('user.keranjang')->with('error', 'Terjadi kesalahan saat memuat keranjang');
         }
     }
@@ -76,8 +81,8 @@ class KeranjangController extends Controller
                 'ukuran_id' => 'required|integer',
                 'bahan_id' => 'required|integer',
                 'jenis_id' => 'required|integer',
-                'tipe_desain' => 'required|in:sendiri,toko',
-                'quantity' => 'required|integer|min:1|max:100',
+                'tipe_desain' => 'required|in:sendiri,dibuatkan',
+                'jumlah' => 'required|integer|min:1|max:100',
                 'upload_desain' => 'nullable|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240'
             ]);
 
@@ -90,7 +95,6 @@ class KeranjangController extends Controller
             }
 
             $token = session('api_token');
-            
             if (!$token) {
                 return response()->json([
                     'success' => false,
@@ -98,19 +102,17 @@ class KeranjangController extends Controller
                 ], 401);
             }
 
-            // Persiapan data untuk dikirim ke API
             $requestData = [
                 'item_id' => $request->item_id,
                 'ukuran_id' => $request->ukuran_id,
                 'bahan_id' => $request->bahan_id,
                 'jenis_id' => $request->jenis_id,
                 'tipe_desain' => $request->tipe_desain,
-                'quantity' => $request->quantity
+                'jumlah' => $request->jumlah
             ];
 
-            // Kirim request ke API
+            // Handle file upload jika ada
             if ($request->hasFile('upload_desain')) {
-                // Jika ada file upload, gunakan multipart form
                 $response = Http::withToken($token)
                     ->timeout(30)
                     ->attach(
@@ -120,38 +122,41 @@ class KeranjangController extends Controller
                     )
                     ->post($this->apiBaseUrl . '/keranjang', $requestData);
             } else {
-                // Jika tidak ada file, kirim sebagai JSON
                 $response = Http::withToken($token)
                     ->post($this->apiBaseUrl . '/keranjang', $requestData);
             }
 
             $responseData = $response->json();
 
+            // Log response untuk debugging
+            Log::info('Response dari API add to cart:', [
+                'status' => $response->status(),
+                'response' => $responseData
+            ]);
+
             if ($response->successful() && ($responseData['success'] ?? false)) {
-                // Cek apakah request dari AJAX atau form
                 if ($request->expectsJson() || $request->ajax()) {
-                    // Untuk AJAX, return JSON
                     return response()->json([
                         'success' => true,
-                        'message' => 'Produk berhasil ditambahkan ke keranjang'
+                        'message' => 'Produk berhasil ditambahkan ke keranjang',
+                        'data' => $responseData['data'] ?? null
                     ]);
                 } else {
-                    // Untuk form submission, redirect dengan session flash
                     return redirect()->back()->with('success', 'Produk berhasil ditambahkan ke keranjang');
                 }
             }
-    
-            // Handle error
+
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $responseData['message'] ?? 'Gagal menambahkan ke keranjang'
-                ]);
+                    'message' => $responseData['message'] ?? 'Gagal menambahkan ke keranjang',
+                    'errors' => $responseData['errors'] ?? null
+                ], $response->status());
             } else {
                 return redirect()->back()->with('error', $responseData['message'] ?? 'Gagal menambahkan ke keranjang');
             }
-    
         } catch (\Exception $e) {
+            Log::error('Error adding to cart: ' . $e->getMessage());
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
             } else {
@@ -161,24 +166,23 @@ class KeranjangController extends Controller
     }
 
     /**
-     * Update quantity item di keranjang
+     * Update jumlah item di keranjang
      */
     public function updateQuantity(Request $request, $id)
     {
         try {
             $validator = Validator::make($request->all(), [
-                'quantity' => 'required|integer|min:1|max:100'
+                'jumlah' => 'required|integer|min:1|max:100'
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Quantity tidak valid'
+                    'message' => 'Jumlah tidak valid'
                 ], 422);
             }
 
             $token = session('api_token');
-            
             if (!$token) {
                 return response()->json([
                     'success' => false,
@@ -188,7 +192,7 @@ class KeranjangController extends Controller
 
             $response = Http::withToken($token)
                 ->put($this->apiBaseUrl . '/keranjang/' . $id, [
-                    'quantity' => $request->quantity
+                    'jumlah' => $request->jumlah
                 ]);
 
             $responseData = $response->json();
@@ -196,16 +200,15 @@ class KeranjangController extends Controller
             if ($response->successful() && ($responseData['success'] ?? false)) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Quantity berhasil diperbarui',
+                    'message' => 'Jumlah berhasil diperbarui',
                     'data' => $responseData['data'] ?? null
                 ]);
             }
 
             return response()->json([
                 'success' => false,
-                'message' => $responseData['message'] ?? 'Gagal memperbarui quantity'
+                'message' => $responseData['message'] ?? 'Gagal memperbarui jumlah'
             ], $response->status());
-
         } catch (\Exception $e) {
             Log::error('Error updating quantity: ' . $e->getMessage());
             return response()->json([
@@ -234,7 +237,6 @@ class KeranjangController extends Controller
             }
 
             $token = session('api_token');
-            
             if (!$token) {
                 return response()->json([
                     'success' => false,
@@ -265,7 +267,6 @@ class KeranjangController extends Controller
                 'success' => false,
                 'message' => $responseData['message'] ?? 'Gagal mengupload desain'
             ], $response->status());
-
         } catch (\Exception $e) {
             Log::error('Error uploading design: ' . $e->getMessage());
             return response()->json([
@@ -282,7 +283,6 @@ class KeranjangController extends Controller
     {
         try {
             $token = session('api_token');
-            
             if (!$token) {
                 return response()->json([
                     'success' => false,
@@ -306,7 +306,6 @@ class KeranjangController extends Controller
                 'success' => false,
                 'message' => $responseData['message'] ?? 'Gagal menghapus item'
             ], $response->status());
-
         } catch (\Exception $e) {
             Log::error('Error removing item: ' . $e->getMessage());
             return response()->json([
@@ -323,7 +322,6 @@ class KeranjangController extends Controller
     {
         try {
             $token = session('api_token');
-            
             if (!$token) {
                 return response()->json([
                     'success' => false,
@@ -347,7 +345,6 @@ class KeranjangController extends Controller
                 'success' => false,
                 'message' => $responseData['message'] ?? 'Gagal mengosongkan keranjang'
             ], $response->status());
-
         } catch (\Exception $e) {
             Log::error('Error clearing cart: ' . $e->getMessage());
             return response()->json([
@@ -364,7 +361,6 @@ class KeranjangController extends Controller
     {
         try {
             $token = session('api_token');
-            
             if (!$token) {
                 return response()->json(['count' => 0]);
             }
@@ -375,12 +371,10 @@ class KeranjangController extends Controller
             if ($response->successful()) {
                 $data = $response->json();
                 $count = $data['data']['summary']['total_items'] ?? 0;
-                
                 return response()->json(['count' => $count]);
             }
 
             return response()->json(['count' => 0]);
-
         } catch (\Exception $e) {
             Log::error('Error getting cart count: ' . $e->getMessage());
             return response()->json(['count' => 0]);

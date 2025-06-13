@@ -125,7 +125,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
         display: flex;
-        justify-content: between;
+        justify-content: space-between;
         align-items: center;
     }
     
@@ -413,29 +413,20 @@
                         <i class="fas fa-map-marker-alt"></i>
                         Alamat Pengiriman
                     </h5>
-                    
-                    <div class="address-card selected">
-                        <input type="radio" name="selected_address" value="1" checked style="display: none;">
-                        <div class="address-label">Rumah</div>
-                        <div class="address-name">Shafa</div>
-                        <div class="address-detail">
-                            Jl. Prof. Hamka No. 123, RT 01/RW 02<br>
-                            Tembalang, Semarang, Jawa Tengah 50275<br>
-                            📱 +62 895-2686-1571
+
+                    @foreach($addresses as $i => $address)
+                        <div class="address-card{{ $i === 0 ? ' selected' : '' }}">
+                            <input type="radio" name="selected_address" value="{{ $address['id'] }}" {{ $i === 0 ? 'checked' : '' }} style="display: none;">
+                            <div class="address-label">{{ strtoupper($address['label']) }}</div>
+                            <div class="address-name">{{ $user_name }}</div>
+                            <div class="address-detail">
+                                {{ $address['alamat_lengkap'] }}<br>
+                                {{ $address['kelurahan'] }}, {{ $address['kecamatan'] }}, {{ $address['kota'] }}, {{ $address['provinsi'] }} {{ $address['kode_pos'] }}<br>
+                                +{{ $address['nomor_hp'] }}
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="address-card">
-                        <input type="radio" name="selected_address" value="2" style="display: none;">
-                        <div class="address-label">Kantor</div>
-                        <div class="address-name">Shafa</div>
-                        <div class="address-detail">
-                            Jl. Soekarno Hatta No. 456<br>
-                            Banyumanik, Semarang, Jawa Tengah 50268<br>
-                            📱 +62 895-2686-1571
-                        </div>
-                    </div>
-                    
+                    @endforeach
+
                     <button class="btn-add-address">
                         <i class="fas fa-plus me-2"></i>Tambah Alamat Baru
                     </button>
@@ -447,42 +438,37 @@
                         <i class="fas fa-shipping-fast"></i>
                         Pilihan Ekspedisi
                     </h5>
-                    
-                    <div class="ekspedisi-option selected">
-                        <input type="radio" name="selected_ekspedisi" value="1" checked style="display: none;">
-                        <div class="ekspedisi-info">
-                            <div class="ekspedisi-name">JNE Regular</div>
-                            <div class="ekspedisi-service">Paket reguler</div>
+                    @if(isset($expeditions) && count($expeditions) > 0)
+                        @php $first = true; @endphp
+                        @foreach($expeditions as $layanan)
+                            <div class="ekspedisi-option {{ $first ? 'selected' : '' }}" data-cost="{{ $layanan['cost'] ?? 0 }}">
+                                <input type="radio"
+                                    name="selected_ekspedisi"
+                                    value="{{ $layanan['code'] . '-' . ($layanan['service'] ?? '') }}"
+                                    {{ $first ? 'checked' : '' }}
+                                    style="display: none;">
+                                <div class="ekspedisi-info">
+                                    <div class="ekspedisi-name">{{ $layanan['name'] ?? '-' }}</div>
+                                    <div class="ekspedisi-service">{{ $layanan['description'] ?? '-' }}</div>
+                                </div>
+                                <div class="ekspedisi-price">
+                                    <div class="ekspedisi-cost">
+                                        Rp {{ number_format($layanan['cost'] ?? 0, 0, ',', '.') }}
+                                    </div>
+                                    <div class="ekspedisi-estimate">
+                                        {{ $layanan['etd'] ?? '-' }}
+                                    </div>
+                                </div>
+                            </div>
+                            @php $first = false; @endphp
+                        @endforeach
+                    @else
+                        <div class="ekspedisi-option" data-cost="0">
+                            <div class="ekspedisi-info">
+                                <div class="ekspedisi-name">Tidak ada ekspedisi ditemukan.</div>
+                            </div>
                         </div>
-                        <div class="ekspedisi-price">
-                            <div class="ekspedisi-cost">Rp 15.000</div>
-                            <div class="ekspedisi-estimate">2-3 hari</div>
-                        </div>
-                    </div>
-                    
-                    <div class="ekspedisi-option">
-                        <input type="radio" name="selected_ekspedisi" value="2" style="display: none;">
-                        <div class="ekspedisi-info">
-                            <div class="ekspedisi-name">J&T Express</div>
-                            <div class="ekspedisi-service">Paket reguler</div>
-                        </div>
-                        <div class="ekspedisi-price">
-                            <div class="ekspedisi-cost">Rp 18.000</div>
-                            <div class="ekspedisi-estimate">2-3 hari</div>
-                        </div>
-                    </div>
-                    
-                    <div class="ekspedisi-option">
-                        <input type="radio" name="selected_ekspedisi" value="3" style="display: none;">
-                        <div class="ekspedisi-info">
-                            <div class="ekspedisi-name">SiCepat REG</div>
-                            <div class="ekspedisi-service">Paket reguler</div>
-                        </div>
-                        <div class="ekspedisi-price">
-                            <div class="ekspedisi-cost">Rp 20.000</div>
-                            <div class="ekspedisi-estimate">1-2 hari</div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
 
                 <!-- Informasi Toko (Untuk Ambil Sendiri) -->
@@ -571,59 +557,88 @@
                         <i class="fas fa-receipt"></i>
                         Ringkasan Pesanan
                     </h5>
-                    
-                    <div class="order-item">
-                        <img src="https://via.placeholder.com/60x60/4361ee/ffffff?text=KAOS" class="order-item-image" alt="Kaos">
-                        <div class="order-item-details">
-                            <div class="order-item-name">Kaos Custom</div>
-                            <div class="order-item-specs">
-                                Cotton Combed 24s, Ukuran: S<br>
-                                Jenis: Lengan Bolong
+
+                    @if(isset($produkTerpilih) && count($produkTerpilih) > 0)
+                        @php
+                            // Hitung subtotal
+                            $subtotal = 0;
+                            foreach ($produkTerpilih as $produk) {
+                                $subtotal += ($produk['harga_satuan'] ?? 0) * ($produk['quantity'] ?? 1);
+                            }
+                            
+                            // Ambil biaya desain
+                            $biayaDesainFinal = $biaya_desain ?? 0;
+                            
+                            // Ongkir default (akan diupdate via JavaScript)
+                            $defaultOngkir = 0;
+                            if(isset($expeditions) && count($expeditions) > 0) {
+                                $defaultOngkir = $expeditions[0]['cost'] ?? 0;
+                            }
+                        @endphp
+
+                        {{-- Loop untuk menampilkan setiap produk --}}
+                        @foreach($produkTerpilih as $produk)
+                            @php
+                                $hargaPerItem = ($produk['harga_satuan'] ?? 0) * ($produk['jumlah'] ?? 1);
+                            @endphp
+
+                            <div class="order-item">
+                                <img src="{{ isset($produk['item']['gambar']) ? asset('storage/' . $produk['item']['gambar']) : asset('images/products/default.png') }}" 
+                                    class="order-item-image" 
+                                    alt="{{ $produk['item']['nama_item'] ?? 'Produk' }}">
+
+                                <div class="order-item-details">
+                                    <div class="order-item-name">{{ $produk['item']['nama_item'] ?? '-' }}</div>
+                                    <div class="order-item-specs">
+                                        {{ $produk['bahan']['nama_bahan'] ?? '-' }}, Ukuran: {{ $produk['ukuran']['size'] ?? '-' }}<br>
+                                        Jenis: {{ $produk['jenis']['kategori'] ?? '-' }}
+                                        
+                                        {{-- Tampilkan tipe desain --}}
+                                        @if(($produk['tipe_desain'] ?? 'sendiri') === 'dibuatkan')
+                                            <br><span class="badge badge-info">Desain Toko</span>
+                                        @else
+                                            <br><span class="badge badge-secondary">Desain Sendiri</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="order-item-price">
+                                    <div class="order-item-quantity">{{ $produk['jumlah'] ?? 1 }}x</div>
+                                    <div class="order-item-total">Rp {{ number_format($hargaPerItem, 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        @endforeach
+
+                        <hr>
+                        
+                        {{-- Ringkasan Pesanan --}}
+                        <div class="order-summary">
+                            <div class="summary-row">
+                                <span>Subtotal ({{ count($produkTerpilih) }} item)</span>
+                                <span id="subtotal-display">Rp {{ number_format($subtotal, 0, ',', '.') }}</span>
+                            </div>
+                            
+                            @if($biayaDesainFinal > 0)
+                            <div class="summary-row">
+                                <span>Biaya Desain</span>
+                                <span id="design-cost-display">Rp {{ number_format($biayaDesainFinal, 0, ',', '.') }}</span>
+                            </div>
+                            @endif
+                            
+                            <div class="summary-row" id="shipping-cost-row">
+                                <span>Ongkos Kirim</span>
+                                <span id="shipping-cost-display">Rp {{ number_format($defaultOngkir, 0, ',', '.') }}</span>
+                            </div>
+                            
+                            <div class="summary-row total">
+                                <span><strong>Total</strong></span>
+                                <span id="total-display"><strong>Rp {{ number_format($subtotal + $biayaDesainFinal + $defaultOngkir, 0, ',', '.') }}</strong></span>
                             </div>
                         </div>
-                        <div class="order-item-price">
-                            <div class="order-item-quantity">6x</div>
-                            <div class="order-item-total">Rp 630.000</div>
-                        </div>
-                    </div>
-                    
-                    <div class="order-item">
-                        <img src="https://via.placeholder.com/60x60/4361ee/ffffff?text=JAKET" class="order-item-image" alt="Jaket">
-                        <div class="order-item-details">
-                            <div class="order-item-name">Jaket Custom</div>
-                            <div class="order-item-specs">
-                                Fleece, Ukuran: M<br>
-                                Jenis: Lengan Panjang
-                            </div>
-                        </div>
-                        <div class="order-item-price">
-                            <div class="order-item-quantity">1x</div>
-                            <div class="order-item-total">Rp 180.000</div>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="summary-row">
-                        <span>Subtotal (7 item)</span>
-                        <span>Rp 810.000</span>
-                    </div>
-                    
-                    <div class="summary-row">
-                        <span>Biaya Desain</span>
-                        <span>Rp 200.000</span>
-                    </div>
-                    
-                    <div class="summary-row" id="shipping-cost-row">
-                        <span>Ongkos Kirim</span>
-                        <span id="shipping-cost">Rp 15.000</span>
-                    </div>
-                    
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <span id="grand-total">Rp 1.025.000</span>
-                    </div>
-                    
+                    @else
+                        <p>Tidak ada produk yang dipilih.</p>
+                    @endif
+
                     <div class="checkout-actions">
                         <button class="btn-checkout" type="button">
                             <i class="fas fa-shopping-bag me-2"></i>
@@ -638,21 +653,47 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Data dari PHP
+    const subtotal = {{ $subtotal }};
+    const biayaDesain = {{ $biayaDesainFinal }};
+    
+    // DOM Elements
     const deliveryOptions = document.querySelectorAll('.delivery-option');
     const addressSection = document.getElementById('address-section');
     const shippingSection = document.getElementById('shipping-section');
     const storeSection = document.getElementById('store-section');
     const shippingCostRow = document.getElementById('shipping-cost-row');
-    const shippingCost = document.getElementById('shipping-cost');
-    const grandTotal = document.getElementById('grand-total');
+    const shippingCostDisplay = document.getElementById('shipping-cost-display');
+    const totalDisplay = document.getElementById('total-display');
     
     const addressCards = document.querySelectorAll('.address-card:not(.btn-add-address)');
     const ekspedisiOptions = document.querySelectorAll('.ekspedisi-option');
     const paymentOptions = document.querySelectorAll('.payment-option');
     
-    let subtotal = 810000;
-    let biayaDesain = 200000;
-    let currentShippingCost = 15000;
+    let currentShippingCost = {{ $defaultOngkir }};
+    let currentDeliveryMethod = 'antar';
+    
+    // Fungsi untuk memformat rupiah
+    function formatRupiah(amount) {
+        return 'Rp ' + amount.toLocaleString('id-ID');
+    }
+    
+    // Fungsi untuk update total
+    function updateTotal() {
+        let finalShippingCost = currentDeliveryMethod === 'ambil' ? 0 : currentShippingCost;
+        let total = subtotal + biayaDesain + finalShippingCost;
+        
+        // Update display
+        shippingCostDisplay.textContent = formatRupiah(finalShippingCost);
+        totalDisplay.innerHTML = '<strong>' + formatRupiah(total) + '</strong>';
+        
+        // Show/hide shipping cost row
+        if (currentDeliveryMethod === 'ambil') {
+            shippingCostRow.style.display = 'none';
+        } else {
+            shippingCostRow.style.display = 'flex';
+        }
+    }
     
     // Delivery method switching
     deliveryOptions.forEach(option => {
@@ -665,17 +706,33 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
             radio.checked = true;
             
+            // Update current method
+            currentDeliveryMethod = method;
+            
             if (method === 'antar') {
+                // Pesan Antar
                 addressSection.style.display = 'block';
                 shippingSection.style.display = 'block';
                 storeSection.style.display = 'none';
-                shippingCostRow.style.display = 'flex';
-                currentShippingCost = 15000; // Default JNE
+                
+                // Set shipping cost to selected expedition or default
+                const selectedEkspedisi = document.querySelector('.ekspedisi-option.selected');
+                if (selectedEkspedisi) {
+                    currentShippingCost = parseInt(selectedEkspedisi.dataset.cost) || 0;
+                } else {
+                    // Set to first expedition cost
+                    const firstEkspedisi = document.querySelector('.ekspedisi-option');
+                    if (firstEkspedisi) {
+                        currentShippingCost = parseInt(firstEkspedisi.dataset.cost) || 0;
+                        firstEkspedisi.classList.add('selected');
+                        firstEkspedisi.querySelector('input[type="radio"]').checked = true;
+                    }
+                }
             } else {
+                // Ambil Sendiri
                 addressSection.style.display = 'none';
                 shippingSection.style.display = 'none';
                 storeSection.style.display = 'block';
-                shippingCostRow.style.display = 'none';
                 currentShippingCost = 0;
             }
             
@@ -699,16 +756,17 @@ document.addEventListener('DOMContentLoaded', function() {
     ekspedisiOptions.forEach(option => {
         option.addEventListener('click', function() {
             const radio = this.querySelector('input[type="radio"]');
-            const cost = this.querySelector('.ekspedisi-cost').textContent;
+            const cost = parseInt(this.dataset.cost) || 0;
             
             ekspedisiOptions.forEach(opt => opt.classList.remove('selected'));
             this.classList.add('selected');
             radio.checked = true;
             
-            // Update shipping cost
-            currentShippingCost = parseInt(cost.replace(/[^\d]/g, ''));
-            shippingCost.textContent = cost;
-            updateTotal();
+            // Update shipping cost only if delivery method is 'antar'
+            if (currentDeliveryMethod === 'antar') {
+                currentShippingCost = cost;
+                updateTotal();
+            }
         });
     });
     
@@ -722,11 +780,6 @@ document.addEventListener('DOMContentLoaded', function() {
             radio.checked = true;
         });
     });
-    
-    function updateTotal() {
-        const total = subtotal + biayaDesain + currentShippingCost;
-        grandTotal.textContent = `Rp ${total.toLocaleString('id-ID')}`;
-    }
     
     // Initialize
     updateTotal();

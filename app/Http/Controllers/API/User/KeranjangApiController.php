@@ -4,14 +4,6 @@ namespace App\Http\Controllers\API\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Keranjang;
-use App\Models\Item;
-use App\Models\Ukuran;
-use App\Models\Bahan;
-use App\Models\Jenis;
-use App\Models\Pesanan;
-use App\Models\DetailPesanan;
-use App\Models\Custom;
-use App\Models\Pembayaran;
 use App\Models\BiayaDesain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,17 +32,45 @@ class KeranjangApiController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-            // Hitung total keranjang
-            $totalItems = $keranjangItems->sum('quantity');
-            $totalHarga = $keranjangItems->sum('total_harga');
+            // Hitung total keranjang dengan perhitungan manual
+            $totalItems = 0;
+            $totalHargaProduk = 0;
+            $hasTipeDesainDibuatkan = false;
+
+            foreach ($keranjangItems as $item) {
+                // Hitung harga satuan (harga dasar + biaya tambahan)
+                $hargaSatuan = $this->calculateHargaSatuan($item);
+                
+                // Set harga_satuan ke item untuk response
+                $item->harga_satuan = $hargaSatuan;
+                
+                // Hitung total harga untuk item ini
+                $totalHargaItem = $hargaSatuan * $item->jumlah;
+                $item->total_harga = $totalHargaItem;
+                
+                // Akumulasi total
+                $totalItems += $item->jumlah;
+                $totalHargaProduk += $totalHargaItem;
+                
+                // Cek tipe desain
+                if ($item->tipe_desain === 'dibuatkan') {
+                    $hasTipeDesainDibuatkan = true;
+                }
+            }
 
             // Group by kategori jika ada
             $groupedItems = $keranjangItems->groupBy(function($item) {
                 return $item->item->kategoris->first()->nama_kategori ?? 'Lainnya';
             });
 
-            // TAMBAHAN: Ambil biaya desain
+            // Ambil biaya desain dari database
             $biayaDesain = BiayaDesain::first()->biaya ?? 0;
+
+            // Biaya desain hanya dihitung sekali per transaksi jika ada tipe_desain 'dibuatkan'
+            $totalBiayaDesain = $hasTipeDesainDibuatkan ? $biayaDesain : 0;
+            
+            // Total keseluruhan
+            $totalHarga = $totalHargaProduk + $totalBiayaDesain;
 
             return response()->json([
                 'success' => true,
@@ -59,9 +79,12 @@ class KeranjangApiController extends Controller
                     'grouped_items' => $groupedItems,
                     'summary' => [
                         'total_items' => $totalItems,
+                        'total_harga_produk' => $totalHargaProduk,
                         'total_harga' => $totalHarga,
                         'count_products' => $keranjangItems->count(),
-                        'biaya_desain' => $biayaDesain // TAMBAHAN INI
+                        'biaya_desain' => $totalBiayaDesain,
+                        'biaya_desain_database' => $biayaDesain,
+                        'has_tipe_desain_dibuatkan' => $hasTipeDesainDibuatkan,
                     ]
                 ]
             ]);
@@ -85,20 +108,19 @@ class KeranjangApiController extends Controller
                 'ukuran_id' => 'required|exists:ukurans,id',
                 'bahan_id' => 'required|exists:bahans,id',
                 'jenis_id' => 'required|exists:jenis,id',
-                'quantity' => 'required|integer|min:1|max:100',
-                'tipe_desain' => 'required|in:sendiri,toko',
+                'jumlah' => 'required|integer|min:1|max:100',
+                'tipe_desain' => 'required|in:sendiri,dibuatkan',
                 'upload_desain' => 'nullable|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240'
             ]);
 
             if ($validator->fails()) {
-                // DEBUG: Log validation errors
                 Log::error('Validation failed:', $validator->errors()->toArray());
-                
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Validasi gagal',
                     'errors' => $validator->errors(),
-                    'received_data' => $request->all() // DEBUG: kirim data yang diterima
+                    'received_data' => $request->all()
                 ], 422);
             }
 
@@ -112,11 +134,11 @@ class KeranjangApiController extends Controller
                 ], 422);
             }
 
-            // Validasi: jika tipe_desain toko, tidak perlu file
-            if ($request->tipe_desain === 'toko' && $request->hasFile('upload_desain')) {
+            // Validasi: jika tipe_desain dibuatkan, tidak perlu file
+            if ($request->tipe_desain === 'dibuatkan' && $request->hasFile('upload_desain')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Untuk desain toko, tidak perlu upload file'
+                    'message' => 'Untuk desain dibuatkan, tidak perlu upload file'
                 ], 422);
             }
 
@@ -133,8 +155,17 @@ class KeranjangApiController extends Controller
             DB::beginTransaction();
 
             if ($existingItem) {
-                // Update quantity jika kombinasi sudah ada
-                $existingItem->quantity += $request->quantity;
+                // Update jumlah jika kombinasi sudah ada
+                $existingItem->jumlah += $request->jumlah;
+                
+                // Load relasi untuk perhitungan harga
+                $existingItem->load(['item', 'ukuran', 'bahan', 'jenis']);
+                
+                // Hitung ulang harga satuan dan total harga
+                $hargaSatuan = $this->calculateHargaSatuan($existingItem);
+                $existingItem->harga_satuan = $hargaSatuan;
+                $existingItem->total_harga = $hargaSatuan * $existingItem->jumlah;
+                
                 $existingItem->save();
                 $keranjangItem = $existingItem;
             } else {
@@ -146,11 +177,18 @@ class KeranjangApiController extends Controller
                 $keranjangItem->bahan_id = $request->bahan_id;
                 $keranjangItem->jenis_id = $request->jenis_id;
                 $keranjangItem->tipe_desain = $request->tipe_desain;
-                $keranjangItem->quantity = $request->quantity;
-                
+                $keranjangItem->jumlah = $request->jumlah;
+
                 // Load relasi untuk perhitungan harga
+                $keranjangItem->save(); // Save dulu untuk mendapatkan ID
                 $keranjangItem->load(['item', 'ukuran', 'bahan', 'jenis']);
-                $keranjangItem->save();
+                
+                // Hitung harga satuan dan total harga
+                $hargaSatuan = $this->calculateHargaSatuan($keranjangItem);
+                $keranjangItem->harga_satuan = $hargaSatuan;
+                $keranjangItem->total_harga = $hargaSatuan * $keranjangItem->jumlah;
+                
+                $keranjangItem->save(); // Save lagi dengan harga yang sudah dihitung
             }
 
             // Handle upload desain jika ada
@@ -182,13 +220,13 @@ class KeranjangApiController extends Controller
     }
 
     /**
-     * Update item di keranjang (quantity atau upload desain)
+     * Update item di keranjang (jumlah atau upload desain)
      */
     public function update(Request $request, $id)
     {
         try {
             $validator = Validator::make($request->all(), [
-                'quantity' => 'nullable|integer|min:1|max:100',
+                'jumlah' => 'nullable|integer|min:1|max:100',
                 'upload_desain' => 'nullable|file|mimes:jpeg,png,jpg,pdf,ai,psd|max:10240'
             ]);
 
@@ -215,10 +253,18 @@ class KeranjangApiController extends Controller
 
             DB::beginTransaction();
 
-            // Update quantity jika ada
-            if ($request->has('quantity')) {
-                $keranjangItem->quantity = $request->quantity;
+            // Update jumlah jika ada
+            if ($request->has('jumlah')) {
+                $keranjangItem->jumlah = $request->jumlah;
             }
+
+            // Load relasi untuk perhitungan harga
+            $keranjangItem->load(['item', 'ukuran', 'bahan', 'jenis']);
+            
+            // Hitung ulang harga satuan dan total harga
+            $hargaSatuan = $this->calculateHargaSatuan($keranjangItem);
+            $keranjangItem->harga_satuan = $hargaSatuan;
+            $keranjangItem->total_harga = $hargaSatuan * $keranjangItem->jumlah;
 
             // Handle upload desain baru
             if ($request->hasFile('upload_desain')) {
@@ -231,7 +277,7 @@ class KeranjangApiController extends Controller
                 $keranjangItem->upload_desain = $uploadedFile;
             }
 
-            $keranjangItem->save(); // auto-recalculate harga
+            $keranjangItem->save();
 
             DB::commit();
 
@@ -242,7 +288,6 @@ class KeranjangApiController extends Controller
                 'message' => 'Item keranjang berhasil diperbarui',
                 'data' => $keranjangItem
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating keranjang: ' . $e->getMessage());
@@ -283,7 +328,6 @@ class KeranjangApiController extends Controller
                 'success' => true,
                 'message' => 'Item berhasil dihapus dari keranjang'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error deleting from keranjang: ' . $e->getMessage());
             return response()->json([
@@ -317,7 +361,6 @@ class KeranjangApiController extends Controller
                 'success' => true,
                 'message' => 'Keranjang berhasil dikosongkan'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error clearing keranjang: ' . $e->getMessage());
             return response()->json([
@@ -335,5 +378,18 @@ class KeranjangApiController extends Controller
         $fileName = $userId . '_' . time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('keranjang-designs', $fileName, 'public');
         return $path;
+    }
+
+    /**
+     * Hitung harga satuan berdasarkan item dan pilihan
+     */
+    private function calculateHargaSatuan($keranjangItem)
+    {
+        $hargaDasar = $keranjangItem->item->harga_dasar ?? 0;
+        $biayaUkuran = $keranjangItem->ukuran->biaya_tambahan ?? 0;
+        $biayaBahan = $keranjangItem->bahan->biaya_tambahan ?? 0;
+        $biayaJenis = $keranjangItem->jenis->biaya_tambahan ?? 0;
+
+        return $hargaDasar + $biayaUkuran + $biayaBahan + $biayaJenis;
     }
 }

@@ -25,7 +25,7 @@ class Keranjang extends Model
         'bahan_id',
         'jenis_id',
         'tipe_desain', 
-        'quantity',
+        'jumlah',
         'upload_desain',
         'harga_satuan',
         'total_harga',
@@ -37,7 +37,7 @@ class Keranjang extends Model
      * @var array
      */
     protected $casts = [
-        'quantity' => 'integer',
+        'jumlah' => 'integer',
         'harga_satuan' => 'decimal:2',
         'total_harga' => 'decimal:2',
     ];
