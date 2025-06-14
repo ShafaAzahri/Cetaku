@@ -25,7 +25,6 @@
     <main>
         @yield('content')
     </main>
-    
     @include('user.components.footer')
     
     <!-- Scripts -->

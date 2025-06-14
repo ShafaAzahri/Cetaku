@@ -2,42 +2,20 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Pembayaran extends Model
 {
-    /**
-     * Nama tabel yang terkait dengan model.
-     *
-     * @var string
-     */
-    protected $table = 'pembayarans';
+    use HasFactory;
 
-    /**
-     * Atribut yang dapat diisi secara massal.
-     *
-     * @var array
-     */
     protected $fillable = [
-        'pesanan_id',
-        'metode',
-        'status',
-        'bukti_bayar',
-        'tanggal_bayar'
+        'pesanan_id', 'midtrans_order_id', 'midtrans_transaction_id', 'midtrans_payment_type', 'midtrans_transaction_status', 'midtrans_fraud_status', 
+        'metode', 'status', 'bukti_bayar', 'tanggal_bayar', 'expired_at', 'keranjang_snapshot', 'transaction_id', 'snap_token', 'payment_url', 
+        'midtrans_response'
     ];
 
-    /**
-     * Atribut yang harus dikonversi ke tipe data khusus.
-     *
-     * @var array
-     */
-    protected $casts = [
-        'tanggal_bayar' => 'datetime',
-    ];
-
-    /**
-     * Dapatkan pesanan terkait dengan pembayaran.
-     */
+    // Relasi ke pesanan
     public function pesanan()
     {
         return $this->belongsTo(Pesanan::class);

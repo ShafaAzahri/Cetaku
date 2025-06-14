@@ -13,10 +13,15 @@ use App\Http\Controllers\API\Admin\OperatorApiController;
 use App\Http\Controllers\API\Admin\MesinApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\KategoriApiController;
-use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
 use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
-// use App\Http\Controllers\PaymentController; 
+use App\Http\Controllers\API\User\KeranjangApiController;
 
+
+
+use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
+
+use App\Http\Controllers\API\User\ProfileApiController;
+use App\Http\Controllers\API\User\PaymentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -34,12 +39,29 @@ Route::prefix('auth')->group(function() {
 });
 
 // Alamat API routes (dengan middleware api.auth)
-Route::middleware('api.auth')->prefix('alamats')->group(function() {
-    Route::get('/', 'App\Http\Controllers\User\AlamatApiController@index');
-    Route::post('/', 'App\Http\Controllers\API\User\AlamatApiController@store');
-    Route::get('/{id}', 'App\Http\Controllers\User\AlamatApiController@show');
-    Route::put('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@update');
-    Route::delete('/{id}', 'App\Http\Controllers\API\User\AlamatApiController@destroy');
+Route::middleware('api.user')->group(function() {
+    // Profil pengguna
+    Route::get('/profile', [ProfileApiController::class, 'getProfile']);
+    Route::post('/profile/update', [ProfileApiController::class, 'updateProfile']);
+    Route::post('/profile/update-password', [ProfileApiController::class, 'updatePassword']);
+    
+    // Alamat pengguna
+    Route::get('/alamat', [ProfileApiController::class, 'getAlamat']);
+    Route::get('/alamat/{id}', [ProfileApiController::class, 'getAlamatDetail']);
+    Route::post('/alamat', [ProfileApiController::class, 'createAlamat']);
+    Route::put('/alamat/{id}', [ProfileApiController::class, 'updateAlamat']);
+    Route::delete('/alamat/{id}', [ProfileApiController::class, 'deleteAlamat']);
+
+    Route::prefix('keranjang')->group(function() {
+        Route::get('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'index']); // GET /api/keranjang
+        Route::post('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'store']); // POST /api/keranjang
+        Route::put('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'update']); // PUT /api/keranjang/{id}
+        Route::delete('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'destroy']); // DELETE /api/keranjang/{id}
+        Route::delete('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'clear']); // DELETE /api/keranjang (clear all)
+        Route::get('/count', [App\Http\Controllers\API\User\KeranjangApiController::class, 'count']); // GET /api/keranjang/count
+        
+
+    });
 });
 // Route::middleware('api.auth')->prefix('payments')->group(function() {
 //     Route::post('/qris', [PaymentController::class, 'createQrisPayment']);

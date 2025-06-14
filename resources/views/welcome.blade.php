@@ -71,23 +71,26 @@
             <h2 class="section-title text-center">Terlaris</h2>
             
             <div class="row mt-4">
+                <!-- Di bagian Best Seller Section -->
                 @forelse($terlaris as $item)
                 <div class="col-md-3 col-sm-6 mb-4">
                     <div class="product-card">
-                        <div class="product-img">
-                            @if(isset($item['gambar']) && $item['gambar'])
-                                <img src="{{ asset('storage/' . $item['gambar']) }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
-                            @else
-                                <img src="{{ asset('images/products/default.png') }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
-                            @endif
-                        </div>
-                        <div class="product-info">
-                            <h5 class="product-title">{{ $item['nama_item'] }}</h5>
-                            <p class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</p>
-                            @if(isset($item['total_terjual']) && $item['total_terjual'] > 0)
-                                <small class="text-muted">{{ $item['total_terjual'] }} terjual</small>
-                            @endif
-                        </div>
+                        <a href="{{ route('product.detail', $item['id']) }}" class="text-decoration-none">
+                            <div class="product-img">
+                                @if(isset($item['gambar']) && $item['gambar'])
+                                    <img src="{{ asset('storage/' . $item['gambar']) }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
+                                @else
+                                    <img src="{{ asset('images/products/default.png') }}" alt="{{ $item['nama_item'] }}" class="img-fluid">
+                                @endif
+                            </div>
+                            <div class="product-info">
+                                <h5 class="product-title">{{ $item['nama_item'] }}</h5>
+                                <p class="product-price">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</p>
+                                <small class="text-muted">
+                                    {{ isset($item['total_terjual']) && $item['total_terjual'] > 0 ? $item['total_terjual'] . ' terjual' : '0 terjual' }}
+                                </small>
+                            </div>
+                        </a>
                     </div>
                 </div>
                 @empty
@@ -98,7 +101,7 @@
             </div>
             
             <div class="text-center mt-4">
-                <a href="#" class="btn btn-outline-primary btn-explore">Jelajahi <i class="fas fa-arrow-right ms-2"></i></a>
+                <a href="{{ route('produk-all') }}" class="btn btn-outline-primary btn-explore">Jelajahi <i class="fas fa-arrow-right ms-2"></i></a>
             </div>
         </div>
     </section>
@@ -193,7 +196,7 @@
                     <p class="section-description">
                         Raih kemudahan dalam mencetak berbagai kebutuhan Anda mulai dari kaos, merchandise, poster, kartu nama, hingga banner. Kami hadir untuk Anda dengan pengerjaan cepat 1-3 hari. Kami terbuka untuk pemesanan dalam jumlah bulk baik untuk maupun untuk berbagai merk.
                     </p>
-                    <a href="#" class="chat-admin-link">Chat Admin</a>
+                    <a href="" class="chat-admin-link">Chat Admin</a>
                 </div>
                 
                 <div class="col-md-7">

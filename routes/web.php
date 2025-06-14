@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\WelcomeController;
+use App\Http\Controllers\User\ProfileController;
+
+
+use App\Http\Controllers\User\pesanan;
+use App\Http\Controllers\User\CheckoutController;
 
 // Admin controllers
 use App\Http\Controllers\Admin\ProductManagerController;
@@ -35,6 +40,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
+    // Tambahkan di bagian route yang tidak memerlukan auth
+    Route::get('/product/{id}', [App\Http\Controllers\User\ProductController::class, 'show'])->name('product.detail');
 });
 
 // Logout route (needs auth)
@@ -50,6 +57,25 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
         return redirect()->route('welcome');
     })->name('user.welcome');
 
+     Route::get('/profile', [ProfileController::class, 'showProfile'])->name('user.profile');
+    // Menyimpan perubahan password
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
+    ->name('profile.update-password');
+
+    Route::get('/keranjang', [App\Http\Controllers\User\KeranjangController::class, 'index'])->name('keranjang');
+    Route::post('/keranjang/add', [App\Http\Controllers\User\KeranjangController::class, 'addToCart'])->name('keranjang.add');
+    Route::put('/keranjang/{id}/quantity', [App\Http\Controllers\User\KeranjangController::class, 'updateQuantity'])->name('keranjang.update-quantity');
+    Route::post('/keranjang/{id}/upload-design', [App\Http\Controllers\User\KeranjangController::class, 'uploadDesign'])->name('keranjang.upload-design');
+    Route::delete('/keranjang/{id}', [App\Http\Controllers\User\KeranjangController::class, 'removeItem'])->name('keranjang.remove');
+    Route::delete('/keranjang', [App\Http\Controllers\User\KeranjangController::class, 'clearCart'])->name('keranjang.clear');
+    Route::get('/keranjang/count', [App\Http\Controllers\User\KeranjangController::class, 'getCartCount'])->name('keranjang.count');
+
+
+    Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
+    Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout/payment', [CheckoutController::class, 'checkoutTerpilih'])->name('checkout.terpilih');
+    
     // Add more user routes here if needed
 });
 

@@ -39,4 +39,10 @@ return [
         'base_url' => env('API_BASE_URL'),
     ],
 
+    'midtrans' => [
+    'server_key' => env('MIDTRANS_SERVER_KEY'),
+    'client_key' => env('MIDTRANS_CLIENT_KEY'),
+    'environment' => env('MIDTRANS_ENVIRONMENT'),
+],
+
 ];

@@ -22,7 +22,7 @@
                 <tr>
                     <td>{{ $key + 1 }}</td>
                     <td>{{ $ukuran['size'] }}</td>
-                    <td>{{ $ukuran['faktor_harga'] }}x</td>
+                    <td>Rp. {{ number_format($ukuran['biaya_tambahan'], 0, ',', '.') }}</td>
                     <td>
                         @if(isset($ukuran['items']) && count($ukuran['items']) > 0)
                             @php
@@ -42,7 +42,7 @@
                                 data-bs-toggle="modal" data-bs-target="#editUkuranModal"
                                 data-id="{{ $ukuran['id'] }}"
                                 data-size="{{ $ukuran['size'] }}"
-                                data-faktor="{{ $ukuran['faktor_harga'] }}">
+                                data-faktor="{{ $ukuran['biaya_tambahan'] }}">
                             <i class="fas fa-edit"></i>
                         </button>
                         <form action="{{ route('admin.ukurans.destroy', $ukuran['id']) }}" method="POST" class="d-inline delete-form" data-entity-type="ukuran">

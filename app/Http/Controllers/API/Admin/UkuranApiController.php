@@ -37,14 +37,14 @@ class UkuranApiController extends Controller
         
         $validatedData = $request->validate([
             'size' => 'required|string|max:100',
-            'faktor_harga' => 'required|numeric|min:0',
+            'biaya_tambahan' => 'required|numeric|min:0',  // ganti dari 'faktor_harga'
             'item_ids' => 'nullable|array',
             'item_ids.*' => 'exists:items,id'
         ]);
         
         $ukuran = new Ukuran();
         $ukuran->size = $request->size;
-        $ukuran->faktor_harga = $request->faktor_harga;
+        $ukuran->biaya_tambahan = $request->biaya_tambahan;  // ganti dari faktor_harga
         $ukuran->save();
         
         // Jika ada item yang dipilih, hubungkan dengan ukuran ini
@@ -94,7 +94,7 @@ class UkuranApiController extends Controller
         
         $validatedData = $request->validate([
             'size' => 'required|string|max:100',
-            'faktor_harga' => 'required|numeric|min:0',
+            'biaya_tambahan' => 'required|numeric|min:0',  // ganti dari 'faktor_harga'
             'item_ids' => 'nullable|array',
             'item_ids.*' => 'exists:items,id'
         ]);
@@ -109,7 +109,7 @@ class UkuranApiController extends Controller
         }
         
         $ukuran->size = $request->size;
-        $ukuran->faktor_harga = $request->faktor_harga;
+        $ukuran->biaya_tambahan = $request->biaya_tambahan;  // ganti dari faktor_harga
         $ukuran->save();
         
         // Update relasi dengan item
