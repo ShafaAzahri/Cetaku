@@ -71,8 +71,8 @@
     h2,
     h3 {
         color: #333;
-        /* font-size: 19px; */
-        font-weight: 600;
+        font-size: 24px;
+        font-weight: medium;
     }
 
     .container {

@@ -1,10 +1,12 @@
 @extends('superadmin.layout.superadmin')
 
 @section('content')
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Daftar Operator</h2>
-            <a href="{{ route('superadmin.operator.create') }}" class="btn btn-success">+ Tambah Operator</a>
+    <div class="container-fluid px-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">Daftar Operator</h4>
+            <a href="{{ route('superadmin.operator.create') }}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> Tambah Operator
+            </a>
         </div>
 
 
@@ -73,12 +75,23 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="{{ route('superadmin.operator.show', is_array($operator) ? $operator['id'] : $operator->id) }}" class="btn btn-info btn-sm">Detail</a>
-                                <a href="{{ route('superadmin.operator.edit', is_array($operator) ? $operator['id'] : $operator->id) }}" class="btn btn-warning btn-sm">Edit</a>
+                                <a href="{{ route('superadmin.operator.show', is_array($operator) ? $operator['id'] : $operator->id) }}"
+                                    class="btn btn-info btn-sm"
+                                    title="Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ route('superadmin.operator.edit', is_array($operator) ? $operator['id'] : $operator->id) }}"
+                                    class="btn btn-warning btn-sm"
+                                    title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                                 <form action="{{ route('superadmin.operator.destroy', is_array($operator) ? $operator['id'] : $operator->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus operator ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-danger btn-sm">Hapus</button>
+                                    <button class="btn btn-danger btn-sm"
+                                        title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>
