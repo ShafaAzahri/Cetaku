@@ -91,7 +91,7 @@
 </style>
 
 <div class="container">
-    <h2 class="mb-3">Laporan Penjualan</h2>
+    <h2 class="mb-3">Rentang Tanggal Penjualan</h2>
 
     <!-- Filter Form -->
     <form id="filterForm" action="{{ route('superadmin.laporan.index') }}" method="GET" class="mb-3 filter-section">
