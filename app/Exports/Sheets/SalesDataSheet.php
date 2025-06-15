@@ -3,9 +3,12 @@
 namespace App\Exports\Sheets;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class SalesDataSheet implements FromCollection, WithHeadings
+class SalesDataSheet implements FromCollection, WithTitle, ShouldAutoSize, WithStyles
 {
     protected $salesData;
     protected $totalPrice;
@@ -20,16 +23,26 @@ class SalesDataSheet implements FromCollection, WithHeadings
     {
         $data = [];
 
-        // Add sales data
+        // Judul Laporan
+        $data[] = ['DATA LAPORAN HASIL PENJUALAN', '', '', ''];
+
+        // Heading kolom
+        $data[] = ['Tanggal Pesanan', 'Status', 'Total Harga'];
+
+        // Data penjualan
         foreach ($this->salesData as $sale) {
+            if (is_object($sale)) {
+                $sale = (array) $sale;
+            }
+
             $data[] = [
-                $sale->tanggal_dipesan,
-                $sale->status,
-                number_format($sale->total_harga, 2),
+                $sale['tanggal_dipesan'] ?? '-',
+                $sale['status'] ?? '-',
+                number_format($sale['total_harga'] ?? 0, 2),
             ];
         }
 
-        // Add total price row at the end
+        // Baris total penjualan
         $data[] = [
             'Total Penjualan',
             '',
@@ -39,8 +52,17 @@ class SalesDataSheet implements FromCollection, WithHeadings
         return collect($data);
     }
 
-    public function headings(): array
+    public function title(): string
     {
-        return ['Tanggal Pesanan', 'Status', 'Total Harga'];
+        return 'Laporan Penjualan';
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        return [
+            1 => ['font' => ['bold' => true, 'size' => 14]], // Judul
+            2 => ['font' => ['bold' => true]], // Heading
+            count($this->salesData) + 3 => ['font' => ['bold' => true]], // Total row
+        ];
     }
 }

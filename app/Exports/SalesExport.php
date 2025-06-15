@@ -11,6 +11,8 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
+use App\Exports\Sheets\SalesDataSheet;
+
 class SalesExport implements WithMultipleSheets
 {
     protected $salesData;
@@ -19,70 +21,70 @@ class SalesExport implements WithMultipleSheets
 
     public function __construct($salesData, $totalPrice, $topSellingItems)
     {
-        $this->salesData = $salesData;
+        $this->salesData = collect($salesData);
         $this->totalPrice = $totalPrice;
-        $this->topSellingItems = $topSellingItems;
+        $this->topSellingItems = collect($topSellingItems);
     }
 
     public function sheets(): array
     {
         return [
             new SalesDataSheet($this->salesData, $this->totalPrice),
-            new TopSellingItemsSheet($this->topSellingItems)
+            new TopSellingItemsSheet($this->topSellingItems),
         ];
     }
 }
 
-class SalesDataSheet implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize
-{
-    protected $salesData;
-    protected $totalPrice;
+// class SalesDataSheet implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize
+// {
+//     protected $salesData;
+//     protected $totalPrice;
 
-    public function __construct($salesData, $totalPrice)
-    {
-        $this->salesData = $salesData;
-        $this->totalPrice = $totalPrice;
-    }
+//     public function __construct($salesData, $totalPrice)
+//     {
+//         $this->salesData = $salesData;
+//         $this->totalPrice = $totalPrice;
+//     }
 
-    public function collection()
-    {
-        // Add title and headings to the sheet
-        $data = [
-            ['DATA LAPORAN HASIL PENJUALAN', '', '', ''], // Title row
-        ];
+//     public function collection()
+//     {
+//         // Add title and headings to the sheet
+//         $data = [
+//             ['DATA LAPORAN HASIL PENJUALAN', '', '', ''], // Title row
+//         ];
 
-        // Add headings row
-        $data[] = ['Tanggal Pesanan', 'Status', 'Total Harga'];
+//         // Add headings row
+//         $data[] = ['Tanggal Pesanan', 'Status', 'Total Harga'];
 
-        // Add sales data
-        foreach ($this->salesData as $sale) {
-            $data[] = [
-                $sale['tanggal_dipesan'],
-                $sale['status'],
-                number_format($sale['total_harga'], 2),
-            ];
-        }
+//         // Add sales data
+//         foreach ($this->salesData as $sale) {
+//             $data[] = [
+//                 $sale['tanggal_dipesan'],
+//                 $sale['status'],
+//                 number_format($sale['total_harga'], 2),
+//             ];
+//         }
 
-        // Add the total price row at the end of the collection
-        $data[] = [
-            'Total Penjualan',
-            '',
-            number_format($this->totalPrice, 2),  // Adding total price in the last column
-        ];
+//         // Add the total price row at the end of the collection
+//         $data[] = [
+//             'Total Penjualan',
+//             '',
+//             number_format($this->totalPrice, 2),  // Adding total price in the last column
+//         ];
 
-        return collect($data);
-    }
+//         return collect($data);
+//     }
 
-    public function headings(): array
-    {
-        return [];
-    }
+//     public function headings(): array
+//     {
+//         return [];
+//     }
 
-    public function title(): string
-    {
-        return 'Laporan Penjualan';
-    }
-}
+//     public function title(): string
+//     {
+//         return 'Laporan Penjualan';
+//     }
+// }
 
 class TopSellingItemsSheet implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize
 {

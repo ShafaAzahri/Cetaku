@@ -123,11 +123,26 @@ class LaporanController extends Controller
         $endDate = $request->get('end_date', now()->endOfMonth()->toDateString());
 
         // Fetch sales data from the database
-        $salesData = Pesanan::select('pesanans.tanggal_dipesan', 'pesanans.status', 'detail_pesanans.total_harga')
-            ->join('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
-            ->where('pesanans.status', 'Selesai')
-            ->whereBetween('pesanans.tanggal_dipesan', [$startDate, $endDate])
-            ->get();
+        // $salesData = Pesanan::select('pesanans.tanggal_dipesan', 'pesanans.status', 'detail_pesanans.total_harga')
+        //     ->join('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
+        //     ->where('pesanans.status', 'Selesai')
+        //     ->whereBetween('pesanans.tanggal_dipesan', [$startDate, $endDate])
+        //     ->get();
+
+        // Ambil data dari API biar sesuai tampilan laporan
+        $response = $this->sendApiRequest('get', '/superadmin/sales', [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        // Cek respon API
+        if (!isset($response['success']) || !$response['success']) {
+            return back()->with('error', $response['message'] ?? 'Gagal mengambil data penjualan');
+        }
+
+        $salesData = collect($response['sales_data']);
+        $totalPrice = $salesData->sum('total_harga');
+
 
         // Calculate total price of sales data
         $totalPrice = $salesData->sum('total_harga');
