@@ -91,10 +91,10 @@
 </style>
 
 <div class="container">
-    <h2>Laporan Penjualan</h2>
+    <h2 class="mb-3">Laporan Penjualan</h2>
 
     <!-- Filter Form -->
-    <form action="{{ route('superadmin.laporan.index') }}" method="GET" class="mb-3 filter-section">
+    <form id="filterForm" action="{{ route('superadmin.laporan.index') }}" method="GET" class="mb-3 filter-section">
         <div class="row">
             <!-- Start Date -->
             <div class="col-md-3">
@@ -107,9 +107,9 @@
             </div>
 
             <!-- Filter Button -->
-            <div class="col-md-2">
+            <!-- <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">Filter</button>
-            </div>
+            </div> -->
 
             <!-- Export Excel Button -->
             <div class="col-md-2">
@@ -119,7 +119,7 @@
     </form>
 
     <!-- Sales Data Table -->
-    <h3>Laporan Penjualan</h3>
+    <h3 class="mb-3">Laporan Penjualan</h3>
 
     @if(!empty($salesData) && count($salesData) > 0)
     <table class="table">
@@ -151,7 +151,7 @@
     @endif
     <br>
     <!-- Top Selling Products Table -->
-    <h3>Produk Unggulan (Top Selling Items)</h3>
+     <h3 class="mb-3">Produk Unggulan (Top Selling Items)</h3>
 
     @if(!empty($topItems))
     <table class="table">
@@ -178,5 +178,26 @@
     <p>Tidak ada produk unggulan.</p>
     @endif
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const startDate = document.querySelector('input[name="start_date"]');
+        const endDate = document.querySelector('input[name="end_date"]');
+        const form = document.getElementById('filterForm');
+
+        // Submit form jika salah satu input tanggal berubah
+        startDate.addEventListener('change', function () {
+            if (startDate.value && endDate.value) {
+                form.submit();
+            }
+        });
+
+        endDate.addEventListener('change', function () {
+            if (startDate.value && endDate.value) {
+                form.submit();
+            }
+        });
+    });
+</script>
 
 @endsection
