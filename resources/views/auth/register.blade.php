@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Polines-print | Daftar</title>
+    <title>CETAKU | Daftar</title>
     
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
@@ -153,8 +153,8 @@
         
         <div class="register-form-side">
             <div class="logo-container">
-            <img src="{{ asset('images/polines.png') }}" alt="Polines Logo">
-                <h2>Polines-print</h2>
+            <img src="{{ asset('images/poliness.png') }}" alt="Polines Logo">
+                <h2>CETAKU</h2>
             </div>
             
             <h1 class="welcome-text">Selamat datang</h1>
