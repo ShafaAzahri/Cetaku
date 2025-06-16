@@ -135,7 +135,7 @@
             @foreach($salesData as $key => $sale)
             <tr>
                 <td>{{ $key + 1 }}</td>
-                <td>{{ \Carbon\Carbon::parse($sale['created_at'])->format('d/m/Y') }}</td>
+                <td>{{ \Carbon\Carbon::parse($sale['tanggal_dipesan'])->format('d/m/Y') }}</td>
                 <td>{{ $sale['status'] }}</td>
                 <td>{{ number_format($sale['total_harga'], 2) }}</td>
             </tr>

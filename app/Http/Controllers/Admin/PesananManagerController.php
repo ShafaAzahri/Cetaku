@@ -60,48 +60,108 @@ class PesananManagerController extends Controller
 
 
 
+    // public function index(Request $request)
+    // {
+    //     try {
+    //         $status = $request->get('status', 'Semua Status');
+    //         $search = $request->get('search', '');
+    //         $dariTanggal = $request->get('dari_tanggal', '');
+    //         $sampaiTanggal = $request->get('sampai_tanggal', '');
+    //         $perPage = $request->get('per_page', 10);
+
+    //         // Ambil data dari API
+    //         $response = $this->sendApiRequest('get', '/admin/pesanan', [
+    //             'status' => $status,
+    //             'search' => $search,
+    //             'dari_tanggal' => $dariTanggal,
+    //             'sampai_tanggal' => $sampaiTanggal,
+    //             'per_page' => $perPage
+    //         ]);
+
+    //         // dd($response);
+
+    //         if (!($response['success'] ?? false)) {
+    //             return redirect()->back()->with('error', $response['message'] ?? 'Gagal memuat data pesanan');
+    //         }
+
+    //         $pesanans = $response['pesanans'];
+    //         $statusOptions = $response['status_options'] ?? ['Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
+
+    //         // Ambil data statistik
+    //         $statsResponse = $this->sendApiRequest('get', '/admin/pesanan/statistics');
+    //         $stats = ($statsResponse['success'] ?? false) ? $statsResponse['statistics'] : null;
+
+    //         return view('admin.pesanan.index', compact(
+    //             'pesanans',
+    //             'status',
+    //             'search',
+    //             'dariTanggal',
+    //             'sampaiTanggal',
+    //             'statusOptions',
+    //             'stats'
+    //         ));
+    //     } catch (\Exception $e) {
+    //         Log::error('Error pada halaman daftar pesanan: ' . $e->getMessage());
+    //         return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat data');
+    //     }
+    // }
+
     public function index(Request $request)
     {
-        try {
-            $status = $request->get('status', 'Semua Status');
-            $search = $request->get('search', '');
-            $dariTanggal = $request->get('dari_tanggal', '');
-            $sampaiTanggal = $request->get('sampai_tanggal', '');
-            $perPage = $request->get('per_page', 10);
+        $query = Pesanan::with(['user', 'detailPesanans.custom.item', 'ekspedisi']);
 
-            // Ambil data dari API
-            $response = $this->sendApiRequest('get', '/admin/pesanan', [
-                'status' => $status,
-                'search' => $search,
-                'dari_tanggal' => $dariTanggal,
-                'sampai_tanggal' => $sampaiTanggal,
-                'per_page' => $perPage
-            ]);
+        // Ambil filter dari query string
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $dariTanggal = $request->input('dari_tanggal');
+        $sampaiTanggal = $request->input('sampai_tanggal');
 
-            if (!($response['success'] ?? false)) {
-                return redirect()->back()->with('error', $response['message'] ?? 'Gagal memuat data pesanan');
-            }
-
-            $pesanans = $response['pesanans'];
-            $statusOptions = $response['status_options'] ?? ['Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
-
-            // Ambil data statistik
-            $statsResponse = $this->sendApiRequest('get', '/admin/pesanan/statistics');
-            $stats = ($statsResponse['success'] ?? false) ? $statsResponse['statistics'] : null;
-
-            return view('admin.pesanan.index', compact(
-                'pesanans',
-                'status',
-                'search',
-                'dariTanggal',
-                'sampaiTanggal',
-                'statusOptions',
-                'stats'
-            ));
-        } catch (\Exception $e) {
-            Log::error('Error pada halaman daftar pesanan: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memuat data');
+        // Filter berdasarkan pencarian (ID atau nama pelanggan)
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('id', 'like', "%$search%")
+                  ->orWhereHas('user', function($subQ) use ($search) {
+                      $subQ->where('nama', 'like', "%$search%");
+                  });
+            });
         }
+
+        // Filter berdasarkan status (jika bukan "Semua Status")
+        if ($status && $status !== 'Semua Status') {
+            $query->where('status', $status);
+        }
+
+        // Filter berdasarkan rentang tanggal
+        if ($dariTanggal) {
+            $query->whereDate('tanggal_dipesan', '>=', $dariTanggal);
+        }
+        if ($sampaiTanggal) {
+            $query->whereDate('tanggal_dipesan', '<=', $sampaiTanggal);
+        }
+
+        // Pagination (10 item per halaman)
+        $pesanans = $query->orderBy('tanggal_dipesan', 'desc')->paginate(10)->withQueryString();
+
+        // Status yang tersedia
+        $statusOptions = [
+            'Pemesanan',
+            'Dikonfirmasi',
+            'Sedang Diproses',
+            'Menunggu Pengambilan',
+            'Sedang Dikirim',
+            'Selesai',
+            'Dibatalkan',
+        ];
+
+        // Kirim data ke view
+        return view('admin.pesanan.index', [
+            'pesanans' => $pesanans,
+            'statusOptions' => $statusOptions,
+            'search' => $search,
+            'status' => $status,
+            'dariTanggal' => $dariTanggal,
+            'sampaiTanggal' => $sampaiTanggal,
+        ]);
     }
 
     /**

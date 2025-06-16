@@ -53,7 +53,7 @@ class LaporanApiController extends Controller
             $endDate = $request->get('end_date', now()->subMonth()->endOfMonth()->toDateString());
 
             // Ambil data penjualan yang statusnya "Selesai"
-            $salesData = Pesanan::select('pesanans.id', 'pesanans.created_at', 'pesanans.status', DB::raw('SUM(detail_pesanans.total_harga) as total_harga'))
+            $salesData = Pesanan::select('pesanans.id', 'pesanans.tanggal_dipesan', 'pesanans.status', DB::raw('SUM(detail_pesanans.total_harga) as total_harga'))
                 ->join('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
                 ->where('pesanans.status', 'Selesai')
                 ->whereBetween('pesanans.created_at', [$startDate, $endDate])

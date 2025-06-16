@@ -8,6 +8,9 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
+use DateTime;
+use DateTimeZone;
+
 class SalesDataSheet implements FromCollection, WithTitle, ShouldAutoSize, WithStyles
 {
     protected $salesData;
@@ -17,6 +20,8 @@ class SalesDataSheet implements FromCollection, WithTitle, ShouldAutoSize, WithS
     {
         $this->salesData = $salesData;
         $this->totalPrice = $totalPrice;
+
+        // dd($salesData);
     }
 
     public function collection()
@@ -30,13 +35,37 @@ class SalesDataSheet implements FromCollection, WithTitle, ShouldAutoSize, WithS
         $data[] = ['Tanggal Pesanan', 'Status', 'Total Harga'];
 
         // Data penjualan
+
+        // dd($data);
+
         foreach ($this->salesData as $sale) {
             if (is_object($sale)) {
-                $sale = (array) $sale;
+                $sale = (array) $sale;              
             }
 
+            $utcTime = $sale['tanggal_dipesan'];
+
+                // Buat objek DateTime dari string waktu UTC
+                $date = new DateTime($utcTime, new DateTimeZone('UTC'));
+
+                // Ubah zona waktu ke Asia/Jakarta (WIB)
+                $date->setTimezone(new DateTimeZone('Asia/Jakarta'));
+
+                // Format output waktu sesuai kebutuhan
+                $bulanIndonesia = [
+                    1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+
+                $hari = $date->format('d');
+                $bulan = (int) $date->format('m');
+                $tahun = $date->format('Y');
+
+                $waktu_dipesan = $hari . ' ' . $bulanIndonesia[$bulan] . ' ' . $tahun;
+
             $data[] = [
-                $sale['tanggal_dipesan'] ?? '-',
+                
+                $waktu_dipesan ?? '-',
                 $sale['status'] ?? '-',
                 number_format($sale['total_harga'] ?? 0, 2),
             ];
