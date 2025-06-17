@@ -154,9 +154,20 @@ class AdminController extends Controller
     public function dashboard(Request $request)
     {
         try {
+
             // Ambil bulan dan tahun saat ini
             $currentMonth = now()->month;
             $currentYear = now()->year;
+
+            // Ambil bulan dan tahun unik dari tabel pesanan
+            $months = Pesanan::selectRaw('MONTH(tanggal_dipesan) as month, YEAR(tanggal_dipesan) as year')
+                ->distinct()
+                ->orderByDesc('year')
+                ->orderByDesc('month')
+                ->get();
+
+            // Ambil bulan yang dipilih (dari query string atau default ke bulan saat ini)
+            $selectedMonth = $request->get('month', now()->format('Y-m'));
 
             // Hitung jumlah pesanan bulan ini
             $pesananBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
@@ -233,6 +244,8 @@ class AdminController extends Controller
                 'totalPenjualan',
                 'pesananPerTanggal',
                 'pesananTerbaru',
+                'months',
+                'selectedMonth',
                 'riwayatPesanan' // Pass the latest orders data to the view
             ));
         } catch (\Exception $e) {

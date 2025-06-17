@@ -72,17 +72,21 @@
                 <h5 class="m-0">Statistik Penjualan</h5>
                 <div>
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesMonthDropdown" data-bs-toggle="dropdown">
-                        Mei 2025
+                        {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesMonthDropdown">
-                        <li><a class="dropdown-item" href="#">April 2025</a></li>
-                        <li><a class="dropdown-item" href="#">Mei 2025</a></li>
-                        <li><a class="dropdown-item" href="#">Juni 2025</a></li>
+                        @foreach($months as $month)
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard', ['month' => $month->year.'-'.$month->month]) }}">
+                                    {{ \Carbon\Carbon::createFromFormat('Y-m', $month->year.'-'.$month->month)->format('F Y') }}
+                                </a>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
             </div>
             <div class="card-body">
-                <p class="mb-2">30 Pesanan</p>
+                <p class="mb-2">{{ $pesananBulanIni }} Pesanan</p>
                 <div style="height: 250px;">
                     <canvas id="salesChart"></canvas>
                 </div>
@@ -97,12 +101,16 @@
                 <h5 class="m-0">Total Penjualan</h5>
                 <div>
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="totalMonthDropdown" data-bs-toggle="dropdown">
-                        Mei 2025
+                        {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="totalMonthDropdown">
-                        <li><a class="dropdown-item" href="#">April 2025</a></li>
-                        <li><a class="dropdown-item" href="#">Mei 2025</a></li>
-                        <li><a class="dropdown-item" href="#">Juni 2025</a></li>
+                        @foreach($months as $month)
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard', ['month' => $month->year.'-'.$month->month]) }}">
+                                    {{ \Carbon\Carbon::createFromFormat('Y-m', $month->year.'-'.$month->month)->format('F Y') }}
+                                </a>
+                            </li>
+                        @endforeach
                     </ul>
                 </div>
             </div>
@@ -155,7 +163,7 @@
                                 </td>
                                 <td class="text-center">Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</td>
                                 <td class="text-center">
-                                    <a href="#" class="btn btn-sm btn-outline-primary">Lihat</a>
+                                    <a href="{{ route('admin.pesanan.show', $pesanan->pesanan_id) }}" class="btn btn-sm btn-outline-primary">Lihat</a>
                                 </td>
                             </tr>
                             @endforeach
@@ -200,7 +208,8 @@
                                         @elseif($pesanan->status == 'Dibatalkan') bg-danger
                                         @endif">{{ $pesanan->status }}</span>
                                 </td>
-                                <td class="text-center"><a href="#" class="btn btn-sm btn-outline-primary">Lihat Riwayat</a></td>
+                                <td class="text-center">
+                                <a href="{{ route('admin.pesanan.show', $pesanan->id) }}" class="btn btn-sm btn-outline-primary">Lihat Riwayat</a></td>
                             </tr>
                             @endforeach
                         </tbody>
