@@ -34,12 +34,12 @@
                 <span class="nav-text">Operator</span>
             </a>
         </li>
-        <li class="nav-item">
+        <!-- <li class="nav-item">
             <a href="{{ route('admin.ekspedisi.index') }}" class="nav-link {{ request()->routeIs('admin.ekspedisi.*') ? 'active' : '' }}">
                 <i class="fas fa-truck"></i>
                 <span class="nav-text">Ekspedisi</span>
             </a>
-        </li>
+        </li> -->
         <!-- <li class="nav-item">
             <a href="#" class="nav-link">
                 <i class="fas fa-history"></i>
