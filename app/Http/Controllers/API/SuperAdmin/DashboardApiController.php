@@ -280,7 +280,7 @@ class DashboardApiController extends Controller
                     'id' => $order->id,
                     'description' => $description,
                     'status' => $order->status,
-                    'time' => $order->updated_at->diffForHumans(),
+                    'time' => $order->updated_at, //->diffForHumans()
                     'timestamp' => $order->updated_at
                 ];
             });

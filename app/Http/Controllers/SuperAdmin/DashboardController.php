@@ -22,7 +22,7 @@ class DashboardController extends Controller
     public function index()
     {
         $response = $this->sendApiRequest('get', '/dashboard/stats');
-        
+        // dd($response);
         if (!($response['success'] ?? false)) {
             return view('superadmin.dashboard')->with('error', $response['message'] ?? 'Failed to fetch dashboard data');
         }
