@@ -56,10 +56,6 @@ class PesananManagerController extends Controller
         }
     }
 
-
-
-
-
     public function index(Request $request)
     {
         try {
@@ -76,13 +72,12 @@ class PesananManagerController extends Controller
             'dari_tanggal' => $dariTanggal,
             'sampai_tanggal' => $sampaiTanggal,
             'per_page' => $perPage,
-            'page' => $request->get('page', 1) // ⬅️ Tambahkan ini!
+            'page' => $request->get('page', 1)
         ]);
                 Log::debug('Request params', [
             'page' => $request->get('page'),
             'session_token' => session('api_token'),
         ]);
-
 
             if (!($response['success'] ?? false)) {
                 return redirect()->back()->with('error', $response['message'] ?? 'Gagal memuat data pesanan');

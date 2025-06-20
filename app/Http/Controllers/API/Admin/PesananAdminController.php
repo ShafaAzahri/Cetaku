@@ -51,7 +51,7 @@ class PesananAdminController extends Controller
             if ($request->has('search') && $request->search) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
-                    $q->where('id', 'like', "%{$search}%")
+                    $q->where('pesanans.id', 'like', "%{$search}%")
                       ->orWhereHas('user', function($q2) use ($search) {
                           $q2->where('nama', 'like', "%{$search}%");
                       });
