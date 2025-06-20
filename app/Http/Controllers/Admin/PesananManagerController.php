@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Pesanan;
+use App\Models\DetailPesanan;
+use App\Models\Pesanan; 
+use App\Models\item;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -151,27 +153,51 @@ class PesananManagerController extends Controller
         }
     }
 
+
     /**
      * Update status pesanan
      */
+    public function uploadResi(Request $request, $id)
+    {
+        #dd($request->all());
+
+        try {
+            $request->validate([
+                'resi' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
+                'detail_pesanan_id' => 'required|exists:detail_pesanans,id',
+            ]);
+
+            // Simpan file ke storage
+            $path = $request->file('resi')->store('resi', 'public');
+
+            // Simpan path ke kolom resi_pesanan milik detail_pesanans
+            $detail = DetailPesanan::with('item')->findOrFail($request->detail_pesanan_id);
+
+            $detail->resi_pesanan = $path;
+            $detail->save();
+
+            return redirect()->back()->with('success', 'Resi berhasil diupload.');
+        } catch (\Exception $e) {
+            Log::error('Gagal upload resi: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat upload resi.');
+        }
+    }
+
     public function updateStatus(Request $request, $id)
     {
         try {
             $request->validate([
-                'status' => 'required|string',
-                'catatan' => 'nullable|string'
+                'status' => 'required|string'
             ]);
 
-            $response = $this->sendApiRequest('put', "/admin/pesanan/{$id}/status", $request->all());
+            $pesanan = Pesanan::findOrFail($id);
+            $pesanan->status = $request->status;
+            $pesanan->save();
 
-            if ($response['success'] ?? false) {
-                return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui');
-            }
-
-            return redirect()->back()->with('error', $response['message'] ?? 'Gagal memperbarui status pesanan');
+            return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui.');
         } catch (\Exception $e) {
-            Log::error('Error pada update status pesanan: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status');
+            Log::error('Gagal update status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status.');
         }
     }
 
@@ -308,7 +334,7 @@ class PesananManagerController extends Controller
             return redirect()->back()->with('error', 'Terjadi kesalahan saat mengupload desain');
         }
     }
-
+    
     /**
      * Batalkan pesanan
      */

@@ -36,7 +36,8 @@ class DetailPesanan extends Model
         'rating',
         'komentar',
         'reviewed_at',
-        'desain_revisi'
+        'desain_revisi',
+        'resi_pesanan'
     ];
 
     /**
@@ -74,4 +75,10 @@ class DetailPesanan extends Model
         return $this->hasOne(ProsesPesanan::class);
     }
     
+    // app/Models/DetailPesanan.php
+    public function item()
+    {
+        return $this->belongsTo(Item::class, 'item_id'); // atau sesuaikan nama foreign key-nya
+    }
+
 }

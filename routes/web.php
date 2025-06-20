@@ -127,6 +127,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,su
     Route::post('/pesanan/{id}/confirm-pickup', [PesananManagerController::class, 'confirmPickup'])->name('pesanan.confirm-pickup');
     Route::post('/pesanan/{id}/upload-desain', [PesananManagerController::class, 'uploadDesain'])->name('pesanan.upload-desain');
     Route::post('/pesanan/{id}/cancel', [PesananManagerController::class, 'cancelOrder'])->name('pesanan.cancel');
+    Route::post('/pesanan/{id}/upload-resi', [PesananManagerController::class, 'uploadResi'])->name('pesanan.upload-resi');
+    Route::get('/admin/pesanan/{id}', [PesananManagerController::class, 'show'])->name('admin.pesanan.show');
+    Route::post('/admin/pesanan/{id}/update-status', [PesananManagerController::class, 'updateStatus'])->name('admin.pesanan.update-status');
+
 
     // Operator Management
     Route::get('/operators', [AdminOperatorController::class, 'index'])->name('operators.index');
@@ -157,7 +161,7 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
     Route::put('/admin/{id}', [ManagementAdmin::class, 'update'])->name('admin.update');
     Route::delete('/admin/{id}', [ManagementAdmin::class, 'destroy'])->name('admin.destroy');
     Route::post('/admin/{id}/reset-password', [ManagementAdmin::class, 'resetPassword'])->name('admin.reset-password');
-
+    
     // User Management
     Route::get('/user', [UserController::class, 'index'])->name('user.index');
     Route::post('/user/store', [UserController::class, 'store'])->name('user.store');
