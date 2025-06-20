@@ -116,9 +116,12 @@
                     <input type="date" class="form-control" id="sampai_tanggal" name="sampai_tanggal" value="{{ $sampaiTanggal ?? '' }}">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
+                    <button type="submit" class="btn btn-primary me-2">
                         <i class="fas fa-search me-1"></i> Cari
                     </button>
+                    <a href="{{ route('admin.pesanan.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-redo me-1"></i> Reset
+                    </a>
                 </div>
             </form>
         </div>
