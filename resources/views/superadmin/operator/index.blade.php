@@ -65,7 +65,7 @@
                 <tbody>
                     @forelse($operators as $key => $operator)
                         <tr>
-                            <td>{{ ($pagination['current_page'] ?? 1 - 1) * 10 + $key + 1 }}</td>
+                            <td>{{ ($pagination['current_page'] ?? 1 - 1) * 0 + $key + 1 }}</td>
                             <td>{{ is_array($operator) ? $operator['nama'] : $operator->nama }}</td>
                             <td>{{ is_array($operator) ? $operator['posisi'] : $operator->posisi }}</td>
                             <td>{{ is_array($operator) ? $operator['kontak'] : $operator->kontak }}</td>
