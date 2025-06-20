@@ -24,7 +24,7 @@
                     <input type="text" name="search" class="form-control" placeholder="Cari nama / kontak..." value="{{ request('search') }}">
                 </div>
                 <div class="col-md-3">
-                    <select name="status" class="form-control">
+                    <select name="status" class="form-control" onchange="this.form.submit()">
                         <option value="">Semua Status</option>
                         <option value="aktif" {{ request('status') == 'aktif' ? 'selected' : '' }}>Aktif</option>
                         <option value="tidak_aktif" {{ request('status') == 'tidak_aktif' ? 'selected' : '' }}>Tidak Aktif</option>
@@ -41,7 +41,10 @@
                 </div>
                 -->
                 <div class="col-md-2">
-                    <button class="btn btn-primary w-100">Filter</button>
+                    <button class="btn btn-primary w-50">Filter</button>
+                    <a href="{{ route('superadmin.operator.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-redo me-1"></i> Reset
+                    </a>
                 </div>
             </div>
         </form>
