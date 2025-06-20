@@ -14,150 +14,14 @@ use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
 {
-    /**
-     * Display the admin dashboard
-     */
-    // public function dashboard(Request $request)
-    // {
-    //     // Cek akses terlebih dahulu
-    //     if (!session()->has('api_token') || !session()->has('user')) {
-    //         Log::warning('Akses Admin Dashboard ditolak: Token tidak ada');
-    //         return redirect()->route('login')->with('error', 'Sesi Anda telah berakhir. Silakan login kembali.');
-    //     }
-
-    //     // Cek peran pengguna
-    //     $user = session('user');
-    //     if (!isset($user['role']) || ($user['role'] !== 'admin' && $user['role'] !== 'super_admin')) {
-    //         Log::warning('Akses Admin Dashboard ditolak: Bukan admin', [
-    //             'role' => $user['role'] ?? 'tidak diketahui'
-    //         ]);
-    //         return redirect()->route('login')->with('error', 'Anda tidak memiliki akses ke halaman ini');
-    //     }
-
-    //     Log::info('Admin dashboard diakses', [
-    //         'user' => session('user')
-    //     ]);
-
-    //     return view('admin.dashboard', compact('user'));
-    // }
-    // public function dashboard(Request $request)
-    // {
-    //     try {
-    //         // Ambil bulan dan tahun saat ini
-    //         $currentMonth = now()->month;
-    //         $currentYear = now()->year;
-
-    //         // Hitung jumlah pesanan bulan ini
-    //         $pesananBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
-    //             ->whereYear('created_at', $currentYear)
-    //             ->count();
-
-    //         // Hitung jumlah pesanan selesai bulan ini
-    //         $pesananSelesaiBulanIni = Pesanan::whereMonth('waktu_pengambilan', $currentMonth)
-    //             ->whereYear('waktu_pengambilan', $currentYear)
-    //             ->where('status', 'Selesai')
-    //             ->count();
-
-    //         // Hitung jumlah pesanan berjalan bulan ini
-    //         $pesananBerjalan = Pesanan::whereMonth('created_at', $currentMonth)
-    //             ->whereYear('created_at', $currentYear)
-    //             ->where('status', '!=', 'Selesai')
-    //             ->count();
-
-    //         // Hitung total penjualan bulan ini berdasarkan pesanan selesai
-    //         $totalPenjualan = DetailPesanan::join('pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
-    //             ->where('pesanans.status', 'Selesai')
-    //             ->whereMonth('pesanans.waktu_pengambilan', $currentMonth)
-    //             ->whereYear('pesanans.waktu_pengambilan', $currentYear)
-    //             ->sum('detail_pesanans.total_harga');
-
-    //         // Kirim variabel ke view
-    //         return view('admin.dashboard', compact(
-    //             'pesananBulanIni',
-    //             'pesananSelesaiBulanIni',
-    //             'pesananBerjalan',
-    //             'totalPenjualan'
-    //         ));
-    //     } catch (\Exception $e) {
-    //         Log::error('Error calculating stats: ' . $e->getMessage());
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error fetching statistics',
-    //         ], 500);
-    //     }
-    // }
-    // public function dashboard(Request $request)
-    // {
-    //     try {
-    //         // Ambil bulan dan tahun saat ini
-    //         $currentMonth = now()->month;
-    //         $currentYear = now()->year;
-
-    //         // Hitung jumlah pesanan bulan ini
-    //         $pesananBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
-    //             ->whereYear('created_at', $currentYear)
-    //             ->count();
-
-    //         // Hitung jumlah pesanan selesai bulan ini
-    //         $pesananSelesaiBulanIni = Pesanan::whereMonth('waktu_pengambilan', $currentMonth)
-    //             ->whereYear('waktu_pengambilan', $currentYear)
-    //             ->where('status', 'Selesai')
-    //             ->count();
-
-    //         // Hitung jumlah pesanan berjalan bulan ini
-    //         $pesananBerjalan = Pesanan::whereMonth('created_at', $currentMonth)
-    //             ->whereYear('created_at', $currentYear)
-    //             ->where('status', '!=', 'Selesai')
-    //             ->count();
-
-    //         // Hitung total penjualan bulan ini berdasarkan pesanan selesai
-    //         $totalPenjualan = DetailPesanan::join('pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
-    //             ->where('pesanans.status', 'Selesai')
-    //             ->whereMonth('pesanans.waktu_pengambilan', $currentMonth)
-    //             ->whereYear('pesanans.waktu_pengambilan', $currentYear)
-    //             ->sum('detail_pesanans.total_harga');
-
-    //         // Hitung jumlah pesanan per periode (1-5, 6-10, dst.)
-    //         $pesananPerTanggal = [];
-    //         $periods = ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'];
-
-    //         foreach ($periods as $period) {
-    //             // Ambil tanggal awal dan akhir periode
-    //             list($start, $end) = explode('-', $period);
-    //             $startDate = Carbon::createFromDate($currentYear, $currentMonth, $start);
-    //             $endDate = Carbon::createFromDate($currentYear, $currentMonth, $end);
-
-    //             // Hitung jumlah pesanan dalam periode ini
-    //             $count = Pesanan::whereBetween('created_at', [$startDate, $endDate])
-    //                 ->whereMonth('created_at', $currentMonth)
-    //                 ->whereYear('created_at', $currentYear)
-    //                 ->count();
-    //             $pesananPerTanggal[] = $count;
-    //         }
-
-    //         // Kirim variabel ke view
-    //         return view('admin.dashboard', compact(
-    //             'pesananBulanIni',
-    //             'pesananSelesaiBulanIni',
-    //             'pesananBerjalan',
-    //             'totalPenjualan',
-    //             'pesananPerTanggal'
-    //         ));
-    //     } catch (\Exception $e) {
-    //         Log::error('Error calculating stats: ' . $e->getMessage());
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error fetching statistics',
-    //         ], 500);
-    //     }
-    // }
     public function dashboard(Request $request)
     {
         try {
 
             // Ambil bulan dan tahun saat ini
-            $currentMonth = now()->month;
-            $currentYear = now()->year;
+            // $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
+            // $currentMonth = now()->month;
+            // $currentYear = now()->year;
 
             // Ambil bulan dan tahun unik dari tabel pesanan
             $months = Pesanan::selectRaw('MONTH(tanggal_dipesan) as month, YEAR(tanggal_dipesan) as year')
@@ -168,6 +32,9 @@ class AdminController extends Controller
 
             // Ambil bulan yang dipilih (dari query string atau default ke bulan saat ini)
             $selectedMonth = $request->get('month', now()->format('Y-m'));
+            $date = Carbon::createFromFormat('Y-m', $selectedMonth);
+            $currentMonth = $date->month;
+            $currentYear = $date->year;
 
             // Hitung jumlah pesanan bulan ini
             $pesananBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
@@ -204,8 +71,8 @@ class AdminController extends Controller
             // Hitung total penjualan bulan ini berdasarkan pesanan selesai
             $totalPenjualan = DetailPesanan::join('pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
                 ->where('pesanans.status', 'Selesai')
-                ->whereMonth('pesanans.waktu_pengambilan', $currentMonth)
-                ->whereYear('pesanans.waktu_pengambilan', $currentYear)
+                ->whereMonth('pesanans.created_at', $currentMonth)
+                ->whereYear('pesanans.created_at', $currentYear)
                 ->sum('detail_pesanans.total_harga');
 
             // RIWAYAT PESANAN 
@@ -213,7 +80,6 @@ class AdminController extends Controller
                 ->whereNotNull('created_at') // Ensures that records with NULL created_at are excluded
                 ->orderBy('created_at', 'desc')
                 ->get(['id', 'created_at', 'status']);
-
 
             // Hitung jumlah pesanan per periode (1-5, 6-10, dst.)
             $pesananPerTanggal = [];
@@ -233,7 +99,6 @@ class AdminController extends Controller
                 $pesananPerTanggal[] = $count;
             }
             $tokoInfo = TokoInfo::first();
-
 
             // Kirim variabel ke view
             return view('admin.dashboard', compact(
@@ -256,13 +121,4 @@ class AdminController extends Controller
             ], 500);
         }
     }
-
-
-
-
-
-
-
-
-    // Method-method lain tetap sama
 }

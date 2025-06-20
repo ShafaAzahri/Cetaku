@@ -207,19 +207,29 @@
             
             <!-- Pagination -->
             @if(isset($pesanans['links']))
-            <div class="d-flex justify-content-end mt-3">
-                <nav>
-                    <ul class="pagination">
-                        @foreach($pesanans['links'] as $link)
-                            <li class="page-item {{ $link['active'] ? 'active' : '' }} {{ $link['url'] === null ? 'disabled' : '' }}">
-                                <a class="page-link" href="{{ $link['url'] ?? '#' }}">
-                                    {!! $link['label'] !!}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                </nav>
-            </div>
+                <div class="d-flex justify-content-end mt-3">
+                    <nav>
+                        <ul class="pagination">
+    @foreach($pesanans['links'] as $link)
+        @php
+            // Parse query string dari URL pagination bawaan API
+            $parsedUrl = parse_url($link['url']);
+            parse_str($parsedUrl['query'] ?? '', $queryParams);
+
+            // Ambil semua parameter saat ini, ganti `page` jika ada
+            $queryParams = array_merge(request()->except('page'), $queryParams);
+            $finalUrl = url()->current() . '?' . http_build_query($queryParams);
+        @endphp
+        <li class="page-item {{ $link['active'] ? 'active' : '' }} {{ $link['url'] === null ? 'disabled' : '' }}">
+            <a class="page-link" href="{{ $link['url'] ? $finalUrl : '#' }}">
+                {!! $link['label'] !!}
+            </a>
+        </li>
+    @endforeach
+</ul>
+
+                    </nav>
+                </div>
             @endif
         </div>
     </div>

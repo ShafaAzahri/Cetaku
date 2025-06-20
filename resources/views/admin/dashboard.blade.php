@@ -60,9 +60,8 @@
             </div>
         </div>
     </div>
-
-
 </div>
+
 <!-- Statistik dan Grafik -->
 <div class="row">
     <!-- Statistik Penjualan -->
@@ -272,7 +271,7 @@
                 data: {
                     labels: ['Pemesanan', 'Selesai'],
                     datasets: [{
-                        data: [{{ $pesananBulanIni }}, {{ $pesananSelesaiBulanIni }}], // Dynamic PHP variables
+                        data: [{{ $pesananSelesaiBulanIni }}, {{ $pesananBulanIni - $pesananSelesaiBulanIni }}],
                         backgroundColor: [
                             '#007bff', // Pemesanan color
                             '#28a745'  // Selesai color

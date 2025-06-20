@@ -71,12 +71,18 @@ class PesananManagerController extends Controller
 
             // Ambil data dari API
             $response = $this->sendApiRequest('get', '/admin/pesanan', [
-                'status' => $status,
-                'search' => $search,
-                'dari_tanggal' => $dariTanggal,
-                'sampai_tanggal' => $sampaiTanggal,
-                'per_page' => $perPage
-            ]);
+            'status' => $status,
+            'search' => $search,
+            'dari_tanggal' => $dariTanggal,
+            'sampai_tanggal' => $sampaiTanggal,
+            'per_page' => $perPage,
+            'page' => $request->get('page', 1) // ⬅️ Tambahkan ini!
+        ]);
+                Log::debug('Request params', [
+            'page' => $request->get('page'),
+            'session_token' => session('api_token'),
+        ]);
+
 
             if (!($response['success'] ?? false)) {
                 return redirect()->back()->with('error', $response['message'] ?? 'Gagal memuat data pesanan');
@@ -214,6 +220,8 @@ class PesananManagerController extends Controller
 
             $response = $this->sendApiRequest('post', "/admin/pesanan/{$id}/complete-production", $request->all());
 
+            // Log                                                                                              uuuuuuuuuuuuu::info('Response dari API pesanan:', $response);
+
             if ($response['success'] ?? false) {
                 return redirect()->back()->with('success', 'Proses produksi berhasil diselesaikan');
             }
@@ -343,7 +351,8 @@ class PesananManagerController extends Controller
     protected function sendApiRequest($method, $endpoint, $data = [])
     {
         try {
-            $token = session('api_token');
+            $token = session('api_token') ?? session('token');
+            Log::debug('Token saat request:', ['token' => $token]);
 
             Log::debug('Mengirim permintaan API', [
                 'method' => $method,

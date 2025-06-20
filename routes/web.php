@@ -80,7 +80,7 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
 });
 
 // Admin & Super Admin shared routes
-Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
