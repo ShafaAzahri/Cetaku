@@ -66,7 +66,7 @@ class AdminController extends Controller
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
                 ->orderBy('pesanans.created_at', 'desc')
-                ->take(10)  // Limit to the latest 10 orders
+                ->take(5)  // Limit to the latest 5 orders
                 ->get();
 
             // Hitung total penjualan bulan ini berdasarkan pesanan selesai

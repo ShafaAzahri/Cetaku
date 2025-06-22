@@ -150,13 +150,13 @@ class DashboardApiController extends Controller
         // Calculate total revenue from completed orders
         $totalRevenue = DB::table('detail_pesanans')
             ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
-            ->where('pesanans.status', 'Selesai')
+            ->where('pesanans.status', '!=', 'Dibatalkan')
             ->sum('detail_pesanans.total_harga');
         
         // Calculate monthly revenue for the last 12 months
         $monthlyRevenue = DB::table('detail_pesanans')
             ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
-            ->where('pesanans.status', 'Selesai')
+            ->where('pesanans.status', '!=', 'Dibatalkan')
             ->where('pesanans.created_at', '>=', now()->subMonths(12))
             ->select(
                 DB::raw('MONTH(pesanans.created_at) as month'),
