@@ -71,7 +71,7 @@ class AdminController extends Controller
 
             // Hitung total penjualan bulan ini berdasarkan pesanan selesai
             $totalPenjualan = DetailPesanan::join('pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
-                ->where('pesanans.status', 'Selesai')
+                ->where('pesanans.status', '!=', 'Dibatalkan')
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
                 ->sum('detail_pesanans.total_harga');

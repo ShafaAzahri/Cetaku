@@ -71,6 +71,38 @@
     </div>
 </div>
 
+<!-- Total Penjualan -->
+<div class="row">
+    <div class="col-md-3 mb-0">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+                <h5 class="m-0">Total Penjualan</h5>
+                <!-- <div>
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesMonthDropdown" data-bs-toggle="dropdown">
+                        {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesMonthDropdown">
+                        @foreach($months as $month)
+                            <li>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard', ['month' => $month->year.'-'.$month->month]) }}">
+                                    {{ \Carbon\Carbon::createFromFormat('Y-m', $month->year.'-'.$month->month)->format('F Y') }}
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div> -->
+            </div>
+            <div class="card-body">
+                <h1 class="text-primary mb-3">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</h1>
+                <small class="text-muted">
+                    Total pemasukan di bulan
+                    {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Statistik dan Grafik -->
 <div class="row">
     <!-- Statistik Penjualan -->
