@@ -55,7 +55,7 @@
     
     .search-box {
         position: relative;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
     
     .search-box .search-icon {
