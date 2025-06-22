@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\TokoInfo; // Assuming you have a model for TokoInfo
+use App\Models\TokoInfo;
 use Illuminate\Support\Facades\DB;
 
 class AdminController extends Controller
@@ -17,11 +17,6 @@ class AdminController extends Controller
     public function dashboard(Request $request)
     {
         try {
-
-            // Ambil bulan dan tahun saat ini
-            // $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
-            // $currentMonth = now()->month;
-            // $currentYear = now()->year;
 
             // Ambil bulan dan tahun unik dari tabel pesanan
             $months = Pesanan::selectRaw('MONTH(tanggal_dipesan) as month, YEAR(tanggal_dipesan) as year')
@@ -65,7 +60,7 @@ class AdminController extends Controller
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
                 ->orderBy('pesanans.created_at', 'desc')
-                ->take(7)  // Limit to the latest 7 orders
+                ->take(10)  // Limit to the latest 10 orders
                 ->get();
 
             // Hitung total penjualan bulan ini berdasarkan pesanan selesai
@@ -81,24 +76,42 @@ class AdminController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get(['id', 'created_at', 'status']);
 
-            // Hitung jumlah pesanan per periode (1-5, 6-10, dst.)
+            // Hitung jumlah hari di bulan yang dipilih
+            $jumlahHari = Carbon::create($currentYear, $currentMonth)->daysInMonth;
+
+            // Ambil jumlah pesanan per tanggal dari database
+            $dataPerTanggal = Pesanan::selectRaw('DAY(created_at) as tanggal, COUNT(*) as jumlah')
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->groupByRaw('DAY(created_at)')
+                ->pluck('jumlah', 'tanggal') // Hasil: [1 => 5, 2 => 8, ...]
+                ->toArray();
+
+            // Isi data ke 1 - jumlahHari, default 0 jika tidak ada data
             $pesananPerTanggal = [];
-            $periods = ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'];
-
-            foreach ($periods as $period) {
-                // Ambil tanggal awal dan akhir periode
-                list($start, $end) = explode('-', $period);
-                $startDate = Carbon::createFromDate($currentYear, $currentMonth, $start);
-                $endDate = Carbon::createFromDate($currentYear, $currentMonth, $end);
-
-                // Hitung jumlah pesanan dalam periode ini
-                $count = Pesanan::whereBetween('created_at', [$startDate, $endDate])
-                    ->whereMonth('created_at', $currentMonth)
-                    ->whereYear('created_at', $currentYear)
-                    ->count();
-                $pesananPerTanggal[] = $count;
+            for ($i = 1; $i <= $jumlahHari; $i++) {
+                $pesananPerTanggal[$i] = $dataPerTanggal[$i] ?? 0;
             }
+
+            // $periods = ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'];
+
+            // foreach ($periods as $period) {
+            //     // Ambil tanggal awal dan akhir periode
+            //     list($start, $end) = explode('-', $period);
+            //     $startDate = Carbon::createFromDate($currentYear, $currentMonth, $start);
+            //     $endDate = Carbon::createFromDate($currentYear, $currentMonth, $end);
+
+            //     // Hitung jumlah pesanan dalam periode ini
+            //     $count = Pesanan::whereBetween('created_at', [$startDate, $endDate])
+            //         ->whereMonth('created_at', $currentMonth)
+            //         ->whereYear('created_at', $currentYear)
+            //         ->count();
+            //     $pesananPerTanggal[] = $count;
+            // }
+            
             $tokoInfo = TokoInfo::first();
+
+            // $jumlahHari = Carbon::create($currentYear, $currentMonth)->daysInMonth;
 
             // Kirim variabel ke view
             return view('admin.dashboard', compact(
@@ -111,7 +124,8 @@ class AdminController extends Controller
                 'pesananTerbaru',
                 'months',
                 'selectedMonth',
-                'riwayatPesanan' // Pass the latest orders data to the view
+                'riwayatPesanan',
+                'jumlahHari'
             ));
         } catch (\Exception $e) {
             Log::error('Error calculating stats: ' . $e->getMessage());

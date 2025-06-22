@@ -65,7 +65,7 @@
 <!-- Statistik dan Grafik -->
 <div class="row">
     <!-- Statistik Penjualan -->
-    <div class="col-md-6 mb-4">
+    <div class="col-md-12 mb-4">
         <div class="card h-100 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center bg-white">
                 <h5 class="m-0">Statistik Penjualan</h5>
@@ -86,14 +86,14 @@
             </div>
             <div class="card-body">
                 <p class="mb-2">{{ $pesananBulanIni }} Pesanan</p>
-                <div style="height: 250px;">
+                <div style="height: 300px;">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Total Penjualan -->
+    <!-- Total Penjualan
     <div class="col-md-6 mb-4">
         <div class="card h-100 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center bg-white">
@@ -121,7 +121,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 </div>
 
 <!-- Pesanan Terbaru dan Riwayat Pesanan -->
@@ -227,19 +227,27 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Sales Chart
         const salesCtx = document.getElementById('salesChart');
-        const pesananPerTanggal = @json($pesananPerTanggal); // Passing the PHP variable to JS
+        const pesananPerTanggal = @json($pesananPerTanggal); // Data dari PHP per tanggal
+        const daysInMonth = {{ $jumlahHari }}; // Dihitung dari PHP
+
+        // Buat array tanggal: [1, 2, ..., 31]
+        const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+        // Pastikan semua tanggal punya nilai, kalau tidak isi 0
+        const data = labels.map(tgl => pesananPerTanggal[tgl] ?? 0);
 
         if (salesCtx) {
             const salesChart = new Chart(salesCtx, {
                 type: 'line',
                 data: {
-                    labels: ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'], // Period labels
+                    labels: labels,
                     datasets: [{
                         label: 'Pesanan',
-                        data: pesananPerTanggal, // Data from PHP
+                        data: data,
                         borderColor: '#007bff',
                         tension: 0.1,
-                        fill: false
+                        fill: true,
+                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
                     }]
                 },
                 options: {
@@ -248,9 +256,26 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 30,
+                            min: 0,
+                            max: 10,
                             ticks: {
-                                stepSize: 5
+                                stepSize: 1
+                            },
+                            // grid: {
+                            //     display: false
+                            // },
+                            title: {
+                                display: true,
+                                text: 'Jumlah Pesanan'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            title: {
+                                display: true,
+                                text: 'Tanggal'
                             }
                         }
                     },
@@ -263,32 +288,32 @@
             });
         }
 
-        // Doughnut Chart
-        const doughnutCtx = document.getElementById('doughnutChart');
-        if (doughnutCtx) {
-            const doughnutChart = new Chart(doughnutCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Pemesanan', 'Selesai'],
-                    datasets: [{
-                        data: [{{ $pesananSelesaiBulanIni }}, {{ $pesananBulanIni - $pesananSelesaiBulanIni }}],
-                        backgroundColor: [
-                            '#007bff', // Pemesanan color
-                            '#28a745'  // Selesai color
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-        }
+        // // Doughnut Chart
+        // const doughnutCtx = document.getElementById('doughnutChart');
+        // if (doughnutCtx) {
+        //     const doughnutChart = new Chart(doughnutCtx, {
+        //         type: 'doughnut',
+        //         data: {
+        //             labels: ['Pemesanan', 'Selesai'],
+        //             datasets: [{
+        //                 data: [{{ $pesananSelesaiBulanIni }}, {{ $pesananBulanIni - $pesananSelesaiBulanIni }}],
+        //                 backgroundColor: [
+        //                     '#007bff', // Pemesanan color
+        //                     '#28a745'  // Selesai color
+        //                 ]
+        //             }]
+        //         },
+        //         options: {
+        //             responsive: true,
+        //             maintainAspectRatio: false,
+        //             plugins: {
+        //                 legend: {
+        //                     position: 'bottom'
+        //                 }
+        //             }
+        //         }
+        //     });
+        // }
     });
 </script>
 @endsection
