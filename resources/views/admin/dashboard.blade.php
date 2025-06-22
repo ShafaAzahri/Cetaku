@@ -5,7 +5,7 @@
 @section('content')
 <!-- Row 1: Welcome & Stats -->
 <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-5">
         <div class="card h-100 shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -25,13 +25,13 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-7">
         <div class="card h-100 shadow-sm">
             <div class="card-body">
-                <div class="row row-cols-1 row-cols-md-3 g-3">
+                <div class="row row-cols-1 row-cols-md-4 g-3">
                     <div class="col">
                         <div class="card border-0 bg-light h-100">
-                            <div class="card-body text-center">
+                            <div class="card-body text-center d-flex flex-column justify-content-center">
                                 <h3 class="text-primary mb-2">{{ $pesananBulanIni }}</h3>
                                 <p class="card-text mb-0">Pesanan</p>
                                 <small class="text-muted">Bulan Ini</small>
@@ -40,7 +40,7 @@
                     </div>
                     <div class="col">
                         <div class="card border-0 bg-light h-100">
-                            <div class="card-body text-center">
+                            <div class="card-body text-center d-flex flex-column justify-content-center">
                                 <h3 class="text-success mb-2">{{ $pesananSelesaiBulanIni }}</h3>
                                 <p class="card-text mb-0">Selesai</p>
                                 <small class="text-muted">Bulan Ini</small>
@@ -49,10 +49,19 @@
                     </div>
                     <div class="col">
                         <div class="card border-0 bg-light h-100">
-                            <div class="card-body text-center">
+                            <div class="card-body text-center d-flex flex-column justify-content-center">
                                 <h3 class="text-warning mb-2">{{ $pesananBerjalan }}</h3>
                                 <p class="card-text mb-0">Berjalan</p>
                                 <small class="text-muted">Saat Ini</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card border-0 bg-light h-100">
+                            <div class="card-body text-center d-flex flex-column justify-content-center">
+                                <h3 class="text-danger mb-2">{{ $pesananDibatalkan }}</h3>
+                                <p class="card-text mb-0">Dibatalkan</p>
+                                <small class="text-muted">Bulan Ini</small>
                             </div>
                         </div>
                     </div>

@@ -37,15 +37,21 @@ class AdminController extends Controller
                 ->count();
 
             // Hitung jumlah pesanan selesai bulan ini
-            $pesananSelesaiBulanIni = Pesanan::whereMonth('waktu_pengambilan', $currentMonth)
-                ->whereYear('waktu_pengambilan', $currentYear)
+            $pesananSelesaiBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
                 ->where('status', 'Selesai')
                 ->count();
 
             // Hitung jumlah pesanan berjalan bulan ini
             $pesananBerjalan = Pesanan::whereMonth('created_at', $currentMonth)
                 ->whereYear('created_at', $currentYear)
-                ->where('status', '!=', 'Selesai')
+                ->whereNotIn('status', ['Selesai', 'Dibatalkan'])
+                ->count();
+
+            // Hitung jumlah pesanan yang dibatalkan bulan ini
+            $pesananDibatalkan = Pesanan::whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->where('status', 'Dibatalkan')
                 ->count();
 
             // Ambil data Pesanan Terbaru
@@ -108,7 +114,7 @@ class AdminController extends Controller
             //         ->count();
             //     $pesananPerTanggal[] = $count;
             // }
-            
+
             $tokoInfo = TokoInfo::first();
 
             // $jumlahHari = Carbon::create($currentYear, $currentMonth)->daysInMonth;
@@ -119,6 +125,7 @@ class AdminController extends Controller
                 'pesananBulanIni',
                 'pesananSelesaiBulanIni',
                 'pesananBerjalan',
+                'pesananDibatalkan',
                 'totalPenjualan',
                 'pesananPerTanggal',
                 'pesananTerbaru',
