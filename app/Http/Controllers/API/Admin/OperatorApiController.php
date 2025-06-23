@@ -64,6 +64,8 @@ class OperatorApiController extends Controller
                 $operator->current_assignment = $currentAssignment;
             }
             
+            // dd($operators);
+
             return response()->json([
                 'success' => true,
                 'operators' => $operators

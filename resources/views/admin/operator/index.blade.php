@@ -119,6 +119,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <?php //print_r($operators);?>
                         @forelse($operators as $operator)
                         <tr>
                             <td>{{ $operator['id'] }}</td>
@@ -131,10 +132,10 @@
                                 </span>
                             </td>
                             <td>
-                                @if(isset($operator['current_assignment']) && $operator['current_assignment'])
+                                @if(isset($operator['current_assignment']['detail_pesanan']['pesanan_id']))
                                     <span class="assignment-badge">
                                         {{ $operator['current_assignment']['detailPesanan']['custom']['item']['nama_item'] ?? 'Item' }}
-                                        (Pesanan #{{ $operator['current_assignment']['detailPesanan']['pesanan_id'] ?? '-' }})
+                                        (Pesanan #{{ $operator['current_assignment']['detail_pesanan']['pesanan_id'] ?? '-' }})
                                     </span>
                                 @else
                                     <span class="text-muted">-</span>

@@ -33,6 +33,8 @@ class OperatorController extends Controller
                 'search' => $search
             ]);
             
+            // dd($operators);
+
             if (!($response['success'] ?? false)) {
                 return redirect()->back()->with('error', $response['message'] ?? 'Gagal memuat data operator');
             }

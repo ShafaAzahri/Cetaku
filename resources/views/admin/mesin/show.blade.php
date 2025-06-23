@@ -78,6 +78,7 @@
     .process-Mulai { background-color: #dbeafe; color: #1e40af; }
     .process-Selesai { background-color: #d1fae5; color: #065f46; }
     .process-Dikerjakan { background-color: #fef3c7; color: #92400e; }
+    .process-Pause { background-color: #f3f4f6; color: #374151; }
 </style>
 @endsection
 
@@ -163,9 +164,14 @@
                             @if(isset($mesin['current_usage']) && $mesin['current_usage'])
                                 @php
                                     $usage = $mesin['current_usage'];
-                                    $detailPesanan = $usage['detailPesanan'] ?? null;
+                                    $detailPesanan = $usage['detail_pesanan'] ?? null;
                                     $custom = $detailPesanan['custom'] ?? null;
+                                    $pesanan = $detailPesanan['pesanan'] ?? null;
                                     $operator = $usage['operator'] ?? null;
+                                    $item = $custom['item'] ?? null;
+                                    $bahan = $custom['bahan'] ?? null;
+                                    $ukuran = $custom['ukuran'] ?? null;
+                                    $jenis = $custom['jenis'] ?? null;
                                 @endphp
                                 <div class="usage-card">
                                     <div class="row mb-3">
@@ -173,19 +179,23 @@
                                             <h6 class="mb-3">Informasi Pesanan</h6>
                                             <div class="info-row">
                                                 <div class="info-label">Nomor Pesanan</div>
-                                                <div class="info-value">#{{ $detailPesanan['pesanan_id'] ?? '-' }}</div>
+                                                <div class="info-value">#{{ $pesanan['id'] ?? ($detailPesanan['pesanan_id'] ?? '-') }}</div>
                                             </div>
                                             <div class="info-row">
                                                 <div class="info-label">Produk</div>
-                                                <div class="info-value">{{ $custom['item']['nama_item'] ?? '-' }}</div>
+                                                <div class="info-value">{{ $item['nama_item'] ?? '-' }}</div>
                                             </div>
                                             <div class="info-row">
                                                 <div class="info-label">Bahan</div>
-                                                <div class="info-value">{{ $custom['bahan']['nama_bahan'] ?? '-' }}</div>
+                                                <div class="info-value">{{ $bahan['nama_bahan'] ?? '-' }}</div>
                                             </div>
                                             <div class="info-row">
                                                 <div class="info-label">Ukuran</div>
-                                                <div class="info-value">{{ $custom['ukuran']['size'] ?? '-' }}</div>
+                                                <div class="info-value">{{ $ukuran['size'] ?? '-' }}</div>
+                                            </div>
+                                            <div class="info-row">
+                                                <div class="info-label">Jenis</div>
+                                                <div class="info-value">{{ $jenis['jenis'] ?? '-' }}</div>
                                             </div>
                                             <div class="info-row">
                                                 <div class="info-label">Jumlah</div>
@@ -197,7 +207,7 @@
                                             <div class="info-row">
                                                 <div class="info-label">Status</div>
                                                 <div class="info-value">
-                                                    <span class="process-badge process-{{ $usage['status_proses'] }}">
+                                                    <span class="process-badge process-{{ str_replace(' ', '', $usage['status_proses']) }}">
                                                         {{ $usage['status_proses'] }}
                                                     </span>
                                                 </div>
@@ -205,9 +215,13 @@
                                             <div class="info-row">
                                                 <div class="info-label">Operator</div>
                                                 <div class="info-value">
-                                                    <a href="{{ route('admin.operators.show', $operator['id'] ?? 0) }}">
-                                                        {{ $operator['nama'] ?? '-' }}
-                                                    </a>
+                                                    @if($operator)
+                                                        <a href="{{ route('admin.operators.show', $operator['id']) }}">
+                                                            {{ $operator['nama'] }}
+                                                        </a>
+                                                    @else
+                                                        -
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="info-row">
@@ -291,13 +305,13 @@
                 <h5 class="modal-title">Update Status Proses</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.proses-produksi.update-status', $mesin['current_usage']['id']) }}" method="POST">
+            <form action="#" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
                     <p>Proses ID: <strong>#{{ $mesin['current_usage']['id'] }}</strong></p>
-                    <p>Pesanan: <strong>#{{ $mesin['current_usage']['detailPesanan']['pesanan_id'] ?? '-' }}</strong></p>
-                    <p>Produk: <strong>{{ $mesin['current_usage']['detailPesanan']['custom']['item']['nama_item'] ?? 'Item' }}</strong></p>
+                    <p>Pesanan: <strong>#{{ $mesin['current_usage']['detail_pesanan']['pesanan']['id'] ?? ($mesin['current_usage']['detail_pesanan']['pesanan_id'] ?? '-') }}</strong></p>
+                    <p>Produk: <strong>{{ $mesin['current_usage']['detail_pesanan']['custom']['item']['nama_item'] ?? 'Item' }}</strong></p>
                     <div class="mb-3">
                         <label for="status_proses" class="form-label">Status Proses</label>
                         <select name="status_proses" id="status_proses" class="form-select" required>
@@ -332,7 +346,7 @@
             statusSelect.addEventListener('change', function() {
                 const submitBtn = this.closest('form').querySelector('button[type="submit"]');
                 const warningDiv = this.closest('.modal-body').querySelector('.alert-warning');
-                if ((this.value !== 'digunakan') && warningDiv) {
+                if ((this.value === 'maintenance') && warningDiv) {
                     submitBtn.disabled = true;
                 } else {
                     submitBtn.disabled = false;

@@ -42,7 +42,14 @@ class MesinApiController extends Controller
             
             // Untuk setiap mesin, periksa apakah sedang digunakan
             foreach ($mesins as $mesin) {
-                $currentUsage = ProsesPesanan::with(['detailPesanan.custom.item', 'operator'])
+                $currentUsage = ProsesPesanan::with([
+                    'detailPesanan.custom.item', 
+                    'detailPesanan.custom.bahan',
+                    'detailPesanan.custom.ukuran',
+                    'detailPesanan.custom.jenis',
+                    'detailPesanan.pesanan',
+                    'operator'
+                ])
                     ->where('mesin_id', $mesin->id)
                     ->whereNull('waktu_selesai')
                     ->where('status_proses', '!=', 'Selesai')
@@ -77,15 +84,36 @@ class MesinApiController extends Controller
         try {
             $mesin = Mesin::findOrFail($id);
             
-            // Ambil penggunaan saat ini
-            $currentUsage = ProsesPesanan::with(['detailPesanan.custom.item', 'operator'])
-                ->where('mesin_id', $id)
-                ->whereNull('waktu_selesai')
-                ->where('status_proses', '!=', 'Selesai')
-                ->orderBy('waktu_mulai', 'desc')
-                ->first();
+            // Ambil penggunaan saat ini dengan relasi yang lebih lengkap
+            $currentUsage = ProsesPesanan::with([
+                'detailPesanan.custom.item',
+                'detailPesanan.custom.bahan',
+                'detailPesanan.custom.ukuran',
+                'detailPesanan.custom.jenis',
+                'detailPesanan.pesanan',
+                'operator'
+            ])
+            ->where('mesin_id', $id)
+            ->whereNull('waktu_selesai')
+            ->where('status_proses', '!=', 'Selesai')
+            ->orderBy('waktu_mulai', 'desc')
+            ->first();
             
+            // Pastikan data informasi pesanan terlampir dengan benar
             $mesin->current_usage = $currentUsage;
+            
+            // Untuk debugging, tambahkan log
+            if ($currentUsage) {
+                Log::debug('Informasi pesanan mesin', [
+                    'mesin_id' => $id,
+                    'proses_id' => $currentUsage->id,
+                    'detail_pesanan_id' => $currentUsage->detail_pesanan_id,
+                    'pesanan_id' => $currentUsage->detailPesanan->pesanan_id ?? null,
+                    'has_pesanan' => isset($currentUsage->detailPesanan->pesanan)
+                ]);
+            } else {
+                Log::debug('Mesin tidak sedang digunakan', ['mesin_id' => $id]);
+            }
             
             return response()->json([
                 'success' => true,
