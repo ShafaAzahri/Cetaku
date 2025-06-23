@@ -181,13 +181,6 @@
                                     <a href="{{ route('admin.pesanan.show', $pesanan['id']) }}" class="action-btn info" title="Detail">
                                         <i class="fas fa-info-circle"></i>
                                     </a>
-                                    
-                                    @if($pesanan['status'] == 'Sedang Dikirim')
-                                    <a href="#" class="action-btn ship" title="Info Pengiriman" data-bs-toggle="modal" data-bs-target="#trackingModal{{ $pesanan['id'] }}">
-                                        <i class="fas fa-truck"></i>
-                                    </a>
-                                    @endif
-                                    
                                     @if(!in_array($pesanan['status'], ['Selesai', 'Dibatalkan']))
                                     <form action="{{ route('admin.pesanan.cancel', $pesanan['id']) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">
                                         @csrf
