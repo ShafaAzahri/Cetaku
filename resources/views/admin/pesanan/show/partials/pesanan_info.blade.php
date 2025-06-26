@@ -49,31 +49,83 @@
         </div>
     </div>
 
-    {{-- Upload resi jika status "Sedang Dikirim" --}}
     @if ($pesanan['status'] === 'Sedang Dikirim')
-        <h4 class="mt-4">Upload Resi Pengiriman</h4>
+        <h4 class="mt-4">Upload Resi & Bukti Pengiriman</h4>
 
-        @foreach ($pesanan['detail_pesanans'] as $detail)
-            <div class="mb-3 p-3 border rounded">
-                <p><strong>Produk:</strong> {{ $detail['custom']['item']['nama_item'] ?? 'Produk' }}</p>
+        @if (!empty($pesanan['resi_pesanan']))
+            <p>
+                <strong>Resi:</strong>
+                <span>{{ $pesanan['resi_pesanan'] }}</span>
+            </p>
+        @endif
 
+        @if (!empty($pesanan['bukti_pengiriman']))
+            <p>
+                <strong>Bukti Pengiriman:</strong><br>
+                <a href="{{ asset('storage/' . $pesanan['bukti_pengiriman']) }}" target="_blank">
+                    <img src="{{ asset('storage/' . $pesanan['bukti_pengiriman']) }}" alt="Bukti" class="img-fluid mt-2" style="max-width: 200px;">
+                </a>
+            </p>
+        @endif
 
-                @if ($detail['resi_pesanan'])
-                    <p>
-                        <strong>Resi:</strong>
-                        <a href="{{ asset('storage/' . $detail['resi_pesanan']) }}" target="_blank">Lihat Resi</a>
-                    </p>
-                @else
-                    <form action="{{ route('admin.pesanan.upload-resi', $pesanan['id']) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <input type="hidden" name="detail_pesanan_id" value="{{ $detail['id'] }}">
-                        <div class="mb-2">
-                            <input type="file" name="resi" class="form-control" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-sm">Upload Resi</button>
-                    </form>
-                @endif
+        {{-- Form Upload Resi --}}
+        <form action="{{ route('admin.pesanan.upload-resi', $pesanan['id']) }}" method="POST" class="mt-3 mb-3" onsubmit="return konfirmasiResi()">
+            @csrf
+            <div class="mb-2">
+                <label for="resi_pesanan">No Resi:</label>
+                <input type="text" name="resi_pesanan" id="resi_pesanan" class="form-control" value="{{ old('resi_pesanan', $pesanan['resi_pesanan'] ?? '') }}" required>
             </div>
-        @endforeach
+            <button type="submit" class="btn btn-primary btn-sm">Upload Resi</button>
+        </form>
+
+        {{-- Form Upload Bukti --}}
+        <form action="{{ route('admin.pesanan.upload-bukti', $pesanan['id']) }}" method="POST" enctype="multipart/form-data" onsubmit="return konfirmasiBukti()">
+            @csrf
+            <div class="mb-2">
+                <label for="bukti_pengiriman">Upload Bukti Pengiriman (gambar):</label>
+                <input type="file" name="bukti_pengiriman" id="bukti_pengiriman" class="form-control" accept="image/*" required>
+            </div>
+            <button type="submit" class="btn btn-success btn-sm">Upload Bukti</button>
+        </form>
+    @elseif ($pesanan['status'] === 'Selesai')
+        <h4 class="mt-4">Informasi Pengiriman</h4>
+
+        @if (!empty($pesanan['resi_pesanan']))
+            <p>
+                <strong>Resi:</strong>
+                <span>{{ $pesanan['resi_pesanan'] }}</span>
+            </p>
+        @endif
+
+        @if (!empty($pesanan['bukti_pengiriman']))
+            <p>
+                <strong>Bukti Pengiriman:</strong><br>
+                <a href="{{ asset('storage/' . $pesanan['bukti_pengiriman']) }}" target="_blank">
+                    <img src="{{ asset('storage/' . $pesanan['bukti_pengiriman']) }}" alt="Bukti" class="img-fluid mt-2" style="max-width: 200px;">
+                </a>
+            </p>
+        @endif
     @endif
 </div>
+
+@push('scripts')
+<script>
+    function konfirmasiResi() {
+        const resi = document.getElementById('resi_pesanan').value.trim();
+        if (!resi) {
+            alert("Nomor resi tidak boleh kosong!");
+            return false;
+        }
+        return confirm("Apakah Anda yakin nomor resi sudah benar?");
+    }
+
+    function konfirmasiBukti() {
+        const fileInput = document.getElementById('bukti_pengiriman');
+        if (!fileInput.files.length) {
+            alert("Anda belum memilih file gambar!");
+            return false;
+        }
+        return confirm("Apakah Anda yakin gambar bukti pengiriman sudah benar?");
+    }
+</script>
+@endpush

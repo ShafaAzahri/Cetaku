@@ -68,35 +68,31 @@
                     console.error('Session check error:', error);
                 });
             
-            // Fungsi sidebar toggle
+            // Sidebar toggle
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('main-content');
             const toggleBtn = document.getElementById('toggle-sidebar');
             const overlay = document.getElementById('sidebar-overlay');
             
-            // Toggle sidebar when button is clicked
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', function() {
                     sidebar.classList.toggle('collapsed');
                     mainContent.classList.toggle('expanded');
                     
-                    // For mobile
                     if (window.innerWidth < 992) {
                         sidebar.classList.toggle('mobile-visible');
                         overlay.classList.toggle('active');
                     }
                 });
             }
-            
-            // Close sidebar when clicking outside on mobile
+
             if (overlay) {
                 overlay.addEventListener('click', function() {
                     sidebar.classList.remove('mobile-visible');
                     overlay.classList.remove('active');
                 });
             }
-            
-            // Adjust sidebar on window resize
+
             window.addEventListener('resize', function() {
                 if (window.innerWidth < 992) {
                     sidebar.classList.remove('collapsed');
@@ -107,8 +103,11 @@
             });
         });
     </script>
-    
-    
+
+    {{-- Yield script utama --}}
     @yield('scripts')
+
+    {{-- Tambahan script yang di-push --}}
+    @stack('scripts')
 </body>
 </html>

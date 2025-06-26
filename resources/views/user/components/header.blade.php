@@ -45,7 +45,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link cart-icon" href="{{ route('keranjang') }}">
+                    <a class="nav-link cart-icon" href="{{ route('keranjang.index') }}">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
                     </a>
