@@ -2,202 +2,236 @@
 
 @section('content')
 <style>
-    /* Main table styling */
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-
-    table th,
-    table td {
-        padding: 10px;
-        text-align: left;
+    .table th, .table td {
+        font-size: 16px;
         vertical-align: middle;
-        border: 1px solid #ddd;
-        font-size: 16px;
-    }
-
-    table th {
-        background-color: #f4f4f4;
-        font-weight: bold;
-        color: #555;
-    }
-
-    table tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
-
-    table tr:hover {
-        background-color: #f1f1f1;
-    }
-
-    /* Form styling */
-    .form-control {
-        border-radius: 4px;
-        font-size: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .btn {
-        border-radius: 4px;
-        padding: 6px;
         font-size: 16px;
-        font-weight: normal;
-        transition: background-color 0.3s ease;
     }
 
-    .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #004085;
-    }
-
-    .btn-success {
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-    }
-
-    /* Heading styles */
-    h2,
-    h3 {
+    h2, h3 {
         color: #333;
-        font-size: 24px;
-        font-weight: medium;
+        font-weight: 600;
     }
 
-    .container {
-        max-width: 100%;
-        margin: 0 auto;
-    }
-
-    .row {
+    .filter-section {
         margin-bottom: 20px;
     }
 
-    /* Add some margin to the filter section */
-    .filter-section {
-        margin-bottom: 30px;
+    .card {
+        border: 1px solid #ddd;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 6px;
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+        padding: 16px;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #f1f1f1;
     }
 </style>
 
-<div class="container">
-    <h2 class="mb-3">Rentang Tanggal Penjualan</h2>
 
-    <!-- Filter Form -->
-    <form id="filterForm" action="{{ route('superadmin.laporan.index') }}" method="GET" class="mb-3 filter-section">
-        <div class="row">
-            <!-- Start Date -->
-            <div class="col-md-3">
-                <input type="date" name="start_date" class="form-control" value="{{ old('start_date', $startDate) }}">
-            </div>
-
-            <!-- End Date -->
-            <div class="col-md-3">
-                <input type="date" name="end_date" class="form-control" value="{{ old('end_date', $endDate) }}">
-            </div>
-
-            <!-- Filter Button -->
-            <!-- <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">Filter</button>
-            </div> -->
-
-            <!-- Export Excel Button -->
-            <div class="col-md-2">
-                <a href="{{ route('superadmin.laporan.export') }}" class="btn btn-success w-100 mb-3">Export to Excel</a>
-            </div>
+<div class="container-fluid px-2">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="mb-0">Laporan Penjualan</h2>
         </div>
-    </form>
+        <div class="card-body">
 
-    <!-- Sales Data Table -->
-    <h3 class="mb-3">Laporan Penjualan</h3>
+            <!-- 1. Produk Unggulan -->
+            <h3>Produk Unggulan (Top Selling Items)</h3>
+            @if(!empty($topItems) && count($topItems) > 0)
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="">
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Produk</th>
+                                <th>Total Terjual</th>
+                                <th>Total Pendapatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($topItems as $key => $item)
+                                <tr>
+                                    <td>{{ $key + 1 }}</td>
+                                    <td>{{ $item['nama_item'] }}</td>
+                                    <td>{{ $item['total_terjual'] }}</td>
+                                    <td>Rp {{ number_format($item['total_pendapatan'], 2, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-muted">Tidak ada produk unggulan.</p>
+            @endif
 
-    @if(!empty($salesData) && count($salesData) > 0)
-    <table class="table">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Tanggal Pesanan</th>
-                <th>Status</th>
-                <th>Total Harga</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($salesData as $key => $sale)
-            <tr>
-                <td>{{ $key + 1 }}</td>
-                <td>{{ \Carbon\Carbon::parse($sale['tanggal_dipesan'])->format('d/m/Y') }}</td>
-                <td>{{ $sale['status'] }}</td>
-                <td>{{ number_format($sale['total_harga'], 2) }}</td>
-            </tr>
-            @endforeach
-            <tr>
-                <td colspan="3" class="text-end"><strong>Total Penjualan:</strong></td>
-                <td><strong>{{ number_format($totalPrice, 2) }}</strong></td>
-            </tr>
-        </tbody>
-    </table>
-    @else
-    <p>Tidak ada data penjualan.</p>
-    @endif
-    <br>
-    <!-- Top Selling Products Table -->
-     <h3 class="mb-3">Produk Unggulan (Top Selling Items)</h3>
 
-    @if(!empty($topItems))
-    <table class="table">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Nama Produk</th>
-                <th>Total Terjual</th>
-                <th>Total Pendapatan</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($topItems as $key => $item)
-            <tr>
-                <td>{{ $key + 1 }}</td>
-                <td>{{ $item['nama_item'] }}</td>
-                <td>{{ $item['total_terjual'] }}</td>
-                <td>{{ number_format($item['total_pendapatan'], 2) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-    @else
-    <p>Tidak ada produk unggulan.</p>
-    @endif
+            <hr class="my-4">
+
+            <!-- 2. Filter Tanggal -->
+            <form action="{{ route('superadmin.laporan.index') }}" method="GET" class="mb-3 filter-section filter-auto-submit">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="date" name="start_date" class="form-control auto-submit"
+                            value="{{ old('start_date', isset($startDate) ? $startDate : '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="end_date" class="form-control auto-submit"
+                            value="{{ old('end_date', isset($endDate) ? $endDate : '') }}">
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <a href="{{ route('superadmin.laporan.export', ['start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-success">Export ke Excel</a>
+
+                    </div>
+                </div>
+            </form>
+
+            @if(!empty($startDate) && !empty($endDate))
+                <p><strong>Periode:</strong> {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}</p>
+            @endif
+
+            <!-- 3. Laporan Penjualan -->
+            <h3 class="mt-4">Laporan Penjualan</h3>
+            @if(!empty($salesData) && count($salesData) > 0)
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Tanggal Pesanan</th>
+                                <th>Status</th>
+                                <th>Total Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($salesData as $key => $sale)
+                                <tr>
+                                    <td>{{ $key + 1 }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($sale['created_at'])->format('d/m/Y') }}</td>
+                                    <td>{{ $sale['status'] }}</td>
+                                    <td>Rp {{ number_format($sale['total_harga'], 2, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total Penjualan:</strong></td>
+                                <td><strong>Rp {{ number_format($totalPrice, 2, ',', '.') }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <p class="text-muted">Tidak ada data penjualan.</p>
+            @endif
+
+            <!-- 4. Laporan Rincian -->
+            <h3 class="mt-5">Laporan Rincian</h3>
+            @if(!empty($detailRincian) && count($detailRincian) > 0)
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No</th>
+                                <th>ID Pesanan</th>
+                                <th>Tanggal Pesanan</th>
+                                <th>Nama Pemesan</th>
+                                <th>Nama Produk</th>
+                                <th>Harga Satuan</th>
+                                <th>Jumlah</th>
+                                <th>Biaya Desain</th>
+                                <th>Total Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $groupedByPesanan = collect($detailRincian)->groupBy('pesanan_id');
+                                $no = 1;
+                                $grandTotal = 0;
+                            @endphp
+
+                            @foreach($groupedByPesanan as $pesananId => $items)
+                                @php
+                                    $rowspan = $items->count();
+                                    $first = $items->first();
+                                    $subtotal = 0;
+                                @endphp
+
+                                @foreach($items as $index => $item)
+                                    <tr>
+                                        @if($index === 0)
+                                            <td rowspan="{{ $rowspan }}">{{ $no++ }}</td>
+                                            <td rowspan="{{ $rowspan }}">#{{ $pesananId }}</td>
+                                            <td rowspan="{{ $rowspan }}">{{ \Carbon\Carbon::parse($item->tanggal_pesanan)->format('d/m/Y') }}</td>
+                                            <td rowspan="{{ $rowspan }}">{{ $item->nama_pemesan }}</td>
+                                        @endif
+                                        <td>{{ $item->nama_item }}</td>
+                                        <td>Rp {{ number_format($item->harga_satuan, 2, ',', '.') }}</td>
+                                        <td>{{ $item->jumlah }}</td>
+                                        <td>
+                                            @if ($item->biaya_jasa > 0)
+                                                Rp {{ number_format($item->biaya_jasa, 2, ',', '.') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                        <td>Rp {{ number_format($item->total_harga, 2, ',', '.') }}</td>
+
+                                    </tr>
+                                    @php $subtotal += $item->total_harga; @endphp
+                                @endforeach
+
+                                <tr class="table-secondary">
+                                    <td colspan="8" class="text-end"><strong>Sub total:</strong></td>
+                                    <td><strong>Rp {{ number_format($subtotal, 2, ',', '.') }}</strong></td>
+                                </tr>
+
+                                @php $grandTotal += $subtotal; @endphp
+                            @endforeach
+
+                            <tr class="table-info">
+                                <td colspan="8" class="text-end"><strong>Total Keseluruhan:</strong></td>
+                                <td><strong>Rp {{ number_format($grandTotal, 2, ',', '.') }}</strong></td>
+                            </tr>
+                        </tbody>
+
+                    </table>
+                </div>
+            @else
+                <p class="text-muted">Tidak ada data rincian penjualan.</p>
+            @endif
+        </div>
+    </div>
 </div>
 
+@push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const startDate = document.querySelector('input[name="start_date"]');
-        const endDate = document.querySelector('input[name="end_date"]');
-        const form = document.getElementById('filterForm');
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector('form.filter-auto-submit');
+        const startDateInput = form.querySelector('input[name="start_date"]');
+        const endDateInput = form.querySelector('input[name="end_date"]');
 
-        // Submit form jika salah satu input tanggal berubah
-        startDate.addEventListener('change', function () {
-            if (startDate.value && endDate.value) {
+        function autoSubmitIfBothDatesFilled() {
+            if (startDateInput.value && endDateInput.value) {
                 form.submit();
             }
-        });
+        }
 
-        endDate.addEventListener('change', function () {
-            if (startDate.value && endDate.value) {
-                form.submit();
-            }
-        });
+        startDateInput.addEventListener('change', autoSubmitIfBothDatesFilled);
+        endDateInput.addEventListener('change', autoSubmitIfBothDatesFilled);
     });
 </script>
+@endpush
 
 @endsection

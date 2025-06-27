@@ -23,66 +23,66 @@
     <!-- Konten utama profile -->
     <div class="container my-4">
         <div class="card shadow-sm rounded-3 p-4">
-            <!-- Profile Header -->
-            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap">
-                <div class="d-flex align-items-center mb-3 mb-md-0">
-                    <img src="/images/profile.png" alt="Profile Picture" class="rounded-circle me-4" style="width: 70px; height: 70px; object-fit: cover;">
-                    <div>
-                        <div class="fw-bold">{{ $profile['nama'] ?? '-' }}</div>
-                        <div class="text-muted small">{{ $profile['email'] ?? '-' }}</div>
-                    </div>
+           
+        <!-- Profile Header -->
+        <form action="{{ route('user.profile.update') }}" method="POST" class="mb-4 w-100">
+            @csrf
+            <div class="d-flex align-items-center mb-3 mb-md-0">
+                <img src="/images/profile.png" ... >
+                <div>
+                    <div class="fw-bold">{{ $profile['nama'] ?? '-' }}</div>
+                    <div class="text-muted small">{{ $profile['email'] ?? '-' }}</div>
                 </div>
-                <button class="btn btn-primary fw-bold px-4" disabled>Simpan Perubahan</button>
             </div>
 
-            <!-- Main Content -->
+            <!-- Input Fields -->
             <div class="row g-4">
-                <!-- Account Information Section -->
                 <div class="col-md-6">
                     <div class="fw-medium mb-3">Account Information</div>
                     <div class="mb-3">
                         <label class="form-label small text-muted mb-1">Display name</label>
-                        <input type="text" class="form-control" value="{{ $profile['nama'] ?? '-' }}" readonly>
+                        <input type="text" class="form-control" name="nama" value="{{ $profile['nama'] ?? '' }}" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label small text-muted mb-1">Email</label>
-                        <input type="email" class="form-control" value="{{ $profile['email'] ?? '-' }}" readonly>
+                        <input type="email" class="form-control" name="email" value="{{ $profile['email'] ?? '' }}" required>
                     </div>
                 </div>
-                <!-- Password Reset Section -->
-                <div class="col-md-6">
-                    <h2 class="h6 fw-medium mb-3">Reset Password</h2>
-                    <form method="POST" action="{{ route('profile.update-password') }}">
-                        @csrf
-                        <div class="mb-3">
-                            <label class="form-label small text-muted mb-1">Password Lama</label>
-                            <input type="password" class="form-control" name="old_password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small text-muted mb-1">Password Baru</label>
-                            <input type="password" class="form-control" name="new_password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label small text-muted mb-1">Konfirmasi Password Baru</label>
-                            <input type="password" class="form-control" name="new_password_confirmation" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary px-4 fw-bold w-100">Update Password</button>
-                    </form>
-                </div>
-            </div>
 
-            <div class="border rounded-3 p-4 mt-4 bg-white">
+                
+            </div>
+        </form>
+
+                <!-- Tombol Buka Modal Ubah Password -->
+            <div class="col-md-6">
+                <h2 class="h6 fw-medium mb-3">Reset Password</h2>
+                <button type="button" class="btn btn-outline-primary fw-bold w-100" data-bs-toggle="modal" data-bs-target="#ubahPasswordModal">
+                Ubah Password
+            </button>
+        </div>
+
+        <div class="col-12 text-end mt-3">
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Simpan</button>
+                </div>
+        
+
+                
+                
+                        <div class="border rounded-3 p-4 mt-4 bg-white">
                 <div class="fw-medium mb-4">Alamat Anda</div>
                 <div>
                     @forelse ($addresses as $address)
                         <div class="mb-3 pb-3 border-bottom">
-                            <!-- Label + Nama User + Nomor HP -->
                             <span class="badge bg-secondary me-2">{{ $address['label'] ?? $address['type'] ?? '-' }}</span>
                             <span class="fw-bold me-2">{{ $profile['nama'] ?? '-' }}</span>
                             <span class="text-muted">{{ $address['nomor_hp'] ?? $address['phone'] ?? '-' }}</span>
                             <div class="d-inline float-end">
-                                <a href="#" class="text-primary me-2" style="text-decoration:none;" tabindex="-1">Ubah</a>
-                                <a href="#" class="text-danger" style="text-decoration:none;" tabindex="-1">Hapus</a>
+                                <a href="#" class="text-primary me-2" data-bs-toggle="modal" data-bs-target="#editAlamatModal{{ $address['id'] }}" style="text-decoration:none;" tabindex="-1">Ubah</a>
+                                <form action="{{ route('Alamat.delete', $address['id']) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin menghapus alamat ini?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-link text-danger p-0 m-0 align-baseline">Hapus</button>
+                                </form>
                             </div>
                             <div class="text-muted small mt-1">
                                 {{ $address['provinsi'] ?? '-' }},
@@ -92,15 +92,129 @@
                                 {{ $address['kode_pos'] ?? '-' }}
                             </div>
                         </div>
+
+                        <!-- Modal Edit Alamat (DI DALAM FORELSE) -->
+                        <div class="modal fade" id="editAlamatModal{{ $address['id'] }}" tabindex="-1" aria-labelledby="editAlamatLabel{{ $address['id'] }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <form method="POST" action="{{ route('Alamat.update', $address['id']) }}">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editAlamatLabel{{ $address['id'] }}">Edit Alamat</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Full Name</label>
+                                                <input type="text" name="full_name" class="form-control" value="{{ $profile['nama'] ?? '' }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Nomor HP</label>
+                                                <input type="text" name="nomor_hp" class="form-control" value="{{ $address['nomor_hp'] ?? '' }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Alamat Lengkap</label>
+                                                <textarea name="alamat_lengkap" class="form-control" required>{{ $address['alamat_lengkap'] ?? '' }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Kecamatan</label>
+                                                <input type="text" name="kecamatan" class="form-control" value="{{ $address['kecamatan'] ?? '' }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Kota</label>
+                                                <input type="text" name="kota" class="form-control" value="{{ $address['kota'] ?? '' }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Provinsi</label>
+                                                <input type="text" name="provinsi" class="form-control" value="{{ $address['provinsi'] ?? '' }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Kode Pos</label>
+                                                <input type="text" name="kode_pos" class="form-control" value="{{ $address['kode_pos'] ?? '' }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Tipe</label>
+                                                <select name="type" class="form-select" required>
+                                                    <option value="Utama" {{ ($address['type'] ?? '') == 'Utama' ? 'selected' : '' }}>Utama</option>
+                                                    <option value="Kantor" {{ ($address['type'] ?? '') == 'Kantor' ? 'selected' : '' }}>Kantor</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     @empty
                         <div class="text-muted">Belum ada alamat.</div>
                     @endforelse
                 </div>
-                <button class="btn btn-outline-secondary w-100 mt-3" disabled>
+
+                <!-- Tambah Alamat -->
+                <button class="btn btn-outline-secondary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#tambahAlamatModal">
                     + Tambah Alamat
                 </button>
             </div>
 
+                       <!-- Modal Tambah Alamat -->
+            <div class="modal fade" id="tambahAlamatModal" tabindex="-1" aria-labelledby="tambahAlamatModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form method="POST" action="{{ route('Alamat.store') }}">
+                        @csrf
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="tambahAlamatModalLabel">Tambah Alamat Baru</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Nomor HP</label>
+                                    <input type="text" name="nomor_hp" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Alamat Lengkap</label>
+                                    <textarea name="alamat_lengkap" class="form-control" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Kelurahan</label>
+                                    <input type="text" name="kelurahan" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Kecamatan</label>
+                                    <input type="text" name="kecamatan" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Kota</label>
+                                    <input type="text" name="kota" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Provinsi</label>
+                                    <input type="text" name="provinsi" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Kode Pos</label>
+                                    <input type="text" name="kode_pos" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Tipe</label>
+                                    <select name="label" class="form-select" required>
+                                        <option value="Utama">Utama</option>
+                                        <option value="Kantor">Kantor</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary">Simpan Alamat</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <!-- Logout Button -->
             <div class="mt-4 text-end">
@@ -113,4 +227,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Ubah Password -->
+    <div class="modal fade" id="ubahPasswordModal" tabindex="-1" aria-labelledby="ubahPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('profile.updatePassword') }}">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ubahPasswordModalLabel">Ubah Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Password Lama</label>
+                        <input type="password" name="old_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password Baru</label>
+                        <input type="password" name="new_password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Konfirmasi Password Baru</label>
+                        <input type="password" name="new_password_confirmation" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Update Password</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    </div>
+
+
+
 @endsection

@@ -79,23 +79,22 @@ class ProfileController extends Controller
         }
     }
 
-    /**
+   /**
      * Memperbarui profil pengguna
      */
     public function updateProfile(Request $request)
     {
         $token = session('api_token');
+
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $request->user()->id,
+            'email' => 'required|email',
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
-            ], 422);
+            return redirect()->route('user.profile')
+                ->withErrors($validator)
+                ->withInput();
         }
 
         try {
@@ -104,12 +103,20 @@ class ProfileController extends Controller
                     'nama' => $request->nama,
                     'email' => $request->email,
                 ]);
-            return $response->json();
+
+            $data = $response->json();
+
+            if ($response->successful()) {
+                return redirect()->route('user.profile')
+                    ->with('success', $data['message'] ?? 'Profil berhasil diperbarui');
+            } else {
+                return redirect()->route('user.profile')
+                    ->with('error', $data['message'] ?? 'Gagal memperbarui profil');
+            }
+
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat memperbarui profil'
-            ], 500);
+            return redirect()->route('user.profile')
+                ->with('error', 'Terjadi kesalahan saat memperbarui profil');
         }
     }
 
@@ -166,113 +173,163 @@ class ProfileController extends Controller
         }
     }
 
+
+
     /**
      * Menambah alamat baru
      */
     public function addAddress(Request $request)
+{
+    $token = session('api_token');
+
+    $validator = Validator::make($request->all(), [
+        'nomor_hp' => 'required|string|max:15',
+        'alamat_lengkap' => 'required|string',
+        'kelurahan' => 'required|string',
+        'kecamatan' => 'required|string',
+        'kota' => 'required|string',
+        'provinsi' => 'required|string',
+        'kode_pos' => 'required|string|max:10',
+    ]);
+
+    if ($validator->fails()) {
+        return redirect()->route('user.profile')
+            ->withErrors($validator)
+            ->withInput();
+    }
+
+    try {
+        $response = Http::withToken($token)
+            ->post($this->apiBaseUrl . '/addAlamat', [
+                'nomor_hp' => $request->nomor_hp,
+                'alamat_lengkap' => $request->alamat_lengkap,
+                'kelurahan' => $request->kelurahan,
+                'kecamatan' => $request->kecamatan,
+                'kota' => $request->kota,
+                'provinsi' => $request->provinsi,
+                'kode_pos' => $request->kode_pos,
+                'label' => $request->label,
+            ]);
+
+        $data = $response->json();
+
+        if ($response->successful()) {
+            return redirect()->route('user.profile')
+                ->with('success', $data['message'] ?? 'Alamat berhasil ditambahkan');
+        } else {
+            return redirect()->route('user.profile')
+                ->with('error', $data['message'] ?? 'Gagal menambahkan alamat');
+        }
+
+    } catch (\Exception $e) {
+        return redirect()->route('user.profile')
+            ->with('error', 'Terjadi kesalahan saat menambahkan alamat');
+    }
+}
+
+
+        public function getAlamatDetail($id)
     {
         $token = session('api_token');
-        $validator = Validator::make($request->all(), [
-            'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:15',
-            'address' => 'required|string',
-            'kecamatan' => 'required|string',
-            'kota' => 'required|string',
-            'provinsi' => 'required|string',
-            'kode_pos' => 'required|string|max:10',
-            'type' => 'required|string|in:Utama,Kantor',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         try {
             $response = Http::withToken($token)
-                ->post($this->apiBaseUrl . '/alamat', [
-                    'full_name' => $request->full_name,
-                    'phone' => $request->phone,
-                    'address' => $request->address,
-                    'kecamatan' => $request->kecamatan,
-                    'kota' => $request->kota,
-                    'provinsi' => $request->provinsi,
-                    'kode_pos' => $request->kode_pos,
-                    'type' => $request->type,
-                ]);
-            return $response->json();
+                ->get($this->apiBaseUrl . '/alamat/' . $id);
+
+            $data = $response->json();
+
+            // Untuk debug: cek response data
+            // dd($data);
+
+            if (!$response->successful() || !isset($data['data'])) {
+                return view('user.alamat-detail')->with('error', 'Alamat tidak ditemukan');
+            }
+
+            return view('user.alamat-detail', [
+                'alamat' => $data['data']
+            ]);
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menambahkan alamat'
-            ], 500);
+            return view('user.alamat-detail')->with('error', 'Terjadi kesalahan saat mengambil data alamat');
         }
     }
+
 
     /**
      * Memperbarui alamat
      */
     public function updateAddress(Request $request, $id)
-    {
-        $token = session('api_token');
-        $validator = Validator::make($request->all(), [
-            'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:15',
-            'address' => 'required|string',
-            'kecamatan' => 'required|string',
-            'kota' => 'required|string',
-            'provinsi' => 'required|string',
-            'kode_pos' => 'required|string|max:10',
-            'type' => 'required|string|in:Utama,Kantor',
-        ]);
+{
+    $token = session('api_token');
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+    $validator = Validator::make($request->all(), [
+        'full_name' => 'required|string|max:255',
+        'nomor_hp' => 'required|string|max:15',
+        'alamat_lengkap' => 'required|string',
+        'kecamatan' => 'required|string',
+        'kota' => 'required|string',
+        'provinsi' => 'required|string', // typo: 'rpequired'
+        'kode_pos' => 'required|string|max:10',
+        'type' => 'required|string|in:Utama,Kantor',
+    ]);
 
-        try {
-            $response = Http::withToken($token)
-                ->put($this->apiBaseUrl . '/alamat/' . $id, [
-                    'full_name' => $request->full_name,
-                    'phone' => $request->phone,
-                    'address' => $request->address,
-                    'kecamatan' => $request->kecamatan,
-                    'kota' => $request->kota,
-                    'provinsi' => $request->provinsi,
-                    'kode_pos' => $request->kode_pos,
-                    'type' => $request->type,
-                ]);
-            return $response->json();
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat memperbarui alamat'
-            ], 500);
-        }
+    if ($validator->fails()) {
+        return redirect()->route('user.profile')
+            ->withErrors($validator)
+            ->withInput();
     }
+
+    try {
+        $response = Http::withToken($token)
+            ->put($this->apiBaseUrl . '/alamat/' . $id, [
+                'full_name' => $request->full_name,
+                'nomor_hp' => $request->nomor_hp,
+                'alamat_lengkap' => $request->alamat_lengkap,
+                'kecamatan' => $request->kecamatan,
+                'kota' => $request->kota,
+                'provinsi' => $request->provinsi,
+                'kode_pos' => $request->kode_pos,
+                'type' => $request->type,
+            ]);
+
+        $data = $response->json();
+
+        if ($response->successful()) {
+            return redirect()->route('user.profile')->with('success', $data['message'] ?? 'Alamat berhasil diperbarui');
+        } else {
+            return redirect()->route('user.profile')->with('error', $data['message'] ?? 'Gagal memperbarui alamat');
+        }
+
+    } catch (\Exception $e) {
+        return redirect()->route('user.profile')->with('error', 'Terjadi kesalahan saat memperbarui alamat');
+    }
+}
+
 
     /**
      * Menghapus alamat
      */
     public function deleteAddress(Request $request, $id)
-    {
-        $token = session('api_token');
-        try {
-            $response = Http::withToken($token)
-                ->delete($this->apiBaseUrl . '/alamat/' . $id);
-            return $response->json();
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menghapus alamat'
-            ], 500);
+{
+    $token = session('api_token');
+
+    try {
+        $response = Http::withToken($token)
+            ->delete($this->apiBaseUrl . '/alamat/' . $id);
+
+        $data = $response->json();
+
+        if ($response->successful()) {
+            return redirect()->route('user.profile')
+                ->with('success', $data['message'] ?? 'Alamat berhasil dihapus');
+        } else {
+            return redirect()->route('user.profile')
+                ->with('error', $data['message'] ?? 'Gagal menghapus alamat');
         }
+
+    } catch (\Exception $e) {
+        return redirect()->route('user.profile')
+            ->with('error', 'Terjadi kesalahan saat menghapus alamat');
     }
+}
+
 }

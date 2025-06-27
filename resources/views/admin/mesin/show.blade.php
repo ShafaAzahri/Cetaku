@@ -224,9 +224,9 @@
                                     </div>
                                     <div class="mt-3 pt-3 border-top">
                                         <div class="d-flex justify-content-between">
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+                                            <!-- <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
                                                 <i class="fas fa-edit me-1"></i> Update Status
-                                            </button>
+                                            </button> -->
                                         </div>
                                     </div>
                                 </div>
@@ -285,13 +285,13 @@
 <!-- Modal Update Status Proses Penggunaan -->
 @if(isset($mesin['current_usage']) && $mesin['current_usage'])
 <div class="modal fade" id="updateStatusModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <!-- <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Update Status Proses</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{{ route('admin.proses-produksi.update-status', $mesin['current_usage']['id']) }}" method="POST">
+            <!-- <form action="#" method="POST">
                 @csrf
                 @method('PUT')
                 <div class="modal-body">
@@ -316,9 +316,9 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
-            </form>
+            </form> 
         </div>
-    </div>
+    </div-->
 </div>
 @endif
 @endsection

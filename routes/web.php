@@ -6,7 +6,6 @@ use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\User\WelcomeController;
 use App\Http\Controllers\User\ProfileController;
 
-
 use App\Http\Controllers\User\pesanan;
 use App\Http\Controllers\User\CheckoutController;
 
@@ -25,6 +24,15 @@ use App\Http\Controllers\SuperAdmin\DashboardController;
 use App\Http\Controllers\SuperAdmin\LaporanController;
 use App\Http\Controllers\SuperAdmin\PengaturanController;
 
+use App\Http\Controllers\User\PesananWebController;
+use App\Http\Controllers\User\SearchController;
+use App\Http\Controllers\Api\User\KeranjangApiController;
+
+// Super Admin controllers
+use App\Http\Controllers\User\ProdukListController;
+
+
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -33,6 +41,19 @@ use App\Http\Controllers\SuperAdmin\PengaturanController;
 
 // Route halaman utama (welcome page)
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
+
+Route::get('/alamat', [ProfileController::class, 'getAlamat'])->name('Alamat.index');
+Route::get('/alamat/{id}', [ProfileController::class, 'getAlamatDetail'])->name('Alamat.show');
+Route::post('/alamat', [ProfileController::class, 'addAddress'])->name('Alamat.store');
+Route::put('/alamat/{id}', [ProfileController::class, 'updateAddress'])->name('Alamat.update');
+Route::delete('/alamat/{id}', [ProfileController::class, 'deleteAddress'])->name('Alamat.delete');
+
+//search
+Route::get('/search', [SearchController::class, 'index'])->name('search');
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::delete('/keranjang/clear', [KeranjangApiController::class, 'clear']);
+});
 
 // Authentication routes
 Route::middleware('guest')->group(function () {
@@ -57,10 +78,13 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
         return redirect()->route('welcome');
     })->name('user.welcome');
 
-     Route::get('/profile', [ProfileController::class, 'showProfile'])->name('user.profile');
+    Route::get('/profile', [ProfileController::class, 'showProfile'])->name('user.profile');
     // Menyimpan perubahan password
+    Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('user.profile.update');
     Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
-    ->name('profile.update-password');
+        ->name('profile.update-password');
+
+    Route::post('/alamat', [ProfileController::class, 'addAddress'])->name('Alamat.store');
 
     Route::get('/keranjang', [App\Http\Controllers\User\KeranjangController::class, 'index'])->name('keranjang');
     Route::post('/keranjang/add', [App\Http\Controllers\User\KeranjangController::class, 'addToCart'])->name('keranjang.add');
@@ -73,14 +97,27 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
 
     Route::get('/pesanan', [pesanan::class, 'index'])->name('pesanan');
     Route::get('/produk', [pesanan::class, 'allproduk'])->name('produk-all');
+    Route::get('/produk/{id}', [ProdukListController::class, 'show'])->name('produk.show');
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout/payment', [CheckoutController::class, 'checkoutTerpilih'])->name('checkout.terpilih');
-    
+
+
+    Route::get('/user/pesanan', [PesananWebController::class, 'index'])->name('user.pesanan');
+
+    // Routes untuk guest users (dapat mengakses produk tanpa login)
+    Route::get('/produk', [ProdukListController::class, 'index'])->name('produk-all');
+    Route::get('/produk/{id}', [ProdukListController::class, 'show'])->name('produk.show');
+
+    // Jika ingin menambahkan API endpoint untuk sorting via AJAX (opsional)
+    Route::get('/api/produk', [ProdukListController::class, 'apiIndex'])->name('produk.api');
+
+    // Route untuk search dengan sorting (jika diperlukan)
+    Route::get('/produk/search', [ProdukListController::class, 'search'])->name('produk.search');
     // Add more user routes here if needed
 });
 
 // Admin & Super Admin shared routes
-    Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth.check', 'role:admin,super_admin'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
 
@@ -137,10 +174,8 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
     Route::get('/mesins', [MesinController::class, 'index'])->name('mesins.index');
     Route::get('/mesins/{id}', [MesinController::class, 'show'])->name('mesins.show');
     Route::put('/mesins/{id}/status', [MesinController::class, 'updateStatus'])->name('mesins.update-status');
-    
+
     Route::get('/ekspedisi', [EkspedisiController::class, 'index'])->name('ekspedisi.index');
-    
-    
 });
 
 // Super Admin specific routes

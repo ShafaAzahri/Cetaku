@@ -20,236 +20,165 @@
     <div class="container">
         <h2 class="section-title text-center mb-4">Semua Produk Kami</h2>
         
-        <!-- Filter and Sort (optional for future) -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="filter-buttons d-none d-md-block">
-                <button class="btn btn-sm btn-outline-secondary me-2 active">Semua</button>
-                <button class="btn btn-sm btn-outline-secondary me-2">Banner</button>
-                <button class="btn btn-sm btn-outline-secondary me-2">Merchandise</button>
-                <button class="btn btn-sm btn-outline-secondary">Kartu</button>
+        @if(isset($error))
+            <div class="alert alert-danger" role="alert">
+                {{ $error }}
             </div>
+        @endif
+        
+        <!-- Filter and Sort -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div class="filter-buttons d-none d-md-block">
+                <a href="{{ route('produk-all') }}"
+                   class="btn btn-sm btn-outline-secondary me-2 {{ is_null($kategoriNama) ? 'active' : '' }}">
+                    Semua
+                </a>
+
+                @foreach ($kategoris as $kategori)
+                    <a href="{{ route('produk-all', array_merge(request()->query(), ['kategori' => $kategori['nama_kategori']])) }}"
+                       class="btn btn-sm btn-outline-secondary me-2 {{ $kategoriNama === $kategori['nama_kategori'] ? 'active' : '' }}">
+                        {{ $kategori['nama_kategori'] }}
+                    </a>
+                @endforeach
+            </div>
+
+            <!-- Sort Dropdown -->
             <div class="dropdown">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    Urutkan
+                    <i class="fas fa-sort me-2"></i>
+                    <span id="sortLabel">
+                        @switch($currentSort ?? 'terbaru')
+                            @case('harga_rendah')
+                                Harga: Rendah ke Tinggi
+                                @break
+                            @case('harga_tinggi')
+                                Harga: Tinggi ke Rendah
+                                @break
+                            @case('terlaris')
+                                Terlaris
+                                @break
+                            @case('nama_az')
+                                Nama: A-Z
+                                @break
+                            @case('nama_za')
+                                Nama: Z-A
+                                @break
+                            @default
+                                Terbaru
+                        @endswitch
+                    </span>
                 </button>
                 <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                    <li><a class="dropdown-item" href="#">Terbaru</a></li>
-                    <li><a class="dropdown-item" href="#">Harga: Rendah ke Tinggi</a></li>
-                    <li><a class="dropdown-item" href="#">Harga: Tinggi ke Rendah</a></li>
-                    <li><a class="dropdown-item" href="#">Terlaris</a></li>
+                    <li>
+                        <a class="dropdown-item sort-option {{ ($currentSort ?? 'terbaru') == 'terbaru' ? 'active' : '' }}" 
+                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'terbaru'])) }}">
+                            <i class="fas fa-star me-2"></i>Terbaru
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'harga_rendah' ? 'active' : '' }}" 
+                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'harga_rendah'])) }}">
+                            <i class="fas fa-arrow-up me-2"></i>Harga: Rendah ke Tinggi
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'harga_tinggi' ? 'active' : '' }}" 
+                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'harga_tinggi'])) }}">
+                            <i class="fas fa-arrow-down me-2"></i>Harga: Tinggi ke Rendah
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'terlaris' ? 'active' : '' }}" 
+                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'terlaris'])) }}">
+                            <i class="fas fa-fire me-2"></i>Terlaris
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'nama_az' ? 'active' : '' }}" 
+                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'nama_az'])) }}">
+                            <i class="fas fa-sort-alpha-down me-2"></i>Nama: A-Z
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'nama_za' ? 'active' : '' }}" 
+                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'nama_za'])) }}">
+                            <i class="fas fa-sort-alpha-up me-2"></i>Nama: Z-A
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
-        
-        <!-- Products Grid -->
-        <div class="row g-4">
-            <!-- Product 1 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Banner+Indoor" class="card-img-top" alt="Banner Indoor">
-                        <div class="card-body">
-                            <h5 class="card-title">Banner Indoor</h5>
-                            <p class="card-text small text-muted">Banner berkualitas tinggi untuk kebutuhan indoor</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 150.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
+        <!-- Loading indicator -->
+        <div id="loadingIndicator" class="text-center py-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
             </div>
-            
-            <!-- Product 2 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Banner+Outdoor" class="card-img-top" alt="Banner Outdoor">
-                        <div class="card-body">
-                            <h5 class="card-title">Banner Outdoor</h5>
-                            <p class="card-text small text-muted">Banner tahan cuaca untuk penggunaan di luar ruangan</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 200.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 3 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=X-Banner" class="card-img-top" alt="X-Banner">
-                        <div class="card-body">
-                            <h5 class="card-title">X-Banner</h5>
-                            <p class="card-text small text-muted">Stand banner portable untuk promosi dan pameran</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 180.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 4 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Roll+Banner" class="card-img-top" alt="Roll Banner">
-                        <div class="card-body">
-                            <h5 class="card-title">Roll Banner</h5>
-                            <p class="card-text small text-muted">Roll up banner dengan stand kokoh dan mudah dibawa</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 250.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 5 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Kaos+Custom" class="card-img-top" alt="Kaos Custom">
-                        <div class="card-body">
-                            <h5 class="card-title">Kaos Custom</h5>
-                            <p class="card-text small text-muted">Kaos cotton combed 30s dengan desain sesuai keinginan</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 85.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 6 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Hoodie+Custom" class="card-img-top" alt="Hoodie Custom">
-                        <div class="card-body">
-                            <h5 class="card-title">Hoodie Custom</h5>
-                            <p class="card-text small text-muted">Hoodie fleece premium dengan desain custom</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 200.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 7 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Mug+Custom" class="card-img-top" alt="Mug Custom">
-                        <div class="card-body">
-                            <h5 class="card-title">Mug Custom</h5>
-                            <p class="card-text small text-muted">Mug keramik dengan desain dan foto custom</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 45.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 8 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Topi+Custom" class="card-img-top" alt="Topi Custom">
-                        <div class="card-body">
-                            <h5 class="card-title">Topi Custom</h5>
-                            <p class="card-text small text-muted">Topi snapback dengan bordir atau printing desain custom</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 75.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 9 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Stiker+Custom" class="card-img-top" alt="Stiker Custom">
-                        <div class="card-body">
-                            <h5 class="card-title">Stiker Custom</h5>
-                            <p class="card-text small text-muted">Stiker vinyl dengan cutting custom sesuai bentuk desain</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 5.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 10 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Kartu+Nama" class="card-img-top" alt="Kartu Nama">
-                        <div class="card-body">
-                            <h5 class="card-title">Kartu Nama</h5>
-                            <p class="card-text small text-muted">Kartu nama dengan berbagai pilihan kertas premium</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 100.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 11 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Flyer" class="card-img-top" alt="Flyer">
-                        <div class="card-body">
-                            <h5 class="card-title">Flyer</h5>
-                            <p class="card-text small text-muted">Flyer promosi dengan printing full color</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 150.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Product 12 -->
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="product-card h-100">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="https://via.placeholder.com/400x300/4361ee/ffffff?text=Brosur" class="card-img-top" alt="Brosur">
-                        <div class="card-body">
-                            <h5 class="card-title">Brosur</h5>
-                            <p class="card-text small text-muted">Brosur dengan lipatan dan finishing yang rapi</p>
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <span class="fw-bold text-primary">Rp 200.000</span>
-                                <a href="#" class="btn btn-sm btn-outline-primary">Lihat Detail</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <p class="mt-2 text-muted">Memuat produk...</p>
         </div>
         
-        <!-- Pagination -->
-        <nav class="mt-5">
+        <!-- Products Grid -->
+        <div class="row g-4" id="productGrid">
+            @forelse ($items as $item)
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="product-card h-100">
+                        <div class="card border-0 shadow-sm h-100">
+                            <img src="{{ isset($item['gambar']) && $item['gambar'] ? asset('storage/' . $item['gambar']) : asset('images/products/default.png') }}" 
+                                 alt="{{ $item['nama_item'] }}" 
+                                 class="img-fluid product-image card-img-top">
+
+                            <div class="card-body">
+                                <h5 class="card-title">{{ $item['nama_item'] }}</h5>
+                                <p class="card-text small text-muted">{{ Str::limit($item['deskripsi'], 50) }}</p>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="fw-bold text-primary">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
+                                    @if(isset($item['total_sold']))
+                                        <small class="text-muted">Terjual: {{ $item['total_sold'] }}</small>
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <a href="{{ url('/produk/' . $item['id']) }}" class="btn btn-sm btn-outline-primary w-100">
+                                    <i class="fas fa-eye me-2"></i>Lihat Detail
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="col-12 text-center">
+                    <div class="py-5">
+                        <i class="fas fa-box-open text-muted" style="font-size: 4rem;"></i>
+                        <h4 class="mt-3 text-muted">Produk Tidak Ditemukan</h4>
+                        <p class="text-muted">
+                            @if($kategoriNama)
+                                Tidak ada produk dalam kategori "{{ $kategoriNama }}".
+                                <br><a href="{{ route('produk-all') }}" class="btn btn-sm btn-outline-primary mt-2">Lihat Semua Produk</a>
+                            @else
+                                Produk belum tersedia saat ini.
+                            @endif
+                        </p>
+                    </div>
+                </div>
+            @endforelse
+        </div>
+
+        @if(count($items) > 0)
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <p class="text-muted">
+                        Menampilkan {{ count($items) }} produk
+                        @if($kategoriNama)
+                            dalam kategori "{{ $kategoriNama }}"
+                        @endif
+                    </p>
+                </div>
+            </div>
+        @endif
+        
+        <!-- Pagination (for future implementation) -->
+        {{-- <nav class="mt-5">
             <ul class="pagination justify-content-center">
                 <li class="page-item disabled">
                     <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
@@ -261,9 +190,30 @@
                     <a class="page-link" href="#">Next</a>
                 </li>
             </ul>
-        </nav>
+        </nav> --}}
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sortOptions = document.querySelectorAll('.sort-option');
+    const productGrid = document.getElementById('productGrid');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    sortOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            // Show loading indicator
+            if (loadingIndicator && productGrid) {
+                loadingIndicator.style.display = 'block';
+                productGrid.style.opacity = '0.5';
+            }
+            
+            // Let the default link behavior handle the navigation
+            // The page will reload with new sorting
+        });
+    });
+});
+</script>
 
 <!-- Add some custom styling -->
 <style>
@@ -276,7 +226,7 @@
         transform: translateY(-5px);
     }
     
-    .card-img-top {
+    .card-img-top, .product-image {
         height: 200px;
         object-fit: cover;
     }
@@ -298,11 +248,57 @@
         left: 50%;
         transform: translateX(-50%);
     }
+
+    /* Dropdown styling */
+    .dropdown-item.active {
+        background-color: #4361ee;
+        color: white;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .dropdown-item.active:hover {
+        background-color: #3651d4;
+    }
+
+    /* Filter buttons styling */
+    .filter-buttons .btn.active {
+        background-color: #4361ee;
+        border-color: #4361ee;
+        color: white;
+    }
+
+    /* Loading transition */
+    #productGrid {
+        transition: opacity 0.3s ease-in-out;
+    }
     
     /* Mobile responsiveness */
     @media (max-width: 576px) {
-        .card-img-top {
+        .card-img-top, .product-image {
             height: 150px;
+        }
+        
+        .filter-buttons {
+            display: block !important;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-buttons .btn {
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .d-flex.justify-content-between {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+        
+        .dropdown {
+            align-self: flex-end;
         }
     }
 </style>

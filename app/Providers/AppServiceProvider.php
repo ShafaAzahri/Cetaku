@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
 use App\Models\TokoInfo;
+use App\Models\Kategori;
+use App\Models\Keranjang;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,5 +36,20 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('tokoInfo', $tokoInfo);
             }
         );
+        // ambil semua kategori 
+        $categories = Kategori::all();
+        View::share('categories', $categories);
+
+        // Hitung jumlah item keranjang untuk user yang login
+        View::composer('*', function ($view) {
+            $totalKeranjangItems = 0;
+
+            if (Auth::check()) {
+                $user = Auth::user();
+                $totalKeranjangItems = Keranjang::where('user_id', $user->id)->sum('jumlah');
+            }
+
+            $view->with('totalKeranjangItems', $totalKeranjangItems);
+        });
     }
 }

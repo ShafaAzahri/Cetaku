@@ -21,25 +21,25 @@ class MesinApiController extends Controller
     {
         try {
             $query = Mesin::query();
-            
+
             // Filter berdasarkan status
             if ($request->has('status') && in_array($request->status, ['aktif', 'digunakan'])) {
                 $query->where('status', $request->status);
             }
-            
+
             // Filter berdasarkan tipe mesin
             if ($request->has('tipe') && !empty($request->tipe)) {
                 $query->where('tipe_mesin', 'like', '%' . $request->tipe . '%');
             }
-            
+
             // Pencarian berdasarkan nama
             if ($request->has('search') && !empty($request->search)) {
                 $query->where('nama_mesin', 'like', '%' . $request->search . '%');
             }
-            
+
             // Ambil data mesin
             $mesins = $query->get();
-            
+
             // Untuk setiap mesin, periksa apakah sedang digunakan
             foreach ($mesins as $mesin) {
                 $currentUsage = ProsesPesanan::with(['detailPesanan.custom.item', 'operator'])
@@ -48,10 +48,10 @@ class MesinApiController extends Controller
                     ->where('status_proses', '!=', 'Selesai')
                     ->orderBy('waktu_mulai', 'desc')
                     ->first();
-                
+
                 $mesin->current_usage = $currentUsage;
             }
-            
+
             return response()->json([
                 'success' => true,
                 'mesins' => $mesins
@@ -76,17 +76,21 @@ class MesinApiController extends Controller
     {
         try {
             $mesin = Mesin::findOrFail($id);
-            
+
             // Ambil penggunaan saat ini
-            $currentUsage = ProsesPesanan::with(['detailPesanan.custom.item', 'operator'])
+            $currentUsage = ProsesPesanan::with([
+                'detailPesanan.custom.item',
+                'detailPesanan.custom.bahan',
+                'detailPesanan.custom.ukuran',
+                'operator'
+            ])
                 ->where('mesin_id', $id)
                 ->whereNull('waktu_selesai')
                 ->where('status_proses', '!=', 'Selesai')
                 ->orderBy('waktu_mulai', 'desc')
                 ->first();
-            
             $mesin->current_usage = $currentUsage;
-            
+
             return response()->json([
                 'success' => true,
                 'mesin' => $mesin
@@ -113,56 +117,56 @@ class MesinApiController extends Controller
         try {
             // Validasi mesin
             $mesin = Mesin::findOrFail($id);
-            
+
             // Query riwayat
             $query = ProsesPesanan::with(['detailPesanan.custom.item', 'operator'])
                 ->where('mesin_id', $id)
                 ->where('status_proses', 'Selesai')
                 ->whereNotNull('waktu_selesai');
-            
+
             // Filter berdasarkan tanggal
             if ($request->has('start_date') && !empty($request->start_date)) {
                 $query->whereDate('waktu_mulai', '>=', $request->start_date);
             }
-            
+
             if ($request->has('end_date') && !empty($request->end_date)) {
                 $query->whereDate('waktu_selesai', '<=', $request->end_date);
             }
-            
+
             // Pengurutan
             $sortBy = $request->get('sort_by', 'waktu_selesai');
             $sortDirection = $request->get('sort_direction', 'desc');
             $query->orderBy($sortBy, $sortDirection);
-            
+
             // Paginasi
             $limit = $request->get('limit', 10);
             $history = $query->paginate($limit);
-            
+
             // Tambahkan durasi penggunaan untuk setiap item
             foreach ($history as $process) {
                 if ($process->waktu_mulai && $process->waktu_selesai) {
                     $mulai = new \DateTime($process->waktu_mulai);
                     $selesai = new \DateTime($process->waktu_selesai);
                     $interval = $mulai->diff($selesai);
-                    
+
                     $process->durasi_penggunaan = '';
-                    
+
                     if ($interval->d > 0) {
                         $process->durasi_penggunaan .= $interval->d . ' hari ';
                     }
-                    
+
                     if ($interval->h > 0) {
                         $process->durasi_penggunaan .= $interval->h . ' jam ';
                     }
-                    
+
                     if ($interval->i > 0) {
                         $process->durasi_penggunaan .= $interval->i . ' menit';
                     }
-                    
+
                     $process->durasi_penggunaan = trim($process->durasi_penggunaan);
                 }
             }
-            
+
             return response()->json([
                 'success' => true,
                 'mesin' => [
@@ -195,7 +199,7 @@ class MesinApiController extends Controller
             $validator = Validator::make($request->all(), [
                 'status' => 'required|in:aktif,digunakan,maintenance',
             ]);
-            
+
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
@@ -203,9 +207,9 @@ class MesinApiController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-            
+
             $mesin = Mesin::findOrFail($id);
-            
+
             // Jika status sebelumnya digunakan dan akan diubah ke maintenance
             // Kita perlu memeriksa apakah mesin sedang digunakan dalam proses produksi
             if ($mesin->status == 'digunakan' && $request->status == 'maintenance') {
@@ -213,7 +217,7 @@ class MesinApiController extends Controller
                     ->whereNull('waktu_selesai')
                     ->where('status_proses', '!=', 'Selesai')
                     ->first();
-                
+
                 if ($currentUsage) {
                     return response()->json([
                         'success' => false,
@@ -221,13 +225,13 @@ class MesinApiController extends Controller
                     ], 400);
                 }
             }
-            
+
             // Update status mesin
             Mesin::where('id', $id)->update(['status' => $request->status]);
-            
+
             // Ambil data mesin yang sudah diupdate
             $updatedMesin = Mesin::find($id);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Status mesin berhasil diperbarui',

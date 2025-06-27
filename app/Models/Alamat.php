@@ -12,6 +12,7 @@ class Alamat extends Model
      * @var string
      */
     protected $table = 'alamats';
+    public $timestamps = false;
 
     /**
      * Atribut yang dapat diisi secara massal.

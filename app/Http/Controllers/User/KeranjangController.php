@@ -62,7 +62,6 @@ class KeranjangController extends Controller
                 'jumlah_items' => count($keranjangItems),
                 'summary' => $summary
             ]);
-
             return view('user.keranjang', compact('keranjangItems', 'groupedItems', 'summary'));
         } catch (\Exception $e) {
             Log::error('Error loading cart: ' . $e->getMessage());
@@ -280,79 +279,69 @@ class KeranjangController extends Controller
      * Hapus item dari keranjang
      */
     public function removeItem(Request $request, $id)
-    {
-        try {
-            $token = session('api_token');
-            if (!$token) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Silakan login terlebih dahulu'
-                ], 401);
-            }
-
-            $response = Http::withToken($token)
-                ->delete($this->apiBaseUrl . '/keranjang/' . $id);
-
-            $responseData = $response->json();
-
-            if ($response->successful() && ($responseData['success'] ?? false)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Item berhasil dihapus dari keranjang'
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => $responseData['message'] ?? 'Gagal menghapus item'
-            ], $response->status());
-        } catch (\Exception $e) {
-            Log::error('Error removing item: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan sistem'
-            ], 500);
+{
+    try {
+        $token = session('api_token');
+        if (!$token) {
+            // Jika token tidak ditemukan (user belum login), kembalikan ke tampilan dengan pesan error
+            return view('user.keranjang')->with('error', 'Silakan login terlebih dahulu');
         }
+
+        // Kirim request DELETE ke API untuk menghapus item dari keranjang
+        $response = Http::withToken($token)
+            ->delete($this->apiBaseUrl . '/keranjang/' . $id);
+
+        $responseData = $response->json();
+
+        if ($response->successful() && ($responseData['success'] ?? false)) {
+            // Jika request berhasil, kembalikan ke tampilan dengan pesan sukses
+            return view('user.keranjang')->with('success', 'Item berhasil dihapus dari keranjang');
+        }
+
+        // Jika request gagal, kembalikan ke tampilan dengan pesan error
+        return view('user.keranjang')->with('error', $responseData['message'] ?? 'Gagal menghapus item');
+    } catch (\Exception $e) {
+        // Jika terjadi error sistem, log error dan tampilkan pesan error umum di tampilan
+        Log::error('Error removing item: ' . $e->getMessage());
+        return view('user.keranjang')->with('error', 'Terjadi kesalahan sistem');
     }
+}
+
 
     /**
      * Kosongkan seluruh keranjang
      */
-    public function clearCart(Request $request)
-    {
-        try {
-            $token = session('api_token');
-            if (!$token) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Silakan login terlebih dahulu'
-                ], 401);
-            }
-
-            $response = Http::withToken($token)
-                ->delete($this->apiBaseUrl . '/keranjang/clear');
-
-            $responseData = $response->json();
-
-            if ($response->successful() && ($responseData['success'] ?? false)) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Keranjang berhasil dikosongkan'
-                ]);
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => $responseData['message'] ?? 'Gagal mengosongkan keranjang'
-            ], $response->status());
-        } catch (\Exception $e) {
-            Log::error('Error clearing cart: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan sistem'
-            ], 500);
+public function clearCart(Request $request)
+{
+    try {
+        $token = session('api_token');
+        if (!$token) {
+            // Jika token tidak ditemukan (user belum login), kembalikan ke tampilan dengan pesan error
+            return view('user.cart')->with('error', 'Silakan login terlebih dahulu');
         }
+
+        // Kirim request DELETE ke API untuk mengosongkan keranjang
+        $response = Http::withToken($token)
+            ->delete($this->apiBaseUrl . '/keranjang/clear');
+
+        $responseData = $response->json();
+
+        if ($response->successful() && ($responseData['success'] ?? false)) {
+            // Jika request berhasil, kembalikan ke tampilan dengan pesan sukses
+            return view('user.cart')->with('success', 'Keranjang berhasil dikosongkan');
+        }
+
+        // Jika request gagal, kembalikan ke tampilan dengan pesan error
+        return view('user.keranjang')->with('error', $responseData['message'] ?? 'Gagal mengosongkan keranjang');
+    } catch (\Exception $e) {
+        // Jika terjadi error sistem, log error dan tampilkan pesan error umum di tampilan
+        Log::error('Error clearing cart (frontend): ' . $e->getMessage());
+        return view('user.keranjang')->with('error', 'Terjadi kesalahan sistem');
     }
+}
+
+
+
 
     /**
      * Get cart count untuk navbar

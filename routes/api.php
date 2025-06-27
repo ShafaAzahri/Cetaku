@@ -3,25 +3,28 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthApiController;
+use App\Http\Controllers\API\User\PaymentController;
 use App\Http\Controllers\API\Admin\ItemApiController;
 use App\Http\Controllers\API\Admin\BahanApiController;
 use App\Http\Controllers\API\Admin\JenisApiController;
-use App\Http\Controllers\API\Admin\UkuranApiController;
-use App\Http\Controllers\API\Admin\BiayaDesainApiController;
-use App\Http\Controllers\API\Admin\PesananAdminController;
-use App\Http\Controllers\API\Admin\OperatorApiController;
 use App\Http\Controllers\API\Admin\MesinApiController;
-use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
-use App\Http\Controllers\API\Admin\KategoriApiController;
-use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
-use App\Http\Controllers\API\User\KeranjangApiController;
-
-
-
-use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
-
+use App\Http\Controllers\Api\PaymentWebhookController;
+use App\Http\Controllers\API\Admin\UkuranApiController;
+use App\Http\Controllers\Api\User\PesananApiController;
 use App\Http\Controllers\API\User\ProfileApiController;
-use App\Http\Controllers\API\User\PaymentController;
+use App\Http\Controllers\API\Admin\KategoriApiController;
+use App\Http\Controllers\API\Admin\OperatorApiController;
+use App\Http\Controllers\API\Admin\PesananAdminController;
+use App\Http\Controllers\API\User\KeranjangApiController;
+use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
+use App\Http\Controllers\API\Admin\BiayaDesainApiController;
+use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
+use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
+
+// use App\Http\Controllers\API\Admin\BiayaDesainApiController;
+// use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
+// use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
+// use App\Http\Controllers\API\User\PaymentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -31,6 +34,7 @@ use App\Http\Controllers\API\User\PaymentController;
 // Auth Routes (Public)
 Route::post('/login', [AuthApiController::class, 'login']);
 Route::post('/register', [AuthApiController::class, 'register']);
+Route::post('/midtrans/webhook', [PaymentWebhookController::class, 'handle']);
 
 // Route autentikasi publik (tidak memerlukan autentikasi)
 Route::prefix('auth')->group(function() {
@@ -60,9 +64,11 @@ Route::middleware('api.user')->group(function() {
         Route::delete('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'clear']); // DELETE /api/keranjang (clear all)
         Route::get('/count', [App\Http\Controllers\API\User\KeranjangApiController::class, 'count']); // GET /api/keranjang/count
         
-
     });
+    Route::get('/pesanan', [PesananApiController::class, 'index']);
 });
+
+Route::middleware('auth:api')->post('/checkout/payment', [PaymentController::class, 'checkoutPayment']);
 // Route::middleware('api.auth')->prefix('payments')->group(function() {
 //     Route::post('/qris', [PaymentController::class, 'createQrisPayment']);
 //     // Anda bisa menambahkan rute pembayaran lain di sini nanti, misal:

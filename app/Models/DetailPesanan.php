@@ -74,4 +74,9 @@ class DetailPesanan extends Model
         return $this->hasOne(ProsesPesanan::class);
     }
     
+    // Relasi ke item
+    public function item()
+    {
+        return $this->belongsTo(Item::class, 'item_id');
+    }
 }
