@@ -18,6 +18,7 @@ use App\Http\Controllers\API\Admin\PesananAdminController;
 use App\Http\Controllers\API\User\KeranjangApiController;
 use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
 use App\Http\Controllers\API\Admin\BiayaDesainApiController;
+use App\Http\Controllers\Api\Admin\EkspedisiApiController;
 use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
 use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
 
@@ -40,6 +41,7 @@ Route::post('/midtrans/webhook', [PaymentWebhookController::class, 'handle']);
 Route::prefix('auth')->group(function() {
     Route::get('/user', [AuthApiController::class, 'getUserByToken']);
     Route::post('/logout', [AuthApiController::class, 'logout']);
+
 });
 
 // Alamat API routes (dengan middleware api.auth)
@@ -69,6 +71,9 @@ Route::middleware('api.user')->group(function() {
 });
 
 Route::middleware('auth:api')->post('/checkout/payment', [PaymentController::class, 'checkoutPayment']);
+Route::middleware('auth:api')->get('ekspedisis', [EkspedisiApiController::class, 'index']);
+
+
 // Route::middleware('api.auth')->prefix('payments')->group(function() {
 //     Route::post('/qris', [PaymentController::class, 'createQrisPayment']);
 //     // Anda bisa menambahkan rute pembayaran lain di sini nanti, misal:
@@ -101,6 +106,7 @@ Route::get('/biaya-desains/{id}', [BiayaDesainApiController::class, 'show']);
 Route::get('/kategoris', [KategoriApiController::class, 'index']);
 Route::get('/kategoris/{id}', [KategoriApiController::class, 'show']);
 Route::get('/kategoris/{id}/items', [KategoriApiController::class, 'getItemsByKategori']);
+
 
 // Route untuk health check
 Route::get('/health', function() {

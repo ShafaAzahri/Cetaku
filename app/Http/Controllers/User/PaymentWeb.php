@@ -29,6 +29,21 @@ class PaymentWeb extends Controller
         }
 
         try {
+            // Ambil data ekspedisi dari request
+            $ekspedisiInput = $request->input('ekspedisi');
+            
+            // Pastikan data ekspedisi dalam format array yang benar
+            $ekspedisiData = [];
+            if ($ekspedisiInput) {
+                if (is_string($ekspedisiInput)) {
+                    // Jika data ekspedisi berupa string JSON, decode dulu
+                    $ekspedisiData = json_decode($ekspedisiInput, true) ?? [];
+                } elseif (is_array($ekspedisiInput)) {
+                    // Jika sudah array, gunakan langsung
+                    $ekspedisiData = $ekspedisiInput;
+                }
+            }
+
             // Prepare data untuk API
             $checkoutData = [
                 'alamat_id' => $request->input('alamat_id'),
@@ -36,7 +51,7 @@ class PaymentWeb extends Controller
                 'ongkir' => (float) $request->input('ongkir', 0),
                 'payment_method' => $request->input('payment_method', 'cod'),
                 'delivery_method' => $request->input('delivery_method', 'antar'),
-                'ekspedisi' => $request->input('ekspedisi'),
+                'ekspedisi' => $ekspedisiData,
                 'nomor_hp' => $request->input('nomor_hp', '081234567890')
             ];
 
@@ -55,6 +70,36 @@ class PaymentWeb extends Controller
                 ], 400);
             }
 
+            // PERBAIKAN: Validasi data ekspedisi untuk delivery method 'antar'
+            if ($checkoutData['delivery_method'] === 'antar') {
+                // Cek apakah ekspedisi data ada dan memiliki field yang diperlukan
+                if (empty($ekspedisiData) || 
+                    empty($ekspedisiData['nama']) || 
+                    empty($ekspedisiData['code']) || 
+                    !isset($ekspedisiData['cost'])) {
+                    
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Data ekspedisi tidak lengkap. Silakan pilih ekspedisi terlebih dahulu.'
+                    ], 400);
+                }
+
+                // Validasi tambahan untuk memastikan cost adalah numeric
+                if (!is_numeric($ekspedisiData['cost']) || $ekspedisiData['cost'] < 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Biaya ekspedisi tidak valid'
+                    ], 400);
+                }
+            }
+
+            // Log data yang akan dikirim untuk debugging
+            Log::info('Data checkout yang akan dikirim ke API', [
+                'checkout_data' => $checkoutData,
+                'ekspedisi_detail' => $ekspedisiData,
+                'user_session' => session()->getId()
+            ]);
+
             // Call API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $apiToken,
@@ -71,11 +116,20 @@ class PaymentWeb extends Controller
                     Log::info('Checkout berhasil', [
                         'order_id' => $result['order_id'] ?? null,
                         'payment_method' => $result['payment_method'] ?? null,
+                        'delivery_method' => $result['delivery_method'] ?? null,
+                        'ekspedisi_used' => $ekspedisiData,
                         'user_session' => session()->getId()
                     ]);
 
                     return response()->json($result, 201);
                 } else {
+                    // Log API error
+                    Log::warning('API checkout failed', [
+                        'api_message' => $result['message'] ?? 'Unknown error',
+                        'api_response' => $result,
+                        'request_data' => $checkoutData
+                    ]);
+
                     return response()->json($result, 400);
                 }
             } else {

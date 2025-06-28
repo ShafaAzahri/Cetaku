@@ -384,7 +384,7 @@ function pilihPembayaran(method, element) {
     element.querySelector('input[type="radio"]').checked = true;
 }
 
-// Proses checkout
+// Proses checkout - BAGIAN YANG DIPERBAIKI
 function prosesCheckout() {
     // Validasi dasar
     if (currentMethod === 'antar' && !document.querySelector('input[name="selected_address"]:checked')) {
@@ -398,10 +398,45 @@ function prosesCheckout() {
         return;
     }
     
+    // Validasi ekspedisi untuk metode antar
+    if (currentMethod === 'antar' && !document.querySelector('input[name="selected_ekspedisi"]:checked')) {
+        alert('Silakan pilih ekspedisi terlebih dahulu.');
+        return;
+    }
+    
     // Disable button
     var btn = document.querySelector('.btn-checkout');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+    
+    // Prepare ekspedisi data
+    var ekspedisiData = null;
+    if (currentMethod === 'antar') {
+        var selectedEkspedisi = document.querySelector('input[name="selected_ekspedisi"]:checked');
+        var selectedEkspedisiElement = selectedEkspedisi.closest('.ekspedisi-option');
+        
+        if (selectedEkspedisi && selectedEkspedisiElement) {
+            // Parse ekspedisi code dan service
+            var ekspedisiValue = selectedEkspedisi.value.split('-');
+            var ekspedisiCode = ekspedisiValue[0] || '';
+            var ekspedisiService = ekspedisiValue[1] || '';
+            
+            // Get ekspedisi details dari element
+            var ekspedisiName = selectedEkspedisiElement.querySelector('.ekspedisi-name').textContent;
+            var ekspedisiDescription = selectedEkspedisiElement.querySelector('.ekspedisi-service').textContent;
+            var ekspedisiCost = parseInt(selectedEkspedisiElement.getAttribute('data-cost')) || 0;
+            var ekspedisiEtd = selectedEkspedisiElement.querySelector('.ekspedisi-estimate').textContent;
+            
+            ekspedisiData = {
+                code: ekspedisiCode,
+                service: ekspedisiService,
+                nama: ekspedisiName,
+                description: ekspedisiDescription,
+                cost: ekspedisiCost,
+                etd: ekspedisiEtd
+            };
+        }
+    }
     
     // Prepare data
     var data = {
@@ -411,8 +446,11 @@ function prosesCheckout() {
         ongkir: (currentMethod === 'antar') ? currentOngkir : 0,
         payment_method: paymentMethod.value,
         delivery_method: currentMethod,
-        ekspedisi: null // Simplified - bisa dikembangkan nanti
+        ekspedisi: ekspedisiData // Kirim data ekspedisi yang lengkap
     };
+    
+    // Debug log
+    console.log('Data yang akan dikirim:', data);
     
     // Send to server
     fetch('{{ route("checkout.payment") }}', {
@@ -460,6 +498,7 @@ function prosesCheckout() {
         }
     })
     .catch(function(error) {
+        console.error('Error:', error);
         alert('Terjadi kesalahan: ' + error.message);
         resetButton();
     });

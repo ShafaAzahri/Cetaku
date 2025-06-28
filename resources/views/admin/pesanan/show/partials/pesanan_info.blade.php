@@ -27,25 +27,52 @@
 
         <div class="col-md-6">
             @if ($pesanan['metode_pengambilan'] == 'antar')
+                {{-- Menggunakan data dari ekspedisiList jika tersedia, fallback ke pesanan ekspedisi --}}
+                @php
+                    $currentEkspedisi = null;
+                    if (!empty($ekspedisiList) && count($ekspedisiList) > 0) {
+                        $currentEkspedisi = $ekspedisiList[0]; // Ambil ekspedisi pertama atau sesuai logic bisnis
+                    } else {
+                        $currentEkspedisi = $pesanan['ekspedisi'] ?? null;
+                    }
+                @endphp
+
                 <div class="info-row">
                     <div class="info-label">Ekspedisi</div>
-                    <div class="info-value">{{ $pesanan['ekspedisi']['nama_ekspedisi'] ?? '-' }}</div>
+                    <div class="info-value">{{ $currentEkspedisi['nama_ekspedisi'] ?? '-' }}</div>
                 </div>
-                <div class="info-row">
-                    <div class="info-label">Layanan</div>
-                    <div class="info-value">{{ $pesanan['ekspedisi']['layanan'] ?? '-' }}</div>
-                </div>
+                
+                @if (isset($currentEkspedisi['layanan']))
+                    <div class="info-row">
+                        <div class="info-label">Layanan</div>
+                        <div class="info-value">{{ $currentEkspedisi['layanan'] ?? '-' }}</div>
+                    </div>
+                @endif
+                
                 <div class="info-row">
                     <div class="info-label">Biaya Pengiriman</div>
                     <div class="info-value">
-                        Rp {{ number_format($pesanan['ekspedisi']['ongkos_kirim'] ?? 0, 0, ',', '.') }}
+                        Rp {{ number_format($currentEkspedisi['ongkos_kirim'] ?? 0, 0, ',', '.') }}
                     </div>
                 </div>
+
+                {{-- Jika ada multiple ekspedisi, tampilkan semua --}}
+                @if (!empty($ekspedisiList) && count($ekspedisiList) > 1)
+                    <div class="info-row">
+                        <div class="info-label">Pilihan Ekspedisi Lain</div>
+                        <div class="info-value">
+                            @foreach ($ekspedisiList as $index => $ekspedisi)
+                                @if ($index > 0) {{-- Skip yang pertama karena sudah ditampilkan di atas --}}
+                                    <small class="d-block">
+                                        {{ $ekspedisi['nama_ekspedisi'] }} - 
+                                        Rp {{ number_format($ekspedisi['ongkos_kirim'], 0, ',', '.') }}
+                                    </small>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             @endif
-            <div class="info-row">
-                <div class="info-label">Admin</div>
-                <div class="info-value">{{ $pesanan['admin']['nama'] ?? 'Belum ditentukan' }}</div>
-            </div>
         </div>
     </div>
 

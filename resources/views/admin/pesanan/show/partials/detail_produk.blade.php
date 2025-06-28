@@ -182,31 +182,62 @@
     @endforelse
     
     <!-- Total -->
-    <div class="total-section">
-        @php
-            $subTotal = 0;
-            $totalBiayaDesain = 0;
-            
-            foreach ($pesanan['detail_pesanans'] ?? [] as $detail) {
-                $hargaProduk = $detail['custom']['harga'] ?? 0;
-                $jumlah = $detail['jumlah'] ?? 1;
-                $subTotal += $hargaProduk * $jumlah;
-                
-                // Hitung biaya desain
-                if(($detail['tipe_desain'] ?? '') == 'dibuatkan') {
-                    $totalBiayaDesain += $detail['biaya_jasa'] ?? ($biayaDesain ?? 20000);
-                }
-            }
-            
-            $ongkir = $pesanan['ekspedisi']['ongkos_kirim'] ?? 0;
-            $grandTotal = $subTotal + $totalBiayaDesain + $ongkir;
-        @endphp
+    <!-- Total -->
+<div class="total-section">
+    @php
+        $subTotal = 0;
+        $totalBiayaDesain = 0;
         
-        <div class="subtotal">Subtotal Produk: Rp {{ number_format($subTotal, 0, ',', '.') }}</div>
-        <div class="biaya-desain">Biaya Desain: Rp {{ number_format($totalBiayaDesain, 0, ',', '.') }}</div>
-        @if(($pesanan['metode_pengambilan'] ?? '') == 'antar')
-        <div class="ongkir">Ongkos Kirim: Rp {{ number_format($ongkir, 0, ',', '.') }}</div>
+        foreach ($pesanan['detail_pesanans'] ?? [] as $detail) {
+            $hargaProduk = $detail['custom']['harga'] ?? 0;
+            $jumlah = $detail['jumlah'] ?? 1;
+            $subTotal += $hargaProduk * $jumlah;
+            
+            // Hitung biaya desain
+            if(($detail['tipe_desain'] ?? '') == 'dibuatkan') {
+                $totalBiayaDesain += $detail['biaya_jasa'] ?? ($biayaDesain ?? 20000);
+            }
+        }
+        
+        // Ambil ongkir dari ekspedisiList jika tersedia, fallback ke pesanan ekspedisi
+        $ongkir = 0;
+        if (!empty($ekspedisiList) && count($ekspedisiList) > 0) {
+            $ongkir = $ekspedisiList[0]['ongkos_kirim'] ?? 0;
+        } else {
+            $ongkir = $pesanan['ekspedisi']['ongkos_kirim'] ?? 0;
+        }
+        
+        $grandTotal = $subTotal + $totalBiayaDesain + $ongkir;
+    @endphp
+    
+    <div class="subtotal">Subtotal Produk: Rp {{ number_format($subTotal, 0, ',', '.') }}</div>
+    <div class="biaya-desain">Biaya Desain: Rp {{ number_format($totalBiayaDesain, 0, ',', '.') }}</div>
+    
+    @if(($pesanan['metode_pengambilan'] ?? '') == 'antar')
+        <div class="ongkir">
+            Ongkos Kirim : Rp {{ number_format($ongkir, 0, ',', '.') }}
+        </div>
+        
+        {{-- Tampilkan pilihan ekspedisi lain jika ada --}}
+        @if (!empty($ekspedisiList) && count($ekspedisiList) > 1)
+            <div class="ekspedisi-alternatif mt-2">
+                <small class="text-muted">Pilihan ekspedisi lain:</small>
+                @foreach ($ekspedisiList as $index => $ekspedisi)
+                    @if ($index > 0)
+                        @php
+                            $alternativeTotal = $subTotal + $totalBiayaDesain + $ekspedisi['ongkos_kirim'];
+                        @endphp
+                        <div class="small text-muted">
+                            • {{ $ekspedisi['nama_ekspedisi'] }}: 
+                            Rp {{ number_format($ekspedisi['ongkos_kirim'], 0, ',', '.') }}
+                            (Total: Rp {{ number_format($alternativeTotal, 0, ',', '.') }})
+                        </div>
+                    @endif
+                @endforeach
+            </div>
         @endif
-        <div class="total">Total: Rp {{ number_format($grandTotal, 0, ',', '.') }}</div>
-    </div>
+    @endif
+    
+    <div class="total"><strong>Total: Rp {{ number_format($grandTotal, 0, ',', '.') }}</strong></div>
+</div>
 </div>

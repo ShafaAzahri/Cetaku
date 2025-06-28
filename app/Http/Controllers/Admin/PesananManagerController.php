@@ -116,6 +116,17 @@ class PesananManagerController extends Controller
             $mesinList = $response['available_machines'] ?? [];
             $operatorList = $response['active_operators'] ?? [];
 
+            // Fetch additional fields
+            $ekspedisi_id = $pesanan['ekspedisi_id'] ?? null;  // Ekspedisi ID
+            $alamat_pengiriman = $pesanan['alamat_pengiriman'] ?? null;  // Alamat Pengiriman
+
+            // Fetch ekspedisi data berdasarkan pesanan_id
+            $ekspedisiResponse = $this->sendApiRequest('get', "/ekspedisis?pesanan_id={$id}");
+            $ekspedisiList = [];
+            if (($ekspedisiResponse['success'] ?? false) && isset($ekspedisiResponse['data'])) {
+                $ekspedisiList = $ekspedisiResponse['data'];
+            }
+
             $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
             $biayaDesain = 0;
             if (($biayaDesainResponse['success'] ?? false) &&
@@ -129,7 +140,10 @@ class PesananManagerController extends Controller
                 'statusOptions',
                 'mesinList',
                 'operatorList',
-                'biayaDesain'
+                'biayaDesain',
+                'ekspedisi_id',  // Include ekspedisi_id
+                'alamat_pengiriman',  // Include alamat_pengiriman
+                'ekspedisiList'  // Include ekspedisi list
             ));
         } catch (\Exception $e) {
             Log::error('Error pada halaman detail pesanan: ' . $e->getMessage());
@@ -137,6 +151,7 @@ class PesananManagerController extends Controller
                 ->with('error', 'Terjadi kesalahan saat memuat detail pesanan');
         }
     }
+
 
     /**
      * Update resi pesanan (text) dan bukti pengiriman (image) ke tabel `pesanans`

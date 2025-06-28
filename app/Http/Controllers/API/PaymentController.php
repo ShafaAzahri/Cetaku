@@ -50,6 +50,9 @@ class PaymentController extends Controller
         $deliveryMethod = $request->input('delivery_method', 'antar');
         $alamatId = $request->input('alamat_id');
 
+        // Tentukan metode pengambilan berdasarkan delivery method
+        $metodePengambilan = ($deliveryMethod === 'antar') ? 'antar' : 'ambil';
+
         // Data ekspedisi dari request
         $ekspedisiData = $request->input('ekspedisi', []);
         $namaEkspedisi = $ekspedisiData['nama'] ?? null;
@@ -87,12 +90,14 @@ class PaymentController extends Controller
         $biayaDesainRecord = BiayaDesain::first();
         $biayaDesain = (float) ($biayaDesainRecord->biaya ?? 0);
         $totalBiayaDesain = $keranjangItems->where('tipe_desain', 'dibuatkan')->count() > 0 ? $biayaDesain : 0;
-        $ongkir = (float) $request->input('ongkir', 0);
+        
+        // Ongkir hanya untuk delivery 'antar'
+        $ongkir = ($deliveryMethod === 'antar') ? (float) $request->input('ongkir', 0) : 0;
         $totalHarga = $totalHargaProduk + $totalBiayaDesain + $ongkir;
 
         DB::beginTransaction();
         try {
-            // Buat pesanan
+            // Buat pesanan dengan field yang benar
             $pesanan = Pesanan::create([
                 'user_id' => $user->id,
                 'alamat_id' => $alamatId,
@@ -101,7 +106,8 @@ class PaymentController extends Controller
                 'total' => $totalHarga,
                 'estimasi_waktu' => 24,
                 'tanggal_dipesan' => now(),
-                'metode_pengiriman' => $deliveryMethod,
+                'metode_pengiriman' => $deliveryMethod, // 'antar' atau 'ambil'
+                'metode_pengambilan' => $metodePengambilan, // sama dengan metode_pengiriman untuk konsistensi
                 'ongkir' => $ongkir,
             ]);
 
@@ -177,6 +183,8 @@ class PaymentController extends Controller
                 return response()->json([
                     'success' => true,
                     'payment_method' => 'qris',
+                    'delivery_method' => $deliveryMethod,
+                    'metode_pengambilan' => $metodePengambilan,
                     'snap_token' => $snapToken,
                     'redirect_url' => 'https://app.sandbox.midtrans.com/snap/v2/vtweb/' . $snapToken,
                     'order_id' => $pesanan->id,
@@ -199,6 +207,8 @@ class PaymentController extends Controller
                 return response()->json([
                     'success' => true,
                     'payment_method' => 'cod',
+                    'delivery_method' => $deliveryMethod,
+                    'metode_pengambilan' => $metodePengambilan,
                     'order_id' => $pesanan->id,
                     'message' => 'Pesanan berhasil dibuat. Pembayaran saat pesanan diterima.',
                     'redirect_url' => '/pesanan'
@@ -244,6 +254,8 @@ class PaymentController extends Controller
             'payment_status' => $pesanan->pembayaran->status ?? 'Unknown',
             'payment_method' => $pesanan->pembayaran->metode ?? 'Unknown',
             'order_status' => $pesanan->status,
+            'delivery_method' => $pesanan->metode_pengiriman,
+            'metode_pengambilan' => $pesanan->metode_pengambilan,
             'total' => $pesanan->total
         ]);
     }
