@@ -23,6 +23,7 @@ class Pesanan extends Model
         'admin_id',
         'ekspedisi_id',
         'status',
+        'alamat_pengiriman',
         'metode_pengambilan',
         'waktu_pengambilan',
         'estimasi_waktu',
@@ -61,7 +62,7 @@ class Pesanan extends Model
      */
     public function ekspedisi()
     {
-        return $this->belongsTo(Ekspedisi::class);
+        return $this->hasMany(Ekspedisi::class, 'pesanan_id');
     }
 
     /**
@@ -79,5 +80,9 @@ class Pesanan extends Model
     {
         return $this->hasOne(Pembayaran::class);
     }
-
+    // app/Models/Pesanan.php
+    public function detail_pesanans()
+    {
+        return $this->hasMany(DetailPesanan::class, 'pesanan_id');
+    }
 }

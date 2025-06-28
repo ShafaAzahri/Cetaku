@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\DetailPesanan;
 use App\Models\Pesanan;
+use App\Models\item;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class PesananManagerController extends Controller
 {
@@ -17,17 +20,12 @@ class PesananManagerController extends Controller
         $this->apiBaseUrl = rtrim(env('API_URL', config('app.url')), '/');
     }
 
-    /**
-     * Menampilkan halaman daftar pesanan
-     */
     public function getPesananStats()
     {
         try {
-            // Ambil bulan dan tahun saat ini
             $currentMonth = now()->month;
             $currentYear = now()->year;
 
-            // Cek apakah bulan dan tahun saat ini masih sama
             $pesananBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
                 ->whereYear('created_at', $currentYear)
                 ->count();
@@ -65,7 +63,6 @@ class PesananManagerController extends Controller
             $sampaiTanggal = $request->get('sampai_tanggal', '');
             $perPage = $request->get('per_page', 10);
 
-            // Ambil data dari API
             $response = $this->sendApiRequest('get', '/admin/pesanan', [
             'status' => $status,
             'search' => $search,
@@ -86,7 +83,6 @@ class PesananManagerController extends Controller
             $pesanans = $response['pesanans'];
             $statusOptions = $response['status_options'] ?? ['Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
 
-            // Ambil data statistik
             $statsResponse = $this->sendApiRequest('get', '/admin/pesanan/statistics');
             $stats = ($statsResponse['success'] ?? false) ? $statsResponse['statistics'] : null;
 
@@ -105,14 +101,9 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Menampilkan detail pesanan
-     */
-    // Di PesananManagerController.php
     public function show($id)
     {
         try {
-            // Ambil detail pesanan dari API
             $response = $this->sendApiRequest('get', "/admin/pesanan/{$id}");
 
             if (!($response['success'] ?? false)) {
@@ -122,19 +113,14 @@ class PesananManagerController extends Controller
 
             $pesanan = $response['pesanan'];
             $statusOptions = $response['status_options'] ?? [];
-
-            // Ambil daftar mesin dan operator dari response API
             $mesinList = $response['available_machines'] ?? [];
             $operatorList = $response['active_operators'] ?? [];
 
-            // Ambil biaya desain (kode yang sudah ada)
             $biayaDesainResponse = $this->sendApiRequest('get', '/biaya-desains');
             $biayaDesain = 0;
-
             if (($biayaDesainResponse['success'] ?? false) &&
                 isset($biayaDesainResponse['biaya_desains']) &&
-                count($biayaDesainResponse['biaya_desains']) > 0
-            ) {
+                count($biayaDesainResponse['biaya_desains']) > 0) {
                 $biayaDesain = $biayaDesainResponse['biaya_desains'][0]['biaya'] ?? 0;
             }
 
@@ -153,32 +139,98 @@ class PesananManagerController extends Controller
     }
 
     /**
-     * Update status pesanan
+     * Update resi pesanan (text) dan bukti pengiriman (image) ke tabel `pesanans`
      */
+    public function updateResiDanBukti(Request $request, $id)
+    {
+        $request->validate([
+            'resi_pesanan' => 'nullable|string|max:255',
+            'bukti_pengiriman' => 'nullable|image|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
+        try {
+            $pesanan = Pesanan::findOrFail($id);
+            $pesanan->resi_pesanan = $request->resi_pesanan;
+
+            if ($request->hasFile('bukti_pengiriman')) {
+                if ($pesanan->bukti_pengiriman && Storage::disk('public')->exists($pesanan->bukti_pengiriman)) {
+                    Storage::disk('public')->delete($pesanan->bukti_pengiriman);
+                }
+
+                $path = $request->file('bukti_pengiriman')->store('bukti_pengiriman', 'public');
+                $pesanan->bukti_pengiriman = $path;
+            }
+
+            $pesanan->save();
+
+            return redirect()->back()->with('success', 'Resi dan bukti pengiriman berhasil diperbarui.');
+        } catch (\Exception $e) {
+            Log::error('Gagal update resi/bukti: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan data.');
+        }
+    }
+
+    public function uploadBukti(Request $request, $id)
+    {
+        $request->validate([
+            'bukti_pengiriman' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        try {
+            $pesanan = Pesanan::findOrFail($id);
+
+            // Hapus gambar lama jika ada
+            if ($pesanan->bukti_pengiriman && Storage::disk('public')->exists($pesanan->bukti_pengiriman)) {
+                Storage::disk('public')->delete($pesanan->bukti_pengiriman);
+            }
+
+            $path = $request->file('bukti_pengiriman')->store('bukti_pengiriman', 'public');
+            $pesanan->bukti_pengiriman = $path;
+            $pesanan->save();
+
+            return redirect()->back()->with('success', 'Bukti pengiriman berhasil diupload.');
+        } catch (\Exception $e) {
+            Log::error('Gagal upload bukti pengiriman: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengupload bukti pengiriman.');
+        }
+    }
+
+    public function uploadResi(Request $request, $id)
+    {
+        $request->validate([
+            'resi_pesanan' => 'required|string|max:255',
+        ]);
+
+        try {
+            $pesanan = Pesanan::findOrFail($id);
+            $pesanan->resi_pesanan = $request->input('resi_pesanan');
+            $pesanan->save();
+
+            return redirect()->back()->with('success', 'Resi berhasil diunggah.');
+        } catch (\Exception $e) {
+            Log::error('Gagal upload resi: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengunggah resi.');
+        }
+    }
+
     public function updateStatus(Request $request, $id)
     {
         try {
             $request->validate([
-                'status' => 'required|string',
-                'catatan' => 'nullable|string'
+                'status' => 'required|string'
             ]);
 
-            $response = $this->sendApiRequest('put', "/admin/pesanan/{$id}/status", $request->all());
+            $pesanan = Pesanan::findOrFail($id);
+            $pesanan->status = $request->status;
+            $pesanan->save();
 
-            if ($response['success'] ?? false) {
-                return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui');
-            }
-
-            return redirect()->back()->with('error', $response['message'] ?? 'Gagal memperbarui status pesanan');
+            return redirect()->back()->with('success', 'Status pesanan berhasil diperbarui.');
         } catch (\Exception $e) {
-            Log::error('Error pada update status pesanan: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status');
+            Log::error('Gagal update status: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status.');
         }
     }
 
-    /**
-     * Menugaskan proses produksi
-     */
     public function assignProduction(Request $request, $id)
     {
         try {
@@ -202,9 +254,6 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Menyelesaikan proses produksi
-     */
     public function completeProduction(Request $request, $id)
     {
         try {
@@ -228,9 +277,6 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Konfirmasi pengiriman pesanan
-     */
     public function confirmShipment(Request $request, $id)
     {
         try {
@@ -253,9 +299,6 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Konfirmasi pengambilan pesanan
-     */
     public function confirmPickup($id)
     {
         try {
@@ -272,9 +315,6 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Upload desain
-     */
     public function uploadDesain(Request $request, $id)
     {
         try {
@@ -284,7 +324,6 @@ class PesananManagerController extends Controller
                 'tipe' => 'required|in:desain_toko,revisi'
             ]);
 
-            // Untuk upload file, kita perlu mengirim dengan pendekatan multipart
             $token = session('api_token');
 
             $response = Http::withToken($token)
@@ -312,9 +351,6 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Batalkan pesanan
-     */
     public function cancelOrder(Request $request, $id)
     {
         try {
@@ -335,14 +371,6 @@ class PesananManagerController extends Controller
         }
     }
 
-    /**
-     * Helper: Mengirim permintaan API dengan token otentikasi
-     *
-     * @param string $method Metode HTTP (get, post, put, delete)
-     * @param string $endpoint Endpoint API
-     * @param array $data Data yang dikirim (opsional)
-     * @return array Respons dalam format array
-     */
     protected function sendApiRequest($method, $endpoint, $data = [])
     {
         try {
@@ -356,9 +384,7 @@ class PesananManagerController extends Controller
             ]);
 
             $response = Http::withToken($token)
-                ->withHeaders([
-                    'Accept' => 'application/json'
-                ])
+                ->withHeaders(['Accept' => 'application/json'])
                 ->$method($this->apiBaseUrl . $endpoint, $data);
 
             return $response->json();

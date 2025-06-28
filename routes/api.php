@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthApiController;
-use App\Http\Controllers\API\User\PaymentController;
+use App\Http\Controllers\API\PaymentController;
 use App\Http\Controllers\API\Admin\ItemApiController;
 use App\Http\Controllers\API\Admin\BahanApiController;
 use App\Http\Controllers\API\Admin\JenisApiController;

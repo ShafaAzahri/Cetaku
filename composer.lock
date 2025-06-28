@@ -6499,6 +6499,7 @@
         },
         {
             "name": "filp/whoops",
+<<<<<<< HEAD
             "version": "2.18.2",
             "source": {
                 "type": "git",
@@ -6509,6 +6510,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/filp/whoops/zipball/89dabca1490bc77dbcab41c2b20968c7e44bf7c3",
                 "reference": "89dabca1490bc77dbcab41c2b20968c7e44bf7c3",
+=======
+            "version": "2.18.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/filp/whoops.git",
+                "reference": "59a123a3d459c5a23055802237cb317f609867e5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/filp/whoops/zipball/59a123a3d459c5a23055802237cb317f609867e5",
+                "reference": "59a123a3d459c5a23055802237cb317f609867e5",
+>>>>>>> d3808850086c49c3fffd01641fbc98c4f9da330d
                 "shasum": ""
             },
             "require": {
@@ -6558,7 +6571,11 @@
             ],
             "support": {
                 "issues": "https://github.com/filp/whoops/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/filp/whoops/tree/2.18.2"
+=======
+                "source": "https://github.com/filp/whoops/tree/2.18.3"
+>>>>>>> d3808850086c49c3fffd01641fbc98c4f9da330d
             },
             "funding": [
                 {
@@ -6566,7 +6583,11 @@
                     "type": "github"
                 }
             ],
+<<<<<<< HEAD
             "time": "2025-06-11T20:42:19+00:00"
+=======
+            "time": "2025-06-16T00:02:10+00:00"
+>>>>>>> d3808850086c49c3fffd01641fbc98c4f9da330d
         },
         {
             "name": "hamcrest/hamcrest-php",
@@ -8740,6 +8761,11 @@
     "platform": {
         "php": "^8.2"
     },
+<<<<<<< HEAD
     "platform-dev": {},
     "plugin-api-version": "2.6.0"
+=======
+    "platform-dev": [],
+    "plugin-api-version": "2.3.0"
+>>>>>>> d3808850086c49c3fffd01641fbc98c4f9da330d
 }

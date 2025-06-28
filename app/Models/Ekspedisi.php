@@ -6,19 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ekspedisi extends Model
 {
-    /**
-     * Nama tabel yang terkait dengan model.
-     *
-     * @var string
-     */
-    protected $table = 'ekspedisis';
+    // Nonaktifkan timestamps untuk model ini
+    public $timestamps = false;
 
-    /**
-     * Atribut yang dapat diisi secara massal.
-     *
-     * @var array
-     */
     protected $fillable = [
+        'pesanan_id',
         'nama_ekspedisi',
         'layanan',
         'estimasi',
@@ -27,19 +19,10 @@ class Ekspedisi extends Model
     ];
 
     /**
-     * Atribut yang harus dikonversi ke tipe data khusus.
-     *
-     * @var array
+     * Relasi dengan pesanan
      */
-    protected $casts = [
-        'ongkos_kirim' => 'decimal:2',
-    ];
-
-    /**
-     * Dapatkan pesanan terkait dengan ekspedisi.
-     */
-    public function pesanans()
+    public function pesanan()
     {
-        return $this->hasMany(Pesanan::class);
+        return $this->belongsTo(Pesanan::class, 'pesanan_id');
     }
 }
