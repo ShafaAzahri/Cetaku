@@ -27,7 +27,8 @@ class Pesanan extends Model
         'metode_pengambilan',
         'waktu_pengambilan',
         'estimasi_waktu',
-        'tanggal_dipesan'
+        'tanggal_dipesan',
+        'total'
     ];
 
     /**

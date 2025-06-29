@@ -22,66 +22,63 @@ class LaporanController extends Controller
     }
 
     public function index(Request $request)
-    {
+{
+    // Tanggal default (awal & akhir bulan ini)
+    $startDate = $request->get('start_date', now()->startOfMonth()->toDateString());
+    $endDate = $request->get('end_date', now()->endOfMonth()->toDateString());
 
+    // Ambil data penjualan dari API
+    $response = $this->sendApiRequest('get', '/superadmin/sales', [
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+    ]);
 
-        // Tanggal default (awal & akhir bulan ini)
-        $startDate = $request->get('start_date', now()->startOfMonth()->toDateString());
-        $endDate = $request->get('end_date', now()->endOfMonth()->toDateString());
-
-        // Ambil data penjualan dari API
-        $response = $this->sendApiRequest('get', '/superadmin/sales', [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-        ]);
-       // dd($response);
-
-        if (!isset($response['success']) || !$response['success']) {
-            return view('superadmin.laporan.index')->with('error', $response['message'] ?? 'Gagal mengambil data penjualan');
-        }
-
-        // Hitung total harga penjualan
-        $totalPrice = collect($response['sales_data'])->sum('total_harga');
-
-        // Ambil produk unggulan (top selling items)
-        $topItems = $this->getTopSellingItems($startDate, $endDate);
-
-        // Ambil data rincian detail pesanan
-        $detailRincian = DB::table('detail_pesanans')
-            ->join('customs', 'detail_pesanans.custom_id', '=', 'customs.id')
-            ->join('items', 'customs.item_id', '=', 'items.id')
-            ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
-            ->join('users', 'pesanans.user_id', '=', 'users.id')
-            ->select(
-                'pesanans.id as pesanan_id',
-                'pesanans.created_at as tanggal_pesanan',
-                'users.nama as nama_pemesan',
-                'items.nama_item',
-                'customs.harga as harga_satuan',
-                'detail_pesanans.jumlah',
-                'detail_pesanans.total_harga',
-                'detail_pesanans.biaya_jasa'
-            )
-            ->where('pesanans.status', 'Selesai')
-            ->whereBetween('pesanans.created_at', [$startDate, $endDate])
-            ->orderBy('pesanans.id')
-            ->get();
-
-// dd([
-//     'startDate' => $startDate,
-//     'endDate' => $endDate,
-//     'salesData' => $response['sales_data'],
-// ]);
-
-        return view('superadmin.laporan.index', [
-            'salesData' => $response['sales_data'],
-            'topItems' => $topItems,
-            'detailRincian' => $detailRincian,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'totalPrice' => $totalPrice,
-        ]);
+    // Cek jika response tidak sukses atau sales_data tidak ada
+    if (!isset($response['success']) || !$response['success'] || !isset($response['sales_data'])) {
+        return view('superadmin.laporan.index')->with('error', $response['message'] ?? 'Gagal mengambil data penjualan');
     }
+
+    // Ambil total harga penjualan dari tabel pesanans
+    $totalPrice = DB::table('pesanans')
+        ->where('status', 'Selesai')  // Pastikan hanya mengambil pesanan yang sudah selesai
+        ->whereBetween('created_at', [$startDate, $endDate])  // Filter berdasarkan rentang tanggal
+        ->sum('total');  // Menjumlahkan nilai kolom 'total' dari tabel pesanans
+
+    // Ambil produk unggulan (top selling items)
+    $topItems = $this->getTopSellingItems($startDate, $endDate);
+
+    // Ambil data rincian detail pesanan dari database
+    $detailRincian = DB::table('detail_pesanans')
+        ->join('customs', 'detail_pesanans.custom_id', '=', 'customs.id')
+        ->join('items', 'customs.item_id', '=', 'items.id')
+        ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
+        ->join('users', 'pesanans.user_id', '=', 'users.id')
+        ->select(
+            'pesanans.id as pesanan_id',
+            'pesanans.created_at as tanggal_pesanan',
+            'users.nama as nama_pemesan',
+            'items.nama_item',
+            'customs.harga as harga_satuan',
+            'detail_pesanans.jumlah',
+            'pesanans.total',
+            'detail_pesanans.biaya_jasa'
+        )
+        ->where('pesanans.status', 'Selesai')  // Status pesanan Selesai
+        ->whereBetween('pesanans.created_at', [$startDate, $endDate])  // Filter berdasarkan rentang tanggal
+        ->orderBy('pesanans.id')
+        ->get();
+
+    // Kembalikan data ke view
+    return view('superadmin.laporan.index', [
+        'salesData' => $response['sales_data'],
+        'topItems' => $topItems,
+        'detailRincian' => $detailRincian,
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+        'totalPrice' => $totalPrice,  // Total harga dari tabel pesanans
+    ]);
+}
+
 
     // Fungsi bantu untuk request API
     protected function sendApiRequest($method, $endpoint, $data = [])
@@ -128,7 +125,7 @@ class LaporanController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth()->toDateString());
         $endDate = $request->get('end_date', now()->endOfMonth()->toDateString());
 
-        $salesData = Pesanan::select('pesanans.created_at', 'pesanans.status', 'detail_pesanans.total_harga')
+        $salesData = Pesanan::select('pesanans.created_at', 'pesanans.status', 'pesanans.total')
             ->join('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
             ->where('pesanans.status', 'Selesai')
             ->whereBetween('pesanans.created_at', [$startDate, $endDate])
@@ -151,7 +148,7 @@ class LaporanController extends Controller
                 'items.nama_item',
                 'customs.harga as harga_satuan',
                 'detail_pesanans.jumlah',
-                'detail_pesanans.total_harga',
+                'pesanans.total',
                 'detail_pesanans.biaya_jasa'
             )
 

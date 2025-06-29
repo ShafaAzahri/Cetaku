@@ -160,7 +160,7 @@
                                     @elseif($pesanan->status == 'Dibatalkan') bg-danger
                                     @endif">{{ $pesanan->status }}</span>
                                 </td>
-                                <td class="text-center">Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</td>
+                                <td class="text-center">Rp {{ number_format($pesanan->total, 0, ',', '.') }}</td>
                                 <td class="text-center">
                                     <a href="{{ route('admin.pesanan.show', $pesanan->pesanan_id) }}" class="btn btn-sm btn-outline-primary">Lihat</a>
                                 </td>

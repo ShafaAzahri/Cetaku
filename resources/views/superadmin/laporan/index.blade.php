@@ -137,80 +137,80 @@
             @endif
 
             <!-- 4. Laporan Rincian -->
-            <h3 class="mt-5">Laporan Rincian</h3>
-            @if(!empty($detailRincian) && count($detailRincian) > 0)
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No</th>
-                                <th>ID Pesanan</th>
-                                <th>Tanggal Pesanan</th>
-                                <th>Nama Pemesan</th>
-                                <th>Nama Produk</th>
-                                <th>Harga Satuan</th>
-                                <th>Jumlah</th>
-                                <th>Biaya Desain</th>
-                                <th>Total Harga</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $groupedByPesanan = collect($detailRincian)->groupBy('pesanan_id');
-                                $no = 1;
-                                $grandTotal = 0;
-                            @endphp
+<h3 class="mt-5">Laporan Rincian</h3>
+@if(!empty($detailRincian) && count($detailRincian) > 0)
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>No</th>
+                    <th>ID Pesanan</th>
+                    <th>Tanggal Pesanan</th>
+                    <th>Nama Pemesan</th>
+                    <th>Nama Produk</th>
+                    <th>Harga Satuan</th>
+                    <th>Jumlah</th>
+                    <th>Biaya Desain</th>
+                    <th>Total Harga</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $groupedByPesanan = collect($detailRincian)->groupBy('pesanan_id');
+                    $no = 1;
+                    $grandTotal = 0;
+                @endphp
 
-                            @foreach($groupedByPesanan as $pesananId => $items)
-                                @php
-                                    $rowspan = $items->count();
-                                    $first = $items->first();
-                                    $subtotal = 0;
-                                @endphp
+                @foreach($groupedByPesanan as $pesananId => $items)
+                    @php
+                        $rowspan = $items->count();
+                        $first = $items->first();
+                        $subtotal = 0;
+                    @endphp
 
-                                @foreach($items as $index => $item)
-                                    <tr>
-                                        @if($index === 0)
-                                            <td rowspan="{{ $rowspan }}">{{ $no++ }}</td>
-                                            <td rowspan="{{ $rowspan }}">#{{ $pesananId }}</td>
-                                            <td rowspan="{{ $rowspan }}">{{ \Carbon\Carbon::parse($item->tanggal_pesanan)->format('d/m/Y') }}</td>
-                                            <td rowspan="{{ $rowspan }}">{{ $item->nama_pemesan }}</td>
-                                        @endif
-                                        <td>{{ $item->nama_item }}</td>
-                                        <td>Rp {{ number_format($item->harga_satuan, 2, ',', '.') }}</td>
-                                        <td>{{ $item->jumlah }}</td>
-                                        <td>
-                                            @if ($item->biaya_jasa > 0)
-                                                Rp {{ number_format($item->biaya_jasa, 2, ',', '.') }}
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td>Rp {{ number_format($item->total_harga, 2, ',', '.') }}</td>
+                    @foreach($items as $index => $item)
+                        <tr>
+                            @if($index === 0)
+                                <td rowspan="{{ $rowspan }}">{{ $no++ }}</td>
+                                <td rowspan="{{ $rowspan }}">#{{ $pesananId }}</td>
+                                <td rowspan="{{ $rowspan }}">{{ \Carbon\Carbon::parse($item->tanggal_pesanan)->format('d/m/Y') }}</td>
+                                <td rowspan="{{ $rowspan }}">{{ $item->nama_pemesan }}</td>
+                            @endif
+                            <td>{{ $item->nama_item }}</td>
+                            <td>Rp {{ number_format($item->harga_satuan, 2, ',', '.') }}</td>
+                            <td>{{ $item->jumlah }}</td>
+                            <td>
+                                @if ($item->biaya_jasa > 0)
+                                    Rp {{ number_format($item->biaya_jasa, 2, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <!-- Ambil total harga dari kolom 'total' di tabel pesanans -->
+                            <td>Rp {{ number_format($item->total, 2, ',', '.') }}</td>
+                        </tr>
+                        @php $subtotal += $item->total; @endphp
+                    @endforeach
 
-                                    </tr>
-                                    @php $subtotal += $item->total_harga; @endphp
-                                @endforeach
+                    <tr class="table-secondary">
+                        <td colspan="8" class="text-end"><strong>Sub total:</strong></td>
+                        <td><strong>Rp {{ number_format($subtotal, 2, ',', '.') }}</strong></td>
+                    </tr>
 
-                                <tr class="table-secondary">
-                                    <td colspan="8" class="text-end"><strong>Sub total:</strong></td>
-                                    <td><strong>Rp {{ number_format($subtotal, 2, ',', '.') }}</strong></td>
-                                </tr>
+                    @php $grandTotal += $subtotal; @endphp
+                @endforeach
 
-                                @php $grandTotal += $subtotal; @endphp
-                            @endforeach
+                <tr class="table-info">
+                    <td colspan="8" class="text-end"><strong>Total Keseluruhan:</strong></td>
+                    <td><strong>Rp {{ number_format($grandTotal, 2, ',', '.') }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+@else
+    <p class="text-muted">Tidak ada data rincian penjualan.</p>
+@endif
 
-                            <tr class="table-info">
-                                <td colspan="8" class="text-end"><strong>Total Keseluruhan:</strong></td>
-                                <td><strong>Rp {{ number_format($grandTotal, 2, ',', '.') }}</strong></td>
-                            </tr>
-                        </tbody>
-
-                    </table>
-                </div>
-            @else
-                <p class="text-muted">Tidak ada data rincian penjualan.</p>
-            @endif
         </div>
     </div>
 </div>

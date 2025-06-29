@@ -68,6 +68,7 @@ Route::middleware('api.user')->group(function() {
         
     });
     Route::get('/pesanan', [PesananApiController::class, 'index']);
+    Route::get('/pesanan/{id}', [PesananApiController::class, 'show']);
 });
 
 Route::middleware('auth:api')->post('/checkout/payment', [PaymentController::class, 'checkoutPayment']);

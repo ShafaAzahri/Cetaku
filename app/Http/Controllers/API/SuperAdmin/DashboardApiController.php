@@ -148,20 +148,18 @@ class DashboardApiController extends Controller
     private function getRevenueStats()
     {
         // Calculate total revenue from completed orders
-        $totalRevenue = DB::table('detail_pesanans')
-            ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
+        $totalRevenue = DB::table('pesanans')
             ->where('pesanans.status', 'Selesai')
-            ->sum('detail_pesanans.total_harga');
+            ->sum('pesanans.total');
         
         // Calculate monthly revenue for the last 12 months
-        $monthlyRevenue = DB::table('detail_pesanans')
-            ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
+        $monthlyRevenue = DB::table('pesanans')
             ->where('pesanans.status', 'Selesai')
             ->where('pesanans.created_at', '>=', now()->subMonths(12))
             ->select(
                 DB::raw('MONTH(pesanans.created_at) as month'),
                 DB::raw('YEAR(pesanans.created_at) as year'),
-                DB::raw('SUM(detail_pesanans.total_harga) as total')
+                DB::raw('SUM(pesanans.total) as total')
             )
             ->groupBy('year', 'month')
             ->orderBy('year')

@@ -60,7 +60,8 @@ class AdminController extends Controller
                     'pesanans.id as pesanan_id',
                     'users.nama as pelanggan',
                     'pesanans.status',
-                    'detail_pesanans.total_harga'
+                    'detail_pesanans.total_harga',
+                    'pesanans.total'   
                 )
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
@@ -73,7 +74,7 @@ class AdminController extends Controller
                 ->where('pesanans.status', 'Selesai')
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
-                ->sum('detail_pesanans.total_harga');
+                ->sum('pesanans.total');
 
             // RIWAYAT PESANAN 
             $riwayatPesanan = Pesanan::whereIn('status', ['Selesai', 'Dibatalkan'])

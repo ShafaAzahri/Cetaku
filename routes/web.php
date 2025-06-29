@@ -114,6 +114,9 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
 
     // Route untuk search dengan sorting (jika diperlukan)
     Route::get('/produk/search', [ProdukListController::class, 'search'])->name('produk.search');
+
+    Route::get('/detail-pesanan', [PesananWebController::class, 'show'])->name('user.pesanan.detail');
+
     // Add more user routes here if needed
 });
 

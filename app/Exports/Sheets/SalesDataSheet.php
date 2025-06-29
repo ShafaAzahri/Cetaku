@@ -75,7 +75,7 @@ class SalesDataSheet implements FromCollection, WithHeadings, WithTitle, ShouldA
             $data[] = [
                 $sale->created_at->format('Y-m-d'),
                 $sale->status,
-                $sale->total_harga,
+                $sale->total,
             ];
         }
 

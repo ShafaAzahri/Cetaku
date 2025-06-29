@@ -56,22 +56,11 @@
                     </div>
                 </div>
 
-                {{-- Jika ada multiple ekspedisi, tampilkan semua --}}
-                @if (!empty($ekspedisiList) && count($ekspedisiList) > 1)
-                    <div class="info-row">
-                        <div class="info-label">Pilihan Ekspedisi Lain</div>
-                        <div class="info-value">
-                            @foreach ($ekspedisiList as $index => $ekspedisi)
-                                @if ($index > 0) {{-- Skip yang pertama karena sudah ditampilkan di atas --}}
-                                    <small class="d-block">
-                                        {{ $ekspedisi['nama_ekspedisi'] }} - 
-                                        Rp {{ number_format($ekspedisi['ongkos_kirim'], 0, ',', '.') }}
-                                    </small>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                <div class="info-row">
+                    <div class="info-label">Alamat Pengiriman</div>
+                    <div class="info-value">{{ $pesanan['alamat_pengiriman'] ?? '-' }}</div>
+                </div>
+
             @endif
         </div>
     </div>

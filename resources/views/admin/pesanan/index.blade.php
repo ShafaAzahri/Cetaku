@@ -138,16 +138,8 @@
                             @endif
                         </td>
                         <td>
-                            @php
-                            $total = 0;
-                            if(isset($pesanan['detail_pesanans'])) {
-                            foreach($pesanan['detail_pesanans'] as $detail) {
-                            $total += $detail['total_harga'] ?? 0;
-                            }
-                            }
-                            @endphp
-                            Rp {{ number_format($total, 0, ',', '.') }}
-                        </td>
+    Rp {{ number_format($pesanan['total'] ?? 0, 0, ',', '.') }}
+</td>
                         <td>
                             @if(in_array($pesanan['status'], ['Sedang Dikirim', 'Selesai']))
                             {{ $pesanan['resi_pesanan'] ?? '-' }}

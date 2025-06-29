@@ -21,14 +21,14 @@ class LaporanApiController extends Controller
             $endDate = $request->get('end_date', now()->subMonth()->endOfMonth()->toDateString());
 
             // Fetch the sales data for completed orders
-            $salesData = Pesanan::select('pesanans.id', 'pesanans.created_at', 'pesanans.status', DB::raw('SUM(detail_pesanans.total_harga) as total_harga'))
+            $salesData = Pesanan::select('pesanans.id', 'pesanans.created_at', 'pesanans.status', DB::raw('SUM(pesanans.total) as total_harga'))
                 ->join('detail_pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
                 ->where('pesanans.status', 'Selesai')
                 ->whereBetween('pesanans.created_at', [$startDate, $endDate])
                 ->groupBy('pesanans.id', 'pesanans.created_at', 'pesanans.status')
                 ->orderBy('pesanans.created_at', 'desc')  // Order by date (latest first)
                 ->get();
-
+                
             return response()->json([
                 'success' => true,
                 'sales_data' => $salesData,

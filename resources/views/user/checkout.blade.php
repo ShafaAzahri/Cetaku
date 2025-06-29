@@ -163,7 +163,13 @@
                             <i class="fas fa-map-marker-alt store-info-icon"></i>
                             <div class="store-info-content">
                                 <h6>Alamat Toko</h6>
-                                <p>Jl. Prof. Soedarto, Tembalang<br>Semarang, Jawa Tengah 50275</p>
+                                    <p>
+                                        {{ $tokoInfo->alamat_lengkap }},
+                                        {{ $tokoInfo->kecamatan }},
+                                        {{ $tokoInfo->kota }},
+                                        {{ $tokoInfo->provinsi }},
+                                        {{ $tokoInfo->kode_pos }}
+                                    </p>
                             </div>
                         </div>
                         <div class="store-info-item">
@@ -177,7 +183,7 @@
                             <i class="fas fa-phone store-info-icon"></i>
                             <div class="store-info-content">
                                 <h6>Kontak</h6>
-                                <p>(024) 7460054<br>WhatsApp: +62 812-3456-7890</p>
+                                <p>{{ $tokoInfo->nomor_telepon ?? 'Kontak belum tersedia' }}</p>
                             </div>
                         </div>
                     </div>
@@ -191,16 +197,18 @@
                 <!-- Payment Method -->
                 <div class="checkout-card">
                     <h5 class="section-title"><i class="fas fa-credit-card"></i>Metode Pembayaran</h5>
-                    <div class="card-item payment-option selected" onclick="pilihPembayaran('cod', this)">
-                        <input type="radio" name="payment_method" value="cod" checked>
+                    <!-- COD - Hidden by default when antar is selected -->
+                    <div class="card-item payment-option" id="cod-option" onclick="pilihPembayaran('cod', this)" style="display: none;">
+                        <input type="radio" name="payment_method" value="cod">
                         <i class="fas fa-money-bill-wave payment-icon"></i>
                         <div>
                             <div class="fw-semibold">COD (Bayar di Tempat)</div>
                             <small class="text-muted">Bayar saat pesanan diterima</small>
                         </div>
                     </div>
-                    <div class="card-item payment-option" onclick="pilihPembayaran('qris', this)">
-                        <input type="radio" name="payment_method" value="qris">
+                    <!-- QRIS - Always visible -->
+                    <div class="card-item payment-option selected" id="qris-option" onclick="pilihPembayaran('qris', this)">
+                        <input type="radio" name="payment_method" value="qris" checked>
                         <i class="fas fa-qrcode payment-icon"></i>
                         <div>
                             <div class="fw-semibold">QRIS</div>
@@ -287,109 +295,97 @@
 </div>
 
 <script>
-// Data dari server
+// Global variables
 var subtotal = {{ $subtotal ?? 0 }};
 var biayaDesain = {{ $biayaDesainFinal ?? 0 }};
 var defaultOngkir = {{ $defaultOngkir ?? 0 }};
 var currentOngkir = defaultOngkir;
 var currentMethod = 'antar';
 
-// Fungsi format rupiah
+// Utility functions
 function formatRupiah(amount) {
     return 'Rp ' + amount.toLocaleString('id-ID');
 }
 
-// Fungsi update total
 function updateTotal() {
     var ongkir = (currentMethod === 'ambil') ? 0 : currentOngkir;
     var total = subtotal + biayaDesain + ongkir;
     
     document.getElementById('shipping-cost-display').textContent = formatRupiah(ongkir);
     document.getElementById('total-display').innerHTML = '<strong>' + formatRupiah(total) + '</strong>';
-    
-    // Sembunyikan ongkir jika ambil sendiri
-    var shippingRow = document.getElementById('shipping-cost-row');
-    shippingRow.style.display = (currentMethod === 'ambil') ? 'none' : 'flex';
+    document.getElementById('shipping-cost-row').style.display = (currentMethod === 'ambil') ? 'none' : 'flex';
 }
 
-// Pilih metode pengiriman
+// Selection functions
 function pilihMetodePengiriman(method, element) {
-    // Update active state
-    var options = document.querySelectorAll('.delivery-option');
-    for (var i = 0; i < options.length; i++) {
-        options[i].classList.remove('active');
-    }
+    // Update UI
+    document.querySelectorAll('.delivery-option').forEach(el => el.classList.remove('active'));
     element.classList.add('active');
-    
-    // Update radio button
     element.querySelector('input[type="radio"]').checked = true;
     
-    // Update method
     currentMethod = method;
     
     // Show/hide sections
+    document.getElementById('address-section').style.display = method === 'antar' ? 'block' : 'none';
+    document.getElementById('shipping-section').style.display = method === 'antar' ? 'block' : 'none';
+    document.getElementById('store-section').style.display = method === 'ambil' ? 'block' : 'none';
+    
+    // Payment method logic
+    var codOption = document.getElementById('cod-option');
+    var qrisOption = document.getElementById('qris-option');
+    
     if (method === 'antar') {
-        document.getElementById('address-section').style.display = 'block';
-        document.getElementById('shipping-section').style.display = 'block';
-        document.getElementById('store-section').style.display = 'none';
+        // Pesan Antar: Only QRIS
+        codOption.style.display = 'none';
+        qrisOption.style.display = 'block';
+        qrisOption.classList.add('selected');
+        qrisOption.querySelector('input').checked = true;
     } else {
-        document.getElementById('address-section').style.display = 'none';
-        document.getElementById('shipping-section').style.display = 'none';
-        document.getElementById('store-section').style.display = 'block';
+        // Ambil Sendiri: Both COD and QRIS
+        codOption.style.display = 'block';
+        qrisOption.style.display = 'block';
+        // Default to COD for pickup
+        qrisOption.classList.remove('selected');
+        codOption.classList.add('selected');
+        codOption.querySelector('input').checked = true;
+        qrisOption.querySelector('input').checked = false;
     }
     
     updateTotal();
 }
 
-// Pilih alamat
 function pilihAlamat(element) {
-    // Remove selected dari semua
-    var cards = document.querySelectorAll('.address-card');
-    for (var i = 0; i < cards.length; i++) {
-        cards[i].classList.remove('selected');
-    }
-    
-    // Add selected ke yang diklik
+    document.querySelectorAll('.address-card').forEach(el => el.classList.remove('selected'));
     element.classList.add('selected');
     element.querySelector('input[type="radio"]').checked = true;
 }
 
-// Pilih ekspedisi
 function pilihEkspedisi(element) {
-    // Remove selected dari semua
-    var cards = document.querySelectorAll('.ekspedisi-option');
-    for (var i = 0; i < cards.length; i++) {
-        cards[i].classList.remove('selected');
-    }
-    
-    // Add selected ke yang diklik
+    document.querySelectorAll('.ekspedisi-option').forEach(el => el.classList.remove('selected'));
     element.classList.add('selected');
     element.querySelector('input[type="radio"]').checked = true;
     
-    // Update ongkir
     currentOngkir = parseInt(element.getAttribute('data-cost')) || 0;
     updateTotal();
 }
 
-// Pilih pembayaran
 function pilihPembayaran(method, element) {
-    // Remove selected dari semua
-    var options = document.querySelectorAll('.payment-option');
-    for (var i = 0; i < options.length; i++) {
-        options[i].classList.remove('selected');
-    }
-    
-    // Add selected ke yang diklik
+    document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
     element.classList.add('selected');
     element.querySelector('input[type="radio"]').checked = true;
 }
 
-// Proses checkout - BAGIAN YANG DIPERBAIKI
 function prosesCheckout() {
-    // Validasi dasar
-    if (currentMethod === 'antar' && !document.querySelector('input[name="selected_address"]:checked')) {
-        alert('Silakan pilih alamat pengiriman terlebih dahulu.');
-        return;
+    // Validation
+    if (currentMethod === 'antar') {
+        if (!document.querySelector('input[name="selected_address"]:checked')) {
+            alert('Silakan pilih alamat pengiriman terlebih dahulu.');
+            return;
+        }
+        if (!document.querySelector('input[name="selected_ekspedisi"]:checked')) {
+            alert('Silakan pilih ekspedisi terlebih dahulu.');
+            return;
+        }
     }
     
     var paymentMethod = document.querySelector('input[name="payment_method"]:checked');
@@ -398,59 +394,38 @@ function prosesCheckout() {
         return;
     }
     
-    // Validasi ekspedisi untuk metode antar
-    if (currentMethod === 'antar' && !document.querySelector('input[name="selected_ekspedisi"]:checked')) {
-        alert('Silakan pilih ekspedisi terlebih dahulu.');
-        return;
-    }
-    
     // Disable button
     var btn = document.querySelector('.btn-checkout');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
     
-    // Prepare ekspedisi data
+    // Prepare data
     var ekspedisiData = null;
     if (currentMethod === 'antar') {
         var selectedEkspedisi = document.querySelector('input[name="selected_ekspedisi"]:checked');
         var selectedEkspedisiElement = selectedEkspedisi.closest('.ekspedisi-option');
         
         if (selectedEkspedisi && selectedEkspedisiElement) {
-            // Parse ekspedisi code dan service
             var ekspedisiValue = selectedEkspedisi.value.split('-');
-            var ekspedisiCode = ekspedisiValue[0] || '';
-            var ekspedisiService = ekspedisiValue[1] || '';
-            
-            // Get ekspedisi details dari element
-            var ekspedisiName = selectedEkspedisiElement.querySelector('.ekspedisi-name').textContent;
-            var ekspedisiDescription = selectedEkspedisiElement.querySelector('.ekspedisi-service').textContent;
-            var ekspedisiCost = parseInt(selectedEkspedisiElement.getAttribute('data-cost')) || 0;
-            var ekspedisiEtd = selectedEkspedisiElement.querySelector('.ekspedisi-estimate').textContent;
-            
             ekspedisiData = {
-                code: ekspedisiCode,
-                service: ekspedisiService,
-                nama: ekspedisiName,
-                description: ekspedisiDescription,
-                cost: ekspedisiCost,
-                etd: ekspedisiEtd
+                code: ekspedisiValue[0] || '',
+                service: ekspedisiValue[1] || '',
+                nama: selectedEkspedisiElement.querySelector('.ekspedisi-name').textContent,
+                description: selectedEkspedisiElement.querySelector('.ekspedisi-service').textContent,
+                cost: parseInt(selectedEkspedisiElement.getAttribute('data-cost')) || 0,
+                etd: selectedEkspedisiElement.querySelector('.ekspedisi-estimate').textContent
             };
         }
     }
     
-    // Prepare data
     var data = {
-        alamat_id: document.querySelector('input[name="selected_address"]:checked') ? 
-                   document.querySelector('input[name="selected_address"]:checked').value : null,
+        alamat_id: document.querySelector('input[name="selected_address"]:checked')?.value || null,
         selected_items: @json(array_column($produkTerpilih ?? [], 'id')),
         ongkir: (currentMethod === 'antar') ? currentOngkir : 0,
         payment_method: paymentMethod.value,
         delivery_method: currentMethod,
-        ekspedisi: ekspedisiData // Kirim data ekspedisi yang lengkap
+        ekspedisi: ekspedisiData
     };
-    
-    // Debug log
-    console.log('Data yang akan dikirim:', data);
     
     // Send to server
     fetch('{{ route("checkout.payment") }}', {
@@ -462,49 +437,44 @@ function prosesCheckout() {
         },
         body: JSON.stringify(data)
     })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(result) {
+    .then(response => response.json())
+    .then(result => {
         if (result.success) {
             if (result.payment_method === 'qris' && result.snap_token && window.snap) {
-                // QRIS Payment
                 window.snap.pay(result.snap_token, {
-                    onSuccess: function(result) {
+                    onSuccess: () => {
                         alert('Pembayaran berhasil! Pesanan Anda sedang diproses.');
-                        window.location.href = '/pesanan';
+                        window.location.href = '/keranjang';
                     },
-                    onPending: function(result) {
+                    onPending: () => {
                         alert('Pembayaran sedang diproses.');
-                        window.location.href = '/pesanan';
+                        window.location.href = '/keranjang';
                     },
-                    onError: function(result) {
+                    onError: () => {
                         alert('Pembayaran gagal. Silakan coba lagi.');
                         resetButton();
                     },
-                    onClose: function() {
+                    onClose: () => {
                         alert('Pembayaran dibatalkan.');
                         resetButton();
                     }
                 });
             } else {
-                // COD Payment
                 alert('Pesanan berhasil dibuat!');
-                window.location.href = '/pesanan';
+                window.location.href = '/keranjang';
             }
         } else {
             alert(result.message || 'Terjadi kesalahan saat memproses pesanan.');
             resetButton();
         }
     })
-    .catch(function(error) {
+    .catch(error => {
         console.error('Error:', error);
         alert('Terjadi kesalahan: ' + error.message);
         resetButton();
     });
 }
 
-// Reset button
 function resetButton() {
     var btn = document.querySelector('.btn-checkout');
     btn.disabled = false;

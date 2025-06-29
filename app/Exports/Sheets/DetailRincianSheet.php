@@ -22,53 +22,56 @@ class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, Shoul
     }
 
     public function collection()
-    {
-        $data = [];
-        $no = 1;
-        $grandTotal = 0;
-        $rowNum = 2; // karena header di A1-H1
-        $grouped = collect($this->detailRincian)->groupBy('pesanan_id');
+{
+    $data = [];
+    $no = 1;
+    $grandTotal = 0;
+    $rowNum = 2; // karena header di A1-H1
+    $grouped = collect($this->detailRincian)->groupBy('pesanan_id');
 
-        foreach ($grouped as $pesananId => $items) {
-            $first = $items->first();
-            $subtotal = 0;
-            $startRow = $rowNum;
+    foreach ($grouped as $pesananId => $items) {
+        $first = $items->first();
+        $subtotal = 0;
+        $startRow = $rowNum;
 
-            foreach ($items as $index => $item) {
-                $data[] = [
-                    $index === 0 ? $no : '',
-                    $index === 0 ? $pesananId : '',
-                    $index === 0 ? \Carbon\Carbon::parse($item->tanggal_pesanan)->format('Y-m-d') : '',
-                    $index === 0 ? $item->nama_pemesan : '',
-                    $item->nama_item,
-                    $item->harga_satuan,
-                    $item->jumlah,
-                    $item->biaya_jasa > 0 ? $item->biaya_jasa : '-',
-                    $item->total_harga,
-                ];
-                $subtotal += $item->total_harga;
-                $rowNum++;
-            }
-
-            // Simpan merge info untuk baris berulang
-            $this->rowTracking[] = [
-                'row_start' => $startRow,
-                'row_end' => $rowNum - 1,
+        foreach ($items as $index => $item) {
+            // Mengambil total dari kolom 'total' di tabel pesanans
+            $data[] = [
+                $index === 0 ? $no : '',
+                $index === 0 ? $pesananId : '',
+                $index === 0 ? \Carbon\Carbon::parse($item->tanggal_pesanan)->format('Y-m-d') : '',
+                $index === 0 ? $item->nama_pemesan : '',
+                $item->nama_item,
+                $item->harga_satuan,
+                $item->jumlah,
+                $item->biaya_jasa > 0 ? $item->biaya_jasa : '-',
+                $item->total,  // Menggunakan kolom total dari tabel pesanans
             ];
-
-            // Tambahkan subtotal
-            $data[] = ['', '', '', '', 'Sub total', '', '', '', $subtotal];
-            $this->rowTracking[] = ['subtotal' => $rowNum];
+            $subtotal += $item->total; // Menggunakan kolom total dari tabel pesanans
             $rowNum++;
-            $grandTotal += $subtotal;
-            $no++;
         }
 
-        $data[] = ['', '', '', '', 'Total Keseluruhan', '', '', '', $grandTotal];
-        $this->rowTracking[] = ['total' => $rowNum];
+        // Simpan merge info untuk baris berulang
+        $this->rowTracking[] = [
+            'row_start' => $startRow,
+            'row_end' => $rowNum - 1,
+        ];
 
-        return collect($data);
+        // Tambahkan subtotal
+        $data[] = ['', '', '', '', 'Sub total', '', '', '', $subtotal];
+        $this->rowTracking[] = ['subtotal' => $rowNum];
+        $rowNum++;
+        $grandTotal += $subtotal;
+        $no++;
     }
+
+    // Tambahkan total keseluruhan
+    $data[] = ['', '', '', '', 'Total Keseluruhan', '', '', '', $grandTotal];
+    $this->rowTracking[] = ['total' => $rowNum];
+
+    return collect($data);
+}
+
 
     public function title(): string
     {

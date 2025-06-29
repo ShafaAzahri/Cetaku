@@ -23,13 +23,16 @@ class CheckoutController extends Controller
         $addresses = $this->getAddresses($request);
         $userName = $this->getUserName($request);
         $expeditions = $this->getExpeditions($request, $addresses);
+        $tokoInfo = TokoInfo::first(); // ⬅️ Tambahkan ini
 
         return view('user.checkout', [
             'addresses'   => $addresses,
             'user_name'   => $userName,
             'expeditions' => $expeditions,
+            'tokoInfo'    => $tokoInfo, // ⬅️ Kirim ke view
         ]);
     }
+
 
     private function getAddresses(Request $request)
     {
@@ -167,6 +170,7 @@ class CheckoutController extends Controller
 
     public function checkoutTerpilih(Request $request)
     {
+        
         $produkIds = $request->input('selected_items', []);
 
         if (empty($produkIds)) {
@@ -207,7 +211,7 @@ class CheckoutController extends Controller
                 }
             }
         }
-
+        $tokoInfo = TokoInfo::first(); 
         $addresses = $this->getAddresses($request);
         $expeditions = $this->getExpeditions($request, $addresses);
 
@@ -217,6 +221,7 @@ class CheckoutController extends Controller
             'user_name'      => $this->getUserName($request),
             'expeditions'    => $expeditions,
             'biaya_desain'   => $totalBiayaDesain,
+            'tokoInfo'       => $tokoInfo, 
         ]);
     }
 }

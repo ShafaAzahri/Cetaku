@@ -182,7 +182,6 @@
     @endforelse
     
     <!-- Total -->
-    <!-- Total -->
 <div class="total-section">
     @php
         $subTotal = 0;
@@ -199,12 +198,15 @@
             }
         }
         
-        // Ambil ongkir dari ekspedisiList jika tersedia, fallback ke pesanan ekspedisi
+        // Hitung ongkir hanya jika metode pengambilan adalah 'antar'
         $ongkir = 0;
-        if (!empty($ekspedisiList) && count($ekspedisiList) > 0) {
-            $ongkir = $ekspedisiList[0]['ongkos_kirim'] ?? 0;
-        } else {
-            $ongkir = $pesanan['ekspedisi']['ongkos_kirim'] ?? 0;
+        if (($pesanan['metode_pengambilan'] ?? '') == 'antar') {
+            // Ambil ongkir dari ekspedisiList jika tersedia, fallback ke pesanan ekspedisi
+            if (!empty($ekspedisiList) && count($ekspedisiList) > 0) {
+                $ongkir = $ekspedisiList[0]['ongkos_kirim'] ?? 0;
+            } else {
+                $ongkir = $pesanan['ekspedisi']['ongkos_kirim'] ?? 0;
+            }
         }
         
         $grandTotal = $subTotal + $totalBiayaDesain + $ongkir;
@@ -217,25 +219,6 @@
         <div class="ongkir">
             Ongkos Kirim : Rp {{ number_format($ongkir, 0, ',', '.') }}
         </div>
-        
-        {{-- Tampilkan pilihan ekspedisi lain jika ada --}}
-        @if (!empty($ekspedisiList) && count($ekspedisiList) > 1)
-            <div class="ekspedisi-alternatif mt-2">
-                <small class="text-muted">Pilihan ekspedisi lain:</small>
-                @foreach ($ekspedisiList as $index => $ekspedisi)
-                    @if ($index > 0)
-                        @php
-                            $alternativeTotal = $subTotal + $totalBiayaDesain + $ekspedisi['ongkos_kirim'];
-                        @endphp
-                        <div class="small text-muted">
-                            • {{ $ekspedisi['nama_ekspedisi'] }}: 
-                            Rp {{ number_format($ekspedisi['ongkos_kirim'], 0, ',', '.') }}
-                            (Total: Rp {{ number_format($alternativeTotal, 0, ',', '.') }})
-                        </div>
-                    @endif
-                @endforeach
-            </div>
-        @endif
     @endif
     
     <div class="total"><strong>Total: Rp {{ number_format($grandTotal, 0, ',', '.') }}</strong></div>
