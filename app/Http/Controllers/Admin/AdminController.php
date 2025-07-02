@@ -6,31 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Pesanan;
 use App\Models\DetailPesanan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\TokoInfo; // Assuming you have a model for TokoInfo
-use Illuminate\Support\Facades\DB;
+use App\Models\TokoInfo;
 
 class AdminController extends Controller
 {
     public function dashboard(Request $request)
     {
         try {
-
-            // Ambil bulan dan tahun saat ini
-            // $selectedMonth = $request->get('month', Carbon::now()->format('Y-m'));
-            // $currentMonth = now()->month;
-            // $currentYear = now()->year;
-
-            // Ambil bulan dan tahun unik dari tabel pesanan
+            // Ambil daftar bulan-tahun unik dari tabel pesanan
             $months = Pesanan::selectRaw('MONTH(tanggal_dipesan) as month, YEAR(tanggal_dipesan) as year')
                 ->distinct()
                 ->orderByDesc('year')
                 ->orderByDesc('month')
                 ->get();
 
-            // Ambil bulan yang dipilih (dari query string atau default ke bulan saat ini)
+            // Ambil bulan yang dipilih atau default ke bulan sekarang
             $selectedMonth = $request->get('month', now()->format('Y-m'));
             $date = Carbon::createFromFormat('Y-m', $selectedMonth);
             $currentMonth = $date->month;
@@ -41,78 +33,83 @@ class AdminController extends Controller
                 ->whereYear('created_at', $currentYear)
                 ->count();
 
-            // Hitung jumlah pesanan selesai bulan ini
-            $pesananSelesaiBulanIni = Pesanan::whereMonth('waktu_pengambilan', $currentMonth)
-                ->whereYear('waktu_pengambilan', $currentYear)
+            // Jumlah pesanan selesai
+            $pesananSelesaiBulanIni = Pesanan::whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
                 ->where('status', 'Selesai')
                 ->count();
 
-            // Hitung jumlah pesanan berjalan bulan ini
+            // Jumlah pesanan berjalan
             $pesananBerjalan = Pesanan::whereMonth('created_at', $currentMonth)
                 ->whereYear('created_at', $currentYear)
-                ->where('status', '!=', 'Selesai')
+                ->whereNotIn('status', ['Selesai', 'Dibatalkan'])
                 ->count();
 
-            // Ambil data Pesanan Terbaru
+            // Jumlah pesanan dibatalkan
+            $pesananDibatalkan = Pesanan::whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->where('status', 'Dibatalkan')
+                ->count();
+
+            // Pesanan terbaru
             $pesananTerbaru = Pesanan::join('users', 'users.id', '=', 'pesanans.user_id')
                 ->join('detail_pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
                 ->select(
                     'pesanans.id as pesanan_id',
                     'users.nama as pelanggan',
                     'pesanans.status',
-                    'detail_pesanans.total_harga',
-                    'pesanans.total'   
+                    'pesanans.total'
                 )
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
                 ->orderBy('pesanans.created_at', 'desc')
-                ->take(7)  // Limit to the latest 7 orders
+                ->take(5)
                 ->get();
 
-            // Hitung total penjualan bulan ini berdasarkan pesanan selesai
+            // Total penjualan
             $totalPenjualan = DetailPesanan::join('pesanans', 'pesanans.id', '=', 'detail_pesanans.pesanan_id')
-                ->where('pesanans.status', 'Selesai')
+                ->where('pesanans.status', '!=', 'Dibatalkan')
                 ->whereMonth('pesanans.created_at', $currentMonth)
                 ->whereYear('pesanans.created_at', $currentYear)
                 ->sum('pesanans.total');
 
-            // RIWAYAT PESANAN 
+            // Riwayat pesanan selesai atau dibatalkan
             $riwayatPesanan = Pesanan::whereIn('status', ['Selesai', 'Dibatalkan'])
-                ->whereNotNull('created_at') // Ensures that records with NULL created_at are excluded
+                ->whereNotNull('created_at')
                 ->orderBy('created_at', 'desc')
                 ->get(['id', 'created_at', 'status']);
 
-            // Hitung jumlah pesanan per periode (1-5, 6-10, dst.)
+            // Data grafik: pesanan per tanggal
+            $jumlahHari = Carbon::create($currentYear, $currentMonth)->daysInMonth;
+            $dataPerTanggal = Pesanan::selectRaw('DAY(created_at) as tanggal, COUNT(*) as jumlah')
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->groupByRaw('DAY(created_at)')
+                ->pluck('jumlah', 'tanggal')
+                ->toArray();
+
             $pesananPerTanggal = [];
-            $periods = ['1-5', '6-10', '11-15', '16-20', '21-25', '26-31'];
-
-            foreach ($periods as $period) {
-                // Ambil tanggal awal dan akhir periode
-                list($start, $end) = explode('-', $period);
-                $startDate = Carbon::createFromDate($currentYear, $currentMonth, $start);
-                $endDate = Carbon::createFromDate($currentYear, $currentMonth, $end);
-
-                // Hitung jumlah pesanan dalam periode ini
-                $count = Pesanan::whereBetween('created_at', [$startDate, $endDate])
-                    ->whereMonth('created_at', $currentMonth)
-                    ->whereYear('created_at', $currentYear)
-                    ->count();
-                $pesananPerTanggal[] = $count;
+            for ($i = 1; $i <= $jumlahHari; $i++) {
+                $pesananPerTanggal[$i] = $dataPerTanggal[$i] ?? 0;
             }
+
+            // Informasi toko
             $tokoInfo = TokoInfo::first();
 
-            // Kirim variabel ke view
+            // Return ke view
             return view('admin.dashboard', compact(
                 'tokoInfo',
                 'pesananBulanIni',
                 'pesananSelesaiBulanIni',
                 'pesananBerjalan',
+                'pesananDibatalkan',
                 'totalPenjualan',
                 'pesananPerTanggal',
                 'pesananTerbaru',
                 'months',
                 'selectedMonth',
-                'riwayatPesanan' // Pass the latest orders data to the view
+                'riwayatPesanan',
+                'jumlahHari'
             ));
         } catch (\Exception $e) {
             Log::error('Error calculating stats: ' . $e->getMessage());

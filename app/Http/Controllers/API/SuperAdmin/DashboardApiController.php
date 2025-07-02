@@ -148,12 +148,14 @@ class DashboardApiController extends Controller
     private function getRevenueStats()
     {
         // Calculate total revenue from completed orders
-        $totalRevenue = DB::table('pesanans')
+        $totalRevenue = DB::table('detail_pesanans')
+            ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
             ->where('pesanans.status', 'Selesai')
             ->sum('pesanans.total');
         
         // Calculate monthly revenue for the last 12 months
-        $monthlyRevenue = DB::table('pesanans')
+        $monthlyRevenue = DB::table('detail_pesanans')
+            ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
             ->where('pesanans.status', 'Selesai')
             ->where('pesanans.created_at', '>=', now()->subMonths(12))
             ->select(
@@ -187,7 +189,7 @@ class DashboardApiController extends Controller
             ->where('pesanans.status', 'Selesai')
             ->whereMonth('pesanans.created_at', now()->month)
             ->whereYear('pesanans.created_at', now()->year)
-            ->sum('detail_pesanans.total_harga');
+            ->sum('pesanans.total');
         
         return [
             'total_revenue' => $totalRevenue,
@@ -278,7 +280,7 @@ class DashboardApiController extends Controller
                     'id' => $order->id,
                     'description' => $description,
                     'status' => $order->status,
-                    'time' => $order->updated_at, //->diffForHumans()
+                    'time' => $order->updated_at->diffForHumans(),
                     'timestamp' => $order->updated_at
                 ];
             });

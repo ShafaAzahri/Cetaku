@@ -195,7 +195,7 @@
         <h2 class="section-title">Pesanan Saya</h2>
        
         @php
-            $statuses = ['Semua', 'Belum Dibayar', 'Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
+            $statuses = ['Semua', 'Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
         @endphp
 
         <ul class="nav nav-tabs mb-4" id="orderTabs" role="tablist">
@@ -281,10 +281,6 @@
                        
                         <div class="action-buttons">
                             @switch($pesanan['status'])
-                                @case('Belum Dibayar')
-                                    <button class="btn action-btn btn-cancel" onclick="cancelOrder('{{ $pesanan['id'] }}')">Batalkan</button>
-                                    <button class="btn action-btn btn-pay" onclick="payOrder('{{ $pesanan['id'] }}')">Bayar Sekarang</button>
-                                    @break
                                 @case('Pemesanan')
                                     <button class="btn action-btn btn-cancel" onclick="cancelOrder('{{ $pesanan['id'] }}')">Batalkan</button>
                                     <button class="btn action-btn btn-help" onclick="contactAdmin('{{ $pesanan['id'] }}')">Hubungi Admin</button>
@@ -296,11 +292,11 @@
                                     <button class="btn action-btn btn-track" onclick="trackOrder('{{ $pesanan['id'] }}')">Lacak Pengiriman</button>
                                     @break
                                 @case('Selesai')
-                                    <button class="btn action-btn btn-review" onclick="reviewOrder('{{ $pesanan['id'] }}')">Beri Ulasan</button>
-                                    <button class="btn action-btn btn-pay" onclick="reorderOrder('{{ $pesanan['id'] }}')">Beli Lagi</button>
+                                    <button class="btn action-btn btn-review" onclick="reviewOrder('{{ $detail['id'] }}')">Beri Ulasan</button>
+                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
                                     @break
                                 @case('Dibatalkan')
-                                    <button class="btn action-btn btn-pay" onclick="reorderOrder('{{ $pesanan['id'] }}')">Beli Lagi</button>
+                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
                                     @break
                             @endswitch
                             <button class="btn action-btn btn-info" data-bs-toggle="modal" data-bs-target="#orderDetailModal" onclick="showOrderDetails('{{ $pesanan['id'] }}')">Detail</button>
@@ -338,17 +334,29 @@
             </div>
             <div class="modal-body">
                 <div class="order-detail-info">
-                    <h6>Barang:</h6>
+                    <h6>Barang Pesanan:</h6>
                     <div id="orderItems"></div>
                     
-                    <h6>Total Harga:</h6>
-                    <p id="orderTotalPrice">Rp 0</p>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <h6>Total Harga:</h6>
+                            <p id="orderTotalPrice" class="fw-bold text-primary fs-5">Rp 0</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Total Item:</h6>
+                            <p id="orderTotalItems">-</p>
+                        </div>
+                    </div>
+                    
+                    <hr>
                     
                     <h6>Alamat Pengiriman:</h6>
-                    <p id="orderShippingAddress">-</p>
+                    <p id="orderShippingAddress" class="text-muted">-</p>
                     
                     <h6>Bukti Pengiriman:</h6>
-                    <img id="orderShipmentProof" src="" alt="Bukti Pengiriman" class="img-fluid" style="max-height: 300px;">
+                    <div id="orderShipmentProofContainer">
+                        <img id="orderShipmentProof" src="" alt="Bukti Pengiriman" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -362,41 +370,186 @@
 @section('custom-js')
 <script>
 // Debug untuk memastikan Bootstrap tersedia
+// Debug untuk memastikan Bootstrap tersedia
+// Debug untuk memastikan Bootstrap tersedia
 console.log('Bootstrap version:', typeof bootstrap !== 'undefined' ? 'Available' : 'Not Available');
 
 function showOrderDetails(orderId) {
     console.log('showOrderDetails called for order:', orderId);
     
-    // Data dummy untuk testing
-    const orderData = {
-        items: [
-            { name: 'Kaos Custom', price: 150000, qty: 2, size: 'L', material: 'Cotton', category: 'Lengan Pendek' },
-            { name: 'Hoodie Custom', price: 250000, qty: 1, size: 'XL', material: 'Fleece', category: 'Lengan Panjang' }
-        ],
-        total: 550000,
-        address: 'Jl. Contoh No. 123, Semarang, Jawa Tengah',
-        proof: '{{ asset("images/dummy-shipping-photo.jpg") }}'
-    };
-
-    // Update modal content
-    let itemsHtml = '';
-    orderData.items.forEach(item => {
-        itemsHtml += `
-            <div class="mb-3 pb-2 border-bottom">
-                <strong>${item.name}</strong><br>
-                <small>Ukuran: ${item.size} | Bahan: ${item.material} | Kategori: ${item.category}</small><br>
-                <small>Jumlah: ${item.qty}</small><br>
-                <span class="text-primary">Rp ${item.price.toLocaleString()}</span>
-            </div>
-        `;
+    // Show loading state
+    document.getElementById('orderItems').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
+    document.getElementById('orderTotalPrice').innerText = 'Memuat...';
+    document.getElementById('orderTotalItems').innerText = 'Memuat...';
+    document.getElementById('orderShippingAddress').innerText = 'Memuat...';
+    
+    // Hide shipping proof initially
+    const proofImg = document.getElementById('orderShipmentProof');
+    proofImg.style.display = 'none';
+    
+    // Fetch actual data from API
+    fetch(/pesanan/show?id=${orderId}, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(HTTP error! status: ${response.status});
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('API Response:', data);
+        
+        if (data.status === 'success') {
+            const orderData = data.data;
+            updateModalContent(orderData);
+        } else {
+            throw new Error(data.message || 'Gagal mengambil detail pesanan');
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching order details:', error);
+        
+        // Show error message
+        document.getElementById('orderItems').innerHTML = 
+            '<div class="alert alert-danger">Gagal memuat detail pesanan: ' + error.message + '</div>';
+        document.getElementById('orderTotalPrice').innerText = '-';
+        document.getElementById('orderTotalItems').innerText = '-';
+        document.getElementById('orderShippingAddress').innerText = '-';
     });
+}
+
+function updateModalContent(orderData) {
+    // Update modal title with order ID
+    document.getElementById('orderDetailModalLabel').innerText = Detail Pesanan #${orderData.id};
+    
+    // Update items
+    let itemsHtml = '';
+    let totalItems = 0;
+    
+    if (orderData.detail_pesanans && orderData.detail_pesanans.length > 0) {
+        orderData.detail_pesanans.forEach(detail => {
+            const custom = detail.custom || {};
+            const item = custom.item || {};
+            const bahan = custom.bahan || {};
+            const jenis = custom.jenis || {};
+            const ukuran = custom.ukuran || {};
+            
+            const itemName = item.nama_item || 'Custom Product';
+            const itemPrice = parseFloat(detail.total_harga) || 0;
+            const quantity = detail.jumlah || 1;
+            const size = ukuran.size || '-';
+            const material = bahan.nama_bahan || '-';
+            const category = jenis.kategori || '-';
+            const tipeDesain = detail.tipe_desain || '-';
+            const biayaJasa = parseFloat(detail.biaya_jasa) || 0;
+            
+            // Get product image
+            const defaultImage = '/images/polines.png';
+            let productImage = defaultImage;
+            if (item.gambar) {
+                productImage = /storage/${item.gambar};
+            }
+            
+            // Tambahkan ke total items
+            totalItems += quantity;
+            
+            itemsHtml += `
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex">
+                        <img src="${productImage}" alt="${itemName}" class="me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;" onerror="this.src='${defaultImage}'">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">${itemName}</h6>
+                            <small class="text-muted d-block">Ukuran: ${size}</small>
+                            <small class="text-muted d-block">Bahan: ${material}</small>
+                            <small class="text-muted d-block">Kategori: ${category}</small>
+                            <small class="text-muted d-block">Tipe Desain: ${tipeDesain}</small>
+                            ${biayaJasa > 0 ? <small class="text-muted d-block">Biaya Jasa: Rp ${biayaJasa.toLocaleString('id-ID')}</small> : ''}
+                            <small class="text-muted d-block">Jumlah: ${quantity}</small>
+                            <div class="mt-2">
+                                <span class="fw-bold text-primary">Rp ${itemPrice.toLocaleString('id-ID')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        itemsHtml = '<div class="text-muted">Tidak ada detail item</div>';
+        totalItems = orderData.total_items || 1; // Fallback ke total_items dari API
+    }
 
     document.getElementById('orderItems').innerHTML = itemsHtml;
-    document.getElementById('orderTotalPrice').innerText = `Rp ${orderData.total.toLocaleString()}`;
-    document.getElementById('orderShippingAddress').innerText = orderData.address;
-    document.getElementById('orderShipmentProof').src = orderData.proof;
     
-    console.log('Modal content updated');
+    // Update total price - GUNAKAN TOTAL DARI TABEL PESANAN
+    const totalHarga = parseFloat(orderData.total_harga) || parseFloat(orderData.total) || 0;
+    document.getElementById('orderTotalPrice').innerText = Rp ${totalHarga.toLocaleString('id-ID')};
+    
+    // Update total items - GUNAKAN TOTAL ITEMS YANG SUDAH DIHITUNG
+    const finalTotalItems = orderData.total_items || totalItems;
+    document.getElementById('orderTotalItems').innerText = ${finalTotalItems} item;
+    
+    // Update shipping address
+    const shippingAddress = orderData.alamat_pengiriman || 'Alamat pengiriman belum diisi';
+    document.getElementById('orderShippingAddress').innerText = shippingAddress;
+    
+    // Update shipping proof
+    const proofImg = document.getElementById('orderShipmentProof');
+    if (orderData.bukti_pengiriman) {
+        proofImg.src = /storage/${orderData.bukti_pengiriman};
+        proofImg.style.display = 'block';
+        proofImg.onerror = function() {
+            this.style.display = 'none';
+            this.parentNode.innerHTML += '<p class="text-muted">Bukti pengiriman tidak dapat ditampilkan</p>';
+        };
+    } else {
+        proofImg.style.display = 'none';
+        proofImg.parentNode.innerHTML = '<p class="text-muted">Belum ada bukti pengiriman</p>';
+    }
+    
+    // Add order status and date info
+    const orderInfo = document.querySelector('.order-detail-info');
+    const existingInfo = orderInfo.querySelector('.order-status-info');
+    if (existingInfo) {
+        existingInfo.remove();
+    }
+    
+    const statusInfo = document.createElement('div');
+    statusInfo.className = 'order-status-info mb-3';
+    statusInfo.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Status Pesanan:</h6>
+                <span class="badge status-${orderData.status.toLowerCase().replace(/\s+/g, '-')} mb-2">${orderData.status}</span>
+            </div>
+            <div class="col-md-6">
+                <h6>Tanggal Pesanan:</h6>
+                <p class="text-muted">${formatDate(orderData.created_at)}</p>
+            </div>
+        </div>
+        <hr>
+    `;
+    orderInfo.insertBefore(statusInfo, orderInfo.firstChild);
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    
+    const date = new Date(dateString);
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    
+    return date.toLocaleDateString('id-ID', options);
 }
 
 // Alternative function jika bootstrap tidak tersedia
@@ -434,23 +587,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function cancelOrder(orderId) {
-    if (confirm('Yakin ingin membatalkan pesanan ini?')) {
-        alert('Pesanan berhasil dibatalkan');
-        location.reload();
-    }
-}
-
 function payOrder(orderId) {
-    window.location.href = `/pesanan/${orderId}/payment`;
+    window.location.href = /pesanan/${orderId}/payment;
 }
 
 function trackOrder(orderId) {
     alert('Fitur tracking akan segera tersedia');
 }
 
-function reviewOrder(orderId) {
-    window.location.href = `/pesanan/${orderId}/review`;
+function reviewOrder(detailId) {
+    window.location.href = /ulasan/${detailId};
 }
 
 function reorderOrder(orderId) {
@@ -460,9 +606,36 @@ function reorderOrder(orderId) {
 }
 
 function contactAdmin(orderId) {
-    const message = `Halo, saya ingin menanyakan tentang pesanan #${orderId}`;
+    const message = Halo, saya ingin menanyakan tentang pesanan #${orderId};
     const phone = '628123456789';
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(https://wa.me/${phone}?text=${encodeURIComponent(message)}, '_blank');
 }
+
+function cancelOrder(id) {
+    if (confirm('Yakin ingin membatalkan pesanan ini?')) {
+        fetch(/pesanan/${id}/cancel, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message || 'Pesanan berhasil dibatalkan!');
+                location.reload();
+            } else {
+                alert(data.message || 'Gagal membatalkan pesanan.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat membatalkan pesanan.');
+        });
+    }
+}
+
 </script>
 @endsection

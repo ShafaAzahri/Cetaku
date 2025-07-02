@@ -62,6 +62,7 @@ class ItemApiController extends Controller
                 'deskripsi' => 'nullable|string',
                 'harga_dasar' => 'required|numeric|min:0',
                 'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'berat' => 'nullable|numeric|min:0',
             ]);
 
             $item = new Item();
@@ -142,6 +143,7 @@ class ItemApiController extends Controller
                 'deskripsi' => 'nullable|string',
                 'harga_dasar' => 'required|numeric|min:0',
                 'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                'berat' => 'nullable|numeric|min:0',
             ]);
 
             $item = Item::find($id);
@@ -155,6 +157,7 @@ class ItemApiController extends Controller
 
             $item->nama_item = $request->nama_item;
             $item->deskripsi = $request->deskripsi;
+            $item->berat = $request->berat;
             $item->harga_dasar = $request->harga_dasar;
 
             // Upload gambar baru jika ada

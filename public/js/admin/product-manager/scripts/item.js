@@ -1,3 +1,4 @@
+item.js
 document.addEventListener("DOMContentLoaded", function () {
     const editItemModal = document.getElementById("editItemModal");
     if (editItemModal) {
@@ -6,14 +7,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const id = button.getAttribute("data-id");
             const nama = button.getAttribute("data-nama");
             const deskripsi = button.getAttribute("data-deskripsi");
+            const berat = button.getAttribute("data-berat");
             const harga = button.getAttribute("data-harga");
             const gambar = button.getAttribute("data-gambar");
 
             const form = document.getElementById("editItemForm");
-            form.setAttribute("action", `/admin/items/${id}`);
+            form.setAttribute("action", /admin/items/${id});
             document.getElementById("edit_nama_item").value = nama;
             document.getElementById("edit_deskripsi").value = deskripsi || "";
+            document.getElementById("edit_berat").value = (berat !== null && berat !== undefined) ? berat : "";
             document.getElementById("edit_harga_dasar").value = harga;
+
 
             const currentImageDiv = document.getElementById("current_image");
             if (gambar) {

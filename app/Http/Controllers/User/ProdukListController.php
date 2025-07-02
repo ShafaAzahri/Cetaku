@@ -53,7 +53,14 @@ class ProdukListController extends Controller
         // \Log::info('Kategoris structure:', ['kategoris' => $kategoris]);
 
         // Kirim data ke view
-        return view('user.produk-all', compact('items', 'kategoris', 'kategoriNama'));
+        $sortBy = $request->query('sort', 'terbaru'); // ambil sort dari query
+$items = $this->applySorting($items, $sortBy); // terapkan sorting
+        return view('user.produk-all', [
+    'items' => $items,
+    'kategoris' => $kategoris,
+    'kategoriNama' => $kategoriNama,
+    'currentSort' => $sortBy
+]);
     }
 
     /**
@@ -79,6 +86,36 @@ class ProdukListController extends Controller
     //         return [];
     //     }
     // }
+
+    private function applySorting($items, $sortBy)
+{
+    $collection = collect($items);
+
+    switch ($sortBy) {
+        case 'harga_rendah':
+            return $collection->sortBy('harga_dasar')->values()->toArray();
+
+        case 'harga_tinggi':
+            return $collection->sortByDesc('harga_dasar')->values()->toArray();
+
+        case 'terlaris':
+            return $collection->sortByDesc(function ($item) {
+                return $item['total_sold'] ?? 0;
+            })->values()->toArray();
+
+        case 'nama_az':
+            return $collection->sortBy('nama_item')->values()->toArray();
+
+        case 'nama_za':
+            return $collection->sortByDesc('nama_item')->values()->toArray();
+
+        case 'terbaru':
+        default:
+            return $collection->sortByDesc(function ($item) {
+                return $item['created_at'] ?? $item['id'] ?? 0;
+            })->values()->toArray();
+    }
+}
 
     public function show($id)
     {

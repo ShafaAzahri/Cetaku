@@ -8,6 +8,7 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\pesanan;
 use App\Http\Controllers\User\CheckoutController;
 use App\Http\Controllers\User\PaymentWeb;
+use App\Http\Controllers\User\ReviewController;
 
 // Admin Controllers
 use App\Http\Controllers\Admin\AdminController;
@@ -81,8 +82,7 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'showProfile'])->name('user.profile');
     // Menyimpan perubahan password
     Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('user.profile.update');
-    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])
-        ->name('profile.update-password');
+    Route::post('/profile/update-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
 
     Route::post('/alamat', [ProfileController::class, 'addAddress'])->name('Alamat.store');
 
@@ -104,10 +104,13 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
 
 
     Route::get('/user/pesanan', [PesananWebController::class, 'index'])->name('user.pesanan');
+    Route::get('/pesanan/detail', [PesananWebController::class, 'show'])->name('user.pesanan.detail');
+    Route::delete('/pesanan/{id}/cancel', [PesananWebController::class, 'cancel'])->name('user.pesanan.cancel');    
 
     // Routes untuk guest users (dapat mengakses produk tanpa login)
     Route::get('/produk', [ProdukListController::class, 'index'])->name('produk-all');
     Route::get('/produk/{id}', [ProdukListController::class, 'show'])->name('produk.show');
+    Route::get('/pesanan/show', [PesananWebController::class, 'show'])->name('pesanan.show');
 
     // Jika ingin menambahkan API endpoint untuk sorting via AJAX (opsional)
     Route::get('/api/produk', [ProdukListController::class, 'apiIndex'])->name('produk.api');
@@ -116,6 +119,11 @@ Route::middleware(['auth.check', 'role:user'])->group(function () {
     Route::get('/produk/search', [ProdukListController::class, 'search'])->name('produk.search');
 
     Route::get('/detail-pesanan', [PesananWebController::class, 'show'])->name('user.pesanan.detail');
+
+
+    //review
+    Route::get('/ulasan/{id}', [ReviewController::class, 'form'])->name('review.form');
+    Route::post('/ulasan/{id}', [ReviewController::class, 'submit'])->name('review.submit');
 
     // Add more user routes here if needed
 });

@@ -260,6 +260,7 @@ class ProductManagerController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_dasar' => 'required|numeric|min:0',
+            'berat' => 'nullable|numeric|min:0',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         $response = $this->sendApiRequest('post', '/items', $request, true);
@@ -281,6 +282,7 @@ class ProductManagerController extends Controller
             'nama_item' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'harga_dasar' => 'required|numeric|min:0',
+            'berat' => 'nullable|numeric|min:0',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         $response = $this->sendApiRequest('post', "/items/{$id}", $request, true);
