@@ -88,6 +88,7 @@ class AdminController extends Controller
                 ->pluck('jumlah', 'tanggal')
                 ->toArray();
 
+
             $pesananPerTanggal = [];
             for ($i = 1; $i <= $jumlahHari; $i++) {
                 $pesananPerTanggal[$i] = $dataPerTanggal[$i] ?? 0;

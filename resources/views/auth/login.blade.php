@@ -176,7 +176,7 @@
         <div class="login-form-side">
             <div class="logo-container">
                 <img src="{{ asset('images/poliness.png') }}" alt="Polines Logo">
-                <h2>CETAKU</h2>
+                <h2><span class="logo-text">{{ $tokoInfo->nama ?? 'CETAKU' }}</span></h2>
             </div>
             
             <h1 class="welcome-text">Selamat datang kembali</h1>
