@@ -3,49 +3,82 @@
 @section('title', 'Manajemen Pesanan')
 
 @section('styles')
-<style>
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-    }
+        <style>
+            .status-badge {
+                padding: 5px 10px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
 
-    .status-pemesanan {
-        background-color: #e2e8f0;
-        color: #1a202c;
-    }
+            .status-pemesanan {
+                background-color: #e2e8f0;
+                color: #1a202c;
+            }
 
-    .status-dikonfirmasi {
-        background-color: #90cdf4;
-        color: #2c5282;
-    }
+            .status-dikonfirmasi {
+                background-color: #90cdf4;
+                color: #2c5282;
+            }
 
-    .status-sedang-diproses {
-        background-color: #fbd38d;
-        color: #744210;
-    }
+            .status-sedang-diproses {
+                background-color: #fbd38d;
+                color: #744210;
+            }
 
-    .status-menunggu-pengambilan {
-        background-color: #fbd38d;
-        color: #744210;
-    }
+            .status-menunggu-pengambilan {
+                background-color: #fbd38d;
+                color: #744210;
+            }
 
-    .status-sedang-dikirim {
-        background-color: #90cdf4;
-        color: #2c5282;
-    }
+            .status-sedang-dikirim {
+                background-color: #90cdf4;
+                color: #2c5282;
+            }
 
-    .status-selesai {
-        background-color: #9ae6b4;
-        color: #22543d;
-    }
+            .status-selesai {
+                background-color: #9ae6b4;
+                color: #22543d;
+            }
 
-    .status-dibatalkan {
-        background-color: #feb2b2;
-        color: #822727;
-    }
-</style>
+            .status-dibatalkan {
+                background-color: #feb2b2;
+                color: #822727;
+            }
+
+            .btn-cancel-action {
+                background-color: transparent;
+                border: none;
+                color: #e63946;
+                font-size: 16px;
+                padding: 6px;
+                margin-left: 6px; /* agak ke samping */
+                transition: all 0.2s ease;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+
+            .btn-cancel-action:hover {
+                background-color: #ffe5e5;
+                color: #b00020;
+                transform: scale(1.1) translateX(2px);
+            }
+            
+            .btn-cancel-static {
+                background: transparent;
+                border: none;
+                color: #e63946; /* Merah statis */
+                font-size: 16px;
+                padding: 6px;
+                margin: 0;
+                cursor: pointer;
+            }
+
+            .btn-cancel-static i {
+                vertical-align: middle;
+            }
+
+        </style>
 @endsection
 
 @section('content')
@@ -131,7 +164,7 @@
                             @if(isset($pesanan['detail_pesanans']) && count($pesanan['detail_pesanans']) > 0)
                             {{ $pesanan['detail_pesanans'][0]['custom']['item']['nama_item'] ?? 'Produk tidak diketahui' }}
                             @if(count($pesanan['detail_pesanans']) > 1)
-                            <span class="text-muted">(+{{ count($pesanan['detail_pesanans'])-1 }} lainnya)</span>
+                            <span class="text-muted">(+{{ count($pesanan['detail_pesanans']) - 1 }} lainnya)</span>
                             @endif
                             @else
                             Produk tidak diketahui
@@ -148,8 +181,8 @@
                             @endif
                         </td>
                         <td>
-                            <div class="d-flex gap-1">
-                                <a href="{{ route('admin.pesanan.show', $pesanan['id']) }}" class="action-btn info" title="Detail">
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{{ route('admin.pesanan.show', $pesanan['id']) }}" class="action-btn text-primary" title="Detail">
                                     <i class="fas fa-info-circle"></i>
                                 </a>
 
@@ -161,11 +194,12 @@
 
                                 @if(!in_array($pesanan['status'], ['Selesai', 'Dibatalkan']))
                                 <form action="{{ route('admin.pesanan.cancel', $pesanan['id']) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">
-                                    @csrf
-                                    <button type="submit" class="action-btn cancel" title="Batalkan">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </form>
+                            @csrf
+                            <button type="submit" class="btn-cancel-action" title="Batalkan">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </form>
+
                                 @endif
                             </div>
                         </td>
