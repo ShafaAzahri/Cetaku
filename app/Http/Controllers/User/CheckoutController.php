@@ -23,13 +23,13 @@ class CheckoutController extends Controller
         $addresses = $this->getAddresses($request);
         $userName = $this->getUserName($request);
         $expeditions = $this->getExpeditions($request, $addresses);
-        $tokoInfo = TokoInfo::first(); // ⬅️ Tambahkan ini
+        $tokoInfo = TokoInfo::first(); // ⬅ Tambahkan ini
 
         return view('user.checkout', [
-            'addresses'   => $addresses,
-            'user_name'   => $userName,
+            'addresses' => $addresses,
+            'user_name' => $userName,
             'expeditions' => $expeditions,
-            'tokoInfo'    => $tokoInfo, // ⬅️ Kirim ke view
+            'tokoInfo' => $tokoInfo, // ⬅ Kirim ke view
         ]);
     }
 
@@ -78,8 +78,8 @@ class CheckoutController extends Controller
             $response = Http::withHeaders([
                 'key' => env('RAJA_ONGKIR_KEY'),
             ])->get('https://rajaongkir.komerce.id/api/v1/destination/domestic-destination', [
-                'search' => $searchTerm
-            ]);
+                        'search' => $searchTerm
+                    ]);
 
             $data = $response->json();
 
@@ -100,14 +100,14 @@ class CheckoutController extends Controller
     {
         try {
             $tokoInfo = TokoInfo::getActiveToko();
-            
+
             if (!$tokoInfo || !$tokoInfo->kelurahan) {
                 Log::warning('Toko info tidak ditemukan atau kelurahan kosong, menggunakan default Genuk');
                 return $this->getLocationId('Genuk');
             }
 
             $originLocationId = $this->getLocationId($tokoInfo->kelurahan);
-            
+
             if (!$originLocationId) {
                 Log::warning("Tidak dapat menemukan ID lokasi untuk kelurahan: {$tokoInfo->kelurahan}, menggunakan default Genuk");
                 return $this->getLocationId('Genuk');
@@ -115,7 +115,7 @@ class CheckoutController extends Controller
 
             Log::info("Origin dari toko: {$tokoInfo->kelurahan} (ID: {$originLocationId})");
             return $originLocationId;
-            
+
         } catch (\Exception $e) {
             Log::error('Error getting origin location: ' . $e->getMessage());
             // Fallback ke default jika terjadi error
@@ -126,7 +126,7 @@ class CheckoutController extends Controller
     private function getExpeditions(Request $request, $addresses)
     {
         $weight = 1000;
-        
+
         // Ambil origin dari toko_info
         $origin = $this->getOriginLocationId();
 
@@ -135,7 +135,7 @@ class CheckoutController extends Controller
         }
 
         $alamatUtama = collect($addresses)->first();
-        
+
         // Dapatkan destination dari kelurahan alamat user
         $destinationCity = trim($alamatUtama['kelurahan'] ?? '');
         $destination = $this->getLocationId($destinationCity);
@@ -151,14 +151,14 @@ class CheckoutController extends Controller
             $response = Http::withHeaders([
                 'key' => env('RAJA_ONGKIR_KEY'),
             ])
-            ->asForm()
-            ->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
-                'origin'      => $origin,
-                'destination' => $destination,
-                'weight'      => $weight,
-                'courier'     => 'jnt',
-                'price'       => 'lowest',
-            ]);
+                ->asForm()
+                ->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
+                    'origin' => $origin,
+                    'destination' => $destination,
+                    'weight' => $weight,
+                    'courier' => 'jnt',
+                    'price' => 'lowest',
+                ]);
 
             $data = $response->json();
             return $data['data'] ?? [];
@@ -170,7 +170,7 @@ class CheckoutController extends Controller
 
     public function checkoutTerpilih(Request $request)
     {
-        
+
         $produkIds = $request->input('selected_items', []);
 
         if (empty($produkIds)) {
@@ -211,17 +211,17 @@ class CheckoutController extends Controller
                 }
             }
         }
-        $tokoInfo = TokoInfo::first(); 
+        $tokoInfo = TokoInfo::first();
         $addresses = $this->getAddresses($request);
         $expeditions = $this->getExpeditions($request, $addresses);
 
         return view('user.checkout', [
             'produkTerpilih' => $produkTerpilih,
-            'addresses'      => $addresses,
-            'user_name'      => $this->getUserName($request),
-            'expeditions'    => $expeditions,
-            'biaya_desain'   => $totalBiayaDesain,
-            'tokoInfo'       => $tokoInfo, 
+            'addresses' => $addresses,
+            'user_name' => $this->getUserName($request),
+            'expeditions' => $expeditions,
+            'biaya_desain' => $totalBiayaDesain,
+            'tokoInfo' => $tokoInfo,
         ]);
     }
 }

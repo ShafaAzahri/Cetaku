@@ -31,7 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Membagikan data tokoInfo ke view 'admin.components.sidebar'
         View::composer(
-            ['admin.components.sidebar', 'superadmin.components.sidebar'],
+            ['admin.components.sidebar', 'superadmin.components.sidebar', 'user.components.header', 'auth.login', 'auth.register'],
             function ($view) use ($tokoInfo) {
                 $view->with('tokoInfo', $tokoInfo);
             }

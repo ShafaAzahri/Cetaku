@@ -197,7 +197,6 @@
        
         @php
             $statuses = ['Semua', 'Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
-            $statuses = ['Semua', 'Pemesanan', 'Dikonfirmasi', 'Sedang Diproses', 'Menunggu Pengambilan', 'Sedang Dikirim', 'Selesai', 'Dibatalkan'];
         @endphp
 
         <ul class="nav nav-tabs mb-4" id="orderTabs" role="tablist">
@@ -295,10 +294,10 @@
                                     @break
                                 @case('Selesai')
                                     <button class="btn action-btn btn-review" onclick="reviewOrder('{{ $detail['id'] }}')">Beri Ulasan</button>
-                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
+                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
                                     @break
                                 @case('Dibatalkan')
-                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
+                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
                                     @break
                             @endswitch
                             <button class="btn action-btn btn-info" data-bs-toggle="modal" data-bs-target="#orderDetailModal" onclick="showOrderDetails('{{ $pesanan['id'] }}')">Detail</button>
@@ -338,21 +337,8 @@
             <div class="modal-body">
                 <div class="order-detail-info">
                     <h6>Barang Pesanan:</h6>
-                    <h6>Barang Pesanan:</h6>
                     <div id="orderItems"></div>
                     
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h6>Total Harga:</h6>
-                            <p id="orderTotalPrice" class="fw-bold text-primary fs-5">Rp 0</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Total Item:</h6>
-                            <p id="orderTotalItems">-</p>
-                        </div>
-                    </div>
-                    
-                    <hr>
                     <div class="row mt-3">
                         <div class="col-md-6">
                             <h6>Total Harga:</h6>
@@ -369,10 +355,10 @@
                     <h6>Alamat Pengiriman:</h6>
                     <p id="orderShippingAddress" class="text-muted">-</p>
                     
+                    <h6>Nomor Resi: &#40 copy kode resi nya &#41</h6>
+                    <p id="orderResiPesanan" class="text-muted">-</p>
+                    
                     <h6>Bukti Pengiriman:</h6>
-                    <div id="orderShipmentProofContainer">
-                        <img id="orderShipmentProof" src="" alt="Bukti Pengiriman" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
-                    </div>
                     <div id="orderShipmentProofContainer">
                         <img id="orderShipmentProof" src="" alt="Bukti Pengiriman" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
                     </div>
@@ -391,8 +377,6 @@
 // Debug untuk memastikan Bootstrap tersedia
 // Debug untuk memastikan Bootstrap tersedia
 // Debug untuk memastikan Bootstrap tersedia
-// Debug untuk memastikan Bootstrap tersedia
-// Debug untuk memastikan Bootstrap tersedia
 console.log('Bootstrap version:', typeof bootstrap !== 'undefined' ? 'Available' : 'Not Available');
 
 function showOrderDetails(orderId) {
@@ -403,13 +387,14 @@ function showOrderDetails(orderId) {
     document.getElementById('orderTotalPrice').innerText = 'Memuat...';
     document.getElementById('orderTotalItems').innerText = 'Memuat...';
     document.getElementById('orderShippingAddress').innerText = 'Memuat...';
+    document.getElementById('orderResiPesanan').innerText = 'Memuat...';
     
     // Hide shipping proof initially
     const proofImg = document.getElementById('orderShipmentProof');
     proofImg.style.display = 'none';
     
     // Fetch actual data from API
-    fetch(/pesanan/show?id=${orderId}, {
+    fetch(`/pesanan/show?id=${orderId}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -419,7 +404,7 @@ function showOrderDetails(orderId) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(HTTP error! status: ${response.status});
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
     })
@@ -442,12 +427,14 @@ function showOrderDetails(orderId) {
         document.getElementById('orderTotalPrice').innerText = '-';
         document.getElementById('orderTotalItems').innerText = '-';
         document.getElementById('orderShippingAddress').innerText = '-';
+        document.getElementById('orderResiPesanan').innerText = '-';
     });
 }
 
+
 function updateModalContent(orderData) {
     // Update modal title with order ID
-    document.getElementById('orderDetailModalLabel').innerText = Detail Pesanan #${orderData.id};
+    document.getElementById('orderDetailModalLabel').innerText = `Detail Pesanan #${orderData.id}`;
     
     // Update items
     let itemsHtml = '';
@@ -474,7 +461,7 @@ function updateModalContent(orderData) {
             const defaultImage = '/images/polines.png';
             let productImage = defaultImage;
             if (item.gambar) {
-                productImage = /storage/${item.gambar};
+                productImage = `/storage/${item.gambar}`;
             }
             
             // Tambahkan ke total items
@@ -490,7 +477,7 @@ function updateModalContent(orderData) {
                             <small class="text-muted d-block">Bahan: ${material}</small>
                             <small class="text-muted d-block">Kategori: ${category}</small>
                             <small class="text-muted d-block">Tipe Desain: ${tipeDesain}</small>
-                            ${biayaJasa > 0 ? <small class="text-muted d-block">Biaya Jasa: Rp ${biayaJasa.toLocaleString('id-ID')}</small> : ''}
+                            ${biayaJasa > 0 ? `<small class="text-muted d-block">Biaya Jasa: Rp ${biayaJasa.toLocaleString('id-ID')}</small>` : ''}
                             <small class="text-muted d-block">Jumlah: ${quantity}</small>
                             <div class="mt-2">
                                 <span class="fw-bold text-primary">Rp ${itemPrice.toLocaleString('id-ID')}</span>
@@ -509,20 +496,24 @@ function updateModalContent(orderData) {
     
     // Update total price - GUNAKAN TOTAL DARI TABEL PESANAN
     const totalHarga = parseFloat(orderData.total_harga) || parseFloat(orderData.total) || 0;
-    document.getElementById('orderTotalPrice').innerText = Rp ${totalHarga.toLocaleString('id-ID')};
+    document.getElementById('orderTotalPrice').innerText = `Rp ${totalHarga.toLocaleString('id-ID')}`;
     
     // Update total items - GUNAKAN TOTAL ITEMS YANG SUDAH DIHITUNG
     const finalTotalItems = orderData.total_items || totalItems;
-    document.getElementById('orderTotalItems').innerText = ${finalTotalItems} item;
+    document.getElementById('orderTotalItems').innerText = `${finalTotalItems} item`;
     
     // Update shipping address
     const shippingAddress = orderData.alamat_pengiriman || 'Alamat pengiriman belum diisi';
     document.getElementById('orderShippingAddress').innerText = shippingAddress;
     
+    // Update resi pesanan
+    const resiPesanan = orderData.resi_pesanan || orderData.resi_pesanan || 'Resi belum tersedia';
+    document.getElementById('orderResiPesanan').innerText = resiPesanan;
+    
     // Update shipping proof
     const proofImg = document.getElementById('orderShipmentProof');
     if (orderData.bukti_pengiriman) {
-        proofImg.src = /storage/${orderData.bukti_pengiriman};
+        proofImg.src = `/storage/bukti-pengiriman/${orderData.bukti_pengiriman}`;
         proofImg.style.display = 'block';
         proofImg.onerror = function() {
             this.style.display = 'none';
@@ -609,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function payOrder(orderId) {
-    window.location.href = /pesanan/${orderId}/payment;
+    window.location.href = `/pesanan/${orderId}/payment`;
 }
 
 function trackOrder(orderId) {
@@ -617,7 +608,7 @@ function trackOrder(orderId) {
 }
 
 function reviewOrder(detailId) {
-    window.location.href = /ulasan/${detailId};
+    window.location.href = `/ulasan/${detailId}`;
 }
 
 function reorderOrder(orderId) {
@@ -627,14 +618,14 @@ function reorderOrder(orderId) {
 }
 
 function contactAdmin(orderId) {
-    const message = Halo, saya ingin menanyakan tentang pesanan #${orderId};
+    const message = `Halo, saya ingin menanyakan tentang pesanan #${orderId}`;
     const phone = '628123456789';
-    window.open(https://wa.me/${phone}?text=${encodeURIComponent(message)}, '_blank');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
 }
 
 function cancelOrder(id) {
     if (confirm('Yakin ingin membatalkan pesanan ini?')) {
-        fetch(/pesanan/${id}/cancel, {
+        fetch(`/pesanan/${id}/cancel`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),

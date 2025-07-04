@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Log;
 
 class PesananWebController extends Controller
 {
@@ -46,13 +45,13 @@ class PesananWebController extends Controller
 
             if ($response->successful()) {
                 $responseData = $response->json();
-                
+
                 // Pastikan response memiliki struktur yang benar
                 if ($responseData['status'] === 'success') {
                     $pesanans = $responseData['data']; // Ambil data pesanan
                     return view('user.pesanan', compact('pesanans', 'status'));
                 }
-                
+
                 return redirect()->back()->with('error', 'Format response tidak valid');
             }
 
@@ -70,242 +69,146 @@ class PesananWebController extends Controller
     /**
      * Menampilkan halaman detail pesanan berdasarkan ID
      */
-    
 
-public function show(Request $request)
-{
-    $token = session('api_token');
 
-    Log::info('Memasuki fungsi show() PesananWebController', [
-        'token_exist' => $token ? true : false,
-        'request_id' => $request->query('id'),
-        'is_ajax' => $request->ajax(),
-        'wants_json' => $request->wantsJson()
-    ]);
+    public function show(Request $request)
+    {
+        $token = session('api_token');
 
-    if (!$token) {
-        Log::warning('Token tidak ditemukan dalam session saat akses detail pesanan');
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Silakan login terlebih dahulu'
-            ], 401);
-        }
-        return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu');
-    }
-    
-
-public function show(Request $request)
-{
-    $token = session('api_token');
-
-    Log::info('Memasuki fungsi show() PesananWebController', [
-        'token_exist' => $token ? true : false,
-        'request_id' => $request->query('id'),
-        'is_ajax' => $request->ajax(),
-        'wants_json' => $request->wantsJson()
-    ]);
-
-    if (!$token) {
-        Log::warning('Token tidak ditemukan dalam session saat akses detail pesanan');
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Silakan login terlebih dahulu'
-            ], 401);
-        }
-        return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu');
-    }
-
-    $pesananId = $request->query('id');
-    $pesananId = $request->query('id');
-
-    if (!$pesananId) {
-        Log::error('ID pesanan tidak ditemukan dalam query parameter');
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'ID pesanan tidak ditemukan'
-            ], 400);
-        }
-        return redirect()->back()->with('error', 'ID pesanan tidak ditemukan.');
-    }
-    if (!$pesananId) {
-        Log::error('ID pesanan tidak ditemukan dalam query parameter');
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'ID pesanan tidak ditemukan'
-            ], 400);
-        }
-        return redirect()->back()->with('error', 'ID pesanan tidak ditemukan.');
-    }
-
-    try {
-        Log::info('Mengirim request ke API detail pesanan', [
-            'url' => "{$this->apiBaseUrl}/pesanan/$pesananId",
-            'token_length' => strlen($token)
+        Log::info('Memasuki fungsi show() PesananWebController', [
+            'token_exist' => $token ? true : false,
+            'request_id' => $request->query('id'),
+            'is_ajax' => $request->ajax(),
+            'wants_json' => $request->wantsJson()
         ]);
 
-        $response = Http::withToken($token)
-            ->timeout(30) // Add timeout
-            ->get("{$this->apiBaseUrl}/pesanan/{$pesananId}");
+        if (!$token) {
+            Log::warning('Token tidak ditemukan dalam session saat akses detail pesanan');
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Silakan login terlebih dahulu'
+                ], 401);
+            }
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu');
+        }
 
-        Log::info('Response dari API', [
-            'status' => $response->status(),
-            'response_size' => strlen($response->body()),
-            'content_type' => $response->header('Content-Type')
-        ]);
-    try {
-        Log::info('Mengirim request ke API detail pesanan', [
-            'url' => "{$this->apiBaseUrl}/pesanan/$pesananId",
-            'token_length' => strlen($token)
-        ]);
+        $pesananId = $request->query('id');
 
-        $response = Http::withToken($token)
-            ->timeout(30) // Add timeout
-            ->get("{$this->apiBaseUrl}/pesanan/{$pesananId}");
+        if (!$pesananId) {
+            Log::error('ID pesanan tidak ditemukan dalam query parameter');
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'ID pesanan tidak ditemukan'
+                ], 400);
+            }
+            return redirect()->back()->with('error', 'ID pesanan tidak ditemukan.');
+        }
 
-        Log::info('Response dari API', [
-            'status' => $response->status(),
-            'response_size' => strlen($response->body()),
-            'content_type' => $response->header('Content-Type')
-        ]);
+        try {
+            Log::info('Mengirim request ke API detail pesanan', [
+                'url' => "{$this->apiBaseUrl}/pesanan/$pesananId",
+                'token_length' => strlen($token)
+            ]);
 
-        if ($response->successful()) {
-            $responseData = $response->json();
-        if ($response->successful()) {
-            $responseData = $response->json();
+            $response = Http::withToken($token)
+                ->timeout(30) // Add timeout
+                ->get("{$this->apiBaseUrl}/pesanan/{$pesananId}");
 
-            if (isset($responseData['status']) && $responseData['status'] === 'success') {
-                $pesanan = $responseData['data'];
-                Log::info('Berhasil mengambil detail pesanan', [
-                    'pesanan_id' => $pesananId,
-                    'pesanan_status' => $pesanan['status'] ?? 'unknown'
+            Log::info('Response dari API', [
+                'status' => $response->status(),
+                'response_size' => strlen($response->body()),
+                'content_type' => $response->header('Content-Type')
+            ]);
+
+            if ($response->successful()) {
+                $responseData = $response->json();
+
+                if (isset($responseData['status']) && $responseData['status'] === 'success') {
+                    $pesanan = $responseData['data'];
+                    Log::info('Berhasil mengambil detail pesanan', [
+                        'pesanan_id' => $pesananId,
+                        'pesanan_status' => $pesanan['status'] ?? 'unknown'
+                    ]);
+
+                    if ($request->wantsJson() || $request->ajax()) {
+                        return response()->json([
+                            'status' => 'success',
+                            'data' => $pesanan
+                        ]);
+                    }
+
+                    return view('user.detail-pesanan', compact('pesanan'));
+                }
+
+                Log::error('Format response dari API tidak valid', [
+                    'responseData' => $responseData,
+                    'expected_status' => 'success'
                 ]);
 
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
-                        'status' => 'success',
-                        'data' => $pesanan
-                    ]);
+                        'status' => 'error',
+                        'message' => 'Format response tidak valid'
+                    ], 500);
                 }
-
-                return view('user.detail-pesanan', compact('pesanan'));
+                return redirect()->back()->with('error', 'Format response tidak valid.');
             }
 
-            Log::error('Format response dari API tidak valid', [
-                'responseData' => $responseData,
-                'expected_status' => 'success'
+            $errorMessage = $response->json('message') ?? 'Gagal mengambil detail pesanan.';
+            Log::error('API mengembalikan error', [
+                'status' => $response->status(),
+                'message' => $errorMessage,
+                'response_body' => $response->body()
             ]);
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Format response tidak valid'
-                ], 500);
+                    'message' => $errorMessage
+                ], $response->status());
             }
-            return redirect()->back()->with('error', 'Format response tidak valid.');
-        }
+            return redirect()->back()->with('error', $errorMessage);
 
-        $errorMessage = $response->json('message') ?? 'Gagal mengambil detail pesanan.';
-        Log::error('API mengembalikan error', [
-            'status' => $response->status(),
-            'message' => $errorMessage,
-            'response_body' => $response->body()
-        ]);
-
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $errorMessage
-            ], $response->status());
-        }
-        return redirect()->back()->with('error', $errorMessage);
-            if (isset($responseData['status']) && $responseData['status'] === 'success') {
-                $pesanan = $responseData['data'];
-                Log::info('Berhasil mengambil detail pesanan', [
-                    'pesanan_id' => $pesananId,
-                    'pesanan_status' => $pesanan['status'] ?? 'unknown'
-                ]);
-
-                if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json([
-                        'status' => 'success',
-                        'data' => $pesanan
-                    ]);
-                }
-
-                return view('user.detail-pesanan', compact('pesanan'));
-            }
-
-            Log::error('Format response dari API tidak valid', [
-                'responseData' => $responseData,
-                'expected_status' => 'success'
+        } catch (\Exception $e) {
+            Log::critical('Exception saat request ke API', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
+            $errorMessage = 'Terjadi kesalahan: ' . $e->getMessage();
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Format response tidak valid'
+                    'message' => $errorMessage
                 ], 500);
             }
-            return redirect()->back()->with('error', 'Format response tidak valid.');
+            return redirect()->back()->with('error', $errorMessage);
         }
-
-        $errorMessage = $response->json('message') ?? 'Gagal mengambil detail pesanan.';
-        Log::error('API mengembalikan error', [
-            'status' => $response->status(),
-            'message' => $errorMessage,
-            'response_body' => $response->body()
-        ]);
-
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $errorMessage
-            ], $response->status());
-        }
-        return redirect()->back()->with('error', $errorMessage);
-
-    } catch (\Exception $e) {
-        Log::critical('Exception saat request ke API', [    
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-
-        $errorMessage = 'Terjadi kesalahan: ' . $e->getMessage();
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => $errorMessage
-            ], 500);
-        }
-        return redirect()->back()->with('error', $errorMessage);
     }
-}
 
 
     public function cancel($id)
-{
-    $token = session('api_token');
+    {
+        $token = session('api_token');
 
-    if (!$token) {
-        return response()->json(['status' => 'error', 'message' => 'Silakan login terlebih dahulu.'], 401);
-    }
-
-    try {
-        $response = Http::withToken($token)->delete("{$this->apiBaseUrl}/pesanan/{$id}/cancel");
-
-        if ($response->successful()) {
-            return response()->json(['status' => 'success', 'message' => 'Pesanan berhasil dibatalkan.']);
+        if (!$token) {
+            return response()->json(['status' => 'error', 'message' => 'Silakan login terlebih dahulu.'], 401);
         }
 
-        $message = $response->json('message') ?? 'Gagal membatalkan pesanan';
-        return response()->json(['status' => 'error', 'message' => $message]);
+        try {
+            $response = Http::withToken($token)->delete("{$this->apiBaseUrl}/pesanan/{$id}/cancel");
 
-    } catch (\Exception $e) {
-        return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+            if ($response->successful()) {
+                return response()->json(['status' => 'success', 'message' => 'Pesanan berhasil dibatalkan.']);
+            }
+
+            $message = $response->json('message') ?? 'Gagal membatalkan pesanan';
+            return response()->json(['status' => 'error', 'message' => $message]);
+
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
     }
-}
 }
