@@ -28,6 +28,7 @@ class Pesanan extends Model
         'waktu_pengambilan',
         'estimasi_waktu',
         'tanggal_dipesan',
+        'resi_pesanan',
         'total'
     ];
 

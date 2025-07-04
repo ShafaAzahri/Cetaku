@@ -44,67 +44,23 @@
 
             <!-- Sort Dropdown -->
             <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-sort me-2"></i>
-                    <span id="sortLabel">
-                        @switch($currentSort ?? 'terbaru')
-                            @case('harga_rendah')
-                                Harga: Rendah ke Tinggi
-                                @break
-                            @case('harga_tinggi')
-                                Harga: Tinggi ke Rendah
-                                @break
-                            @case('terlaris')
-                                Terlaris
-                                @break
-                            @case('nama_az')
-                                Nama: A-Z
-                                @break
-                            @case('nama_za')
-                                Nama: Z-A
-                                @break
-                            @default
-                                Terbaru
-                        @endswitch
-                    </span>
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    @switch($currentSort)
+                        @case('harga_rendah') Harga: Rendah ke Tinggi @break
+                        @case('harga_tinggi') Harga: Tinggi ke Rendah @break
+                        @case('nama_az') Nama: A-Z @break
+                        @case('nama_za') Nama: Z-A @break
+                        @case('terlaris') Terlaris @break
+                        @default Terbaru
+                    @endswitch
                 </button>
-                <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                    <li>
-                        <a class="dropdown-item sort-option {{ ($currentSort ?? 'terbaru') == 'terbaru' ? 'active' : '' }}" 
-                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'terbaru'])) }}">
-                            <i class="fas fa-star me-2"></i>Terbaru
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'harga_rendah' ? 'active' : '' }}" 
-                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'harga_rendah'])) }}">
-                            <i class="fas fa-arrow-up me-2"></i>Harga: Rendah ke Tinggi
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'harga_tinggi' ? 'active' : '' }}" 
-                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'harga_tinggi'])) }}">
-                            <i class="fas fa-arrow-down me-2"></i>Harga: Tinggi ke Rendah
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'terlaris' ? 'active' : '' }}" 
-                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'terlaris'])) }}">
-                            <i class="fas fa-fire me-2"></i>Terlaris
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'nama_az' ? 'active' : '' }}" 
-                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'nama_az'])) }}">
-                            <i class="fas fa-sort-alpha-down me-2"></i>Nama: A-Z
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item sort-option {{ ($currentSort ?? '') == 'nama_za' ? 'active' : '' }}" 
-                           href="{{ route('produk-all', array_merge(request()->query(), ['sort' => 'nama_za'])) }}">
-                            <i class="fas fa-sort-alpha-up me-2"></i>Nama: Z-A
-                        </a>
-                    </li>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item sort-option {{ $currentSort == 'terbaru' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'terbaru']) }}">Terbaru</a></li>
+                    <li><a class="dropdown-item sort-option {{ $currentSort == 'harga_rendah' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'harga_rendah']) }}">Harga: Rendah ke Tinggi</a></li>
+                    <li><a class="dropdown-item sort-option {{ $currentSort == 'harga_tinggi' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'harga_tinggi']) }}">Harga: Tinggi ke Rendah</a></li>
+                    <li><a class="dropdown-item sort-option {{ $currentSort == 'terlaris' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'terlaris']) }}">Terlaris</a></li>
+                    <li><a class="dropdown-item sort-option {{ $currentSort == 'nama_az' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'nama_az']) }}">Nama: A-Z</a></li>
+                    <li><a class="dropdown-item sort-option {{ $currentSort == 'nama_za' ? 'active' : '' }}" href="{{ request()->fullUrlWithQuery(['sort' => 'nama_za']) }}">Nama: Z-A</a></li>
                 </ul>
             </div>
         </div>
@@ -132,9 +88,12 @@
                                 <p class="card-text small text-muted">{{ Str::limit($item['deskripsi'], 50) }}</p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="fw-bold text-primary">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
-                                    @if(isset($item['total_sold']))
+                                    <small class="text-muted">
+                                        {{ isset($item['total_terjual']) && $item['total_terjual'] > 0 ? $item['total_terjual'] . ' terjual' : '0 terjual' }}
+                                    </small>
+                                    {{-- @if(isset($item['total_sold']))
                                         <small class="text-muted">Terjual: {{ $item['total_sold'] }}</small>
-                                    @endif
+                                    @endif --}}
                                 </div>
                             </div>
                             

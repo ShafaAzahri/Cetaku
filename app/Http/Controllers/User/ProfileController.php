@@ -185,11 +185,12 @@ class ProfileController extends Controller
     $validator = Validator::make($request->all(), [
         'nomor_hp' => 'required|string|max:15',
         'alamat_lengkap' => 'required|string',
-        'kelurahan' => 'required|string',
+        'kelurahan' => 'nullable|string', // Ubah ke nullable karena di form tidak required
         'kecamatan' => 'required|string',
         'kota' => 'required|string',
         'provinsi' => 'required|string',
         'kode_pos' => 'required|string|max:10',
+        'label' => 'required|string|in:Utama,Kantor', // Tambahkan validasi label
     ]);
 
     if ($validator->fails()) {
@@ -200,7 +201,7 @@ class ProfileController extends Controller
 
     try {
         $response = Http::withToken($token)
-            ->post($this->apiBaseUrl . '/addAlamat', [
+            ->post($this->apiBaseUrl . '/alamat', [
                 'nomor_hp' => $request->nomor_hp,
                 'alamat_lengkap' => $request->alamat_lengkap,
                 'kelurahan' => $request->kelurahan,
@@ -208,7 +209,7 @@ class ProfileController extends Controller
                 'kota' => $request->kota,
                 'provinsi' => $request->provinsi,
                 'kode_pos' => $request->kode_pos,
-                'label' => $request->label,
+                'label' => $request->label, // Pastikan label dikirim
             ]);
 
         $data = $response->json();
@@ -217,13 +218,21 @@ class ProfileController extends Controller
             return redirect()->route('user.profile')
                 ->with('success', $data['message'] ?? 'Alamat berhasil ditambahkan');
         } else {
+            // Debug: log response untuk melihat error
+            \Log::error('Add address failed', [
+                'response' => $data,
+                'status' => $response->status()
+            ]);
+            
             return redirect()->route('user.profile')
                 ->with('error', $data['message'] ?? 'Gagal menambahkan alamat');
         }
 
     } catch (\Exception $e) {
+        \Log::error('Add address exception', ['error' => $e->getMessage()]);
+        
         return redirect()->route('user.profile')
-            ->with('error', 'Terjadi kesalahan saat menambahkan alamat');
+            ->with('error', 'Terjadi kesalahan saat menambahkan alamat: ' . $e->getMessage());
     }
 }
 
@@ -262,12 +271,13 @@ class ProfileController extends Controller
     $token = session('api_token');
 
     $validator = Validator::make($request->all(), [
-        'full_name' => 'required|string|max:255',
+        // 'full_name' => 'required|string|max:255',
         'nomor_hp' => 'required|string|max:15',
         'alamat_lengkap' => 'required|string',
+        'kelurahan' => 'required|string',
         'kecamatan' => 'required|string',
         'kota' => 'required|string',
-        'provinsi' => 'required|string', // typo: 'rpequired'
+        'provinsi' => 'required|string',
         'kode_pos' => 'required|string|max:10',
         'type' => 'required|string|in:Utama,Kantor',
     ]);
@@ -284,6 +294,7 @@ class ProfileController extends Controller
                 'full_name' => $request->full_name,
                 'nomor_hp' => $request->nomor_hp,
                 'alamat_lengkap' => $request->alamat_lengkap,
+                'kelurahan' => $request->kelurahan,
                 'kecamatan' => $request->kecamatan,
                 'kota' => $request->kota,
                 'provinsi' => $request->provinsi,

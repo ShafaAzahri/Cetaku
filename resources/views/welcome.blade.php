@@ -22,10 +22,10 @@
                 <img src="{{ asset('images/banner.png') }}" class="d-block w-100 h-100 object-fit-cover" alt="Hero Image 1">
             </div>
             <div class="carousel-item h-100">
-                <img src="{{ asset('images/cover.png') }}" class="d-block w-100 h-100 object-fit-cover" alt="Hero Image 2">
+                <img src="{{ asset('images/pola.jpeg') }}" class="d-block w-100 h-100 object-fit-cover" alt="Hero Image 2">
             </div>
             <div class="carousel-item h-100">
-                <img src="{{ asset('images/polines.png') }}" class="d-block w-100 h-100 object-fit-cover" alt="Hero Image 3">
+                <img src="{{ asset('images/1975.jpg') }}" class="d-block w-100 h-100 object-fit-cover" alt="Hero Image 3">
             </div>
         </div>
         <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">

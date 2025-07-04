@@ -137,6 +137,7 @@
             @endif
 
             <!-- 4. Laporan Rincian -->
+<!-- 4. Laporan Rincian -->
 <h3 class="mt-5">Laporan Rincian</h3>
 @if(!empty($detailRincian) && count($detailRincian) > 0)
     <div class="table-responsive">
@@ -151,6 +152,7 @@
                     <th>Harga Satuan</th>
                     <th>Jumlah</th>
                     <th>Biaya Desain</th>
+                    <th>Biaya Ongkir</th> {{-- Tambahan kolom --}}
                     <th>Total Harga</th>
                 </tr>
             </thead>
@@ -166,6 +168,7 @@
                         $rowspan = $items->count();
                         $first = $items->first();
                         $subtotal = 0;
+                        $ongkir = $first->ongkos_kirim ?? 0;
                     @endphp
 
                     @foreach($items as $index => $item)
@@ -186,22 +189,34 @@
                                     -
                                 @endif
                             </td>
-                            <!-- Ambil total harga dari kolom 'total' di tabel pesanans -->
+                            @if($index === 0)
+                                <td rowspan="{{ $rowspan }}">
+                                    @if($ongkir > 0)
+                                        Rp {{ number_format($ongkir, 2, ',', '.') }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                            @endif
                             <td>Rp {{ number_format($item->total, 2, ',', '.') }}</td>
                         </tr>
-                        @php $subtotal += $item->total; @endphp
+                        @php
+                            $subtotal += $item->total;
+                        @endphp
                     @endforeach
 
+                    {{-- Jangan tambah ongkir lagi jika sudah masuk di item->total --}}
                     <tr class="table-secondary">
-                        <td colspan="8" class="text-end"><strong>Sub total:</strong></td>
+                        <td colspan="9" class="text-end"><strong>Sub total:</strong></td>
                         <td><strong>Rp {{ number_format($subtotal, 2, ',', '.') }}</strong></td>
                     </tr>
 
                     @php $grandTotal += $subtotal; @endphp
                 @endforeach
 
+
                 <tr class="table-info">
-                    <td colspan="8" class="text-end"><strong>Total Keseluruhan:</strong></td>
+                    <td colspan="9" class="text-end"><strong>Total Keseluruhan:</strong></td>
                     <td><strong>Rp {{ number_format($grandTotal, 2, ',', '.') }}</strong></td>
                 </tr>
             </tbody>
@@ -210,6 +225,7 @@
 @else
     <p class="text-muted">Tidak ada data rincian penjualan.</p>
 @endif
+
 
         </div>
     </div>

@@ -12,52 +12,8 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-
 class SalesDataSheet implements FromCollection, WithHeadings, WithTitle, ShouldAutoSize, WithEvents
 {
-    public function registerEvents(): array
-    {
-        return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet;
-                $highestRow = $sheet->getHighestRow(); // Misalnya total di baris 11
-
-                // Gaya Header
-                $sheet->getStyle('A1:C1')->applyFromArray([
-                    'font' => ['bold' => true],
-                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DDEBF7']],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-                ]);
-
-                // Hilangkan border isi
-                $sheet->getStyle("A2:C" . ($highestRow - 1))->applyFromArray([
-                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_NONE]],
-                ]);
-
-                // Tambahkan outline border
-                $sheet->getStyle("A1:C{$highestRow}")->applyFromArray([
-                    'borders' => ['outline' => ['borderStyle' => Border::BORDER_THIN]],
-                ]);
-
-                // Gaya total penjualan (baris terakhir)
-                // Merge kolom A dan B di baris total
-                $sheet->mergeCells("A{$highestRow}:B{$highestRow}");
-
-                // Set isi teks dan gaya
-                $sheet->setCellValue("A{$highestRow}", 'Total Penjualan:');
-                $sheet->getStyle("A{$highestRow}:C{$highestRow}")->applyFromArray([
-                    'font' => ['bold' => true],
-                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2EFDA']],
-                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
-                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-                ]);
-
-            },
-        ];
-    }
-
-
     protected $salesData;
     protected $totalPrice;
 
@@ -79,6 +35,7 @@ class SalesDataSheet implements FromCollection, WithHeadings, WithTitle, ShouldA
             ];
         }
 
+        // Tambahkan baris total penjualan
         $data[] = ['Total Penjualan', '', $this->totalPrice];
 
         return collect($data);
@@ -92,5 +49,42 @@ class SalesDataSheet implements FromCollection, WithHeadings, WithTitle, ShouldA
     public function title(): string
     {
         return 'Laporan Penjualan';
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet;
+                $highestRow = $sheet->getHighestRow(); // Baris terakhir (baris total)
+
+                // Gaya header
+                $sheet->getStyle('A1:C1')->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DDEBF7']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+
+                // Gaya data
+                $sheet->getStyle("A2:C" . ($highestRow - 1))->applyFromArray([
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_NONE]],
+                ]);
+
+                // Outline dan style untuk total
+                $sheet->getStyle("A1:C{$highestRow}")->applyFromArray([
+                    'borders' => ['outline' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+
+                // Gaya baris total penjualan
+                $sheet->mergeCells("A{$highestRow}:B{$highestRow}");
+                $sheet->getStyle("A{$highestRow}:C{$highestRow}")->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E2EFDA']],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+            },
+        ];
     }
 }

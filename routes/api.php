@@ -69,6 +69,7 @@ Route::middleware('api.user')->group(function() {
     });
     Route::get('/pesanan', [PesananApiController::class, 'index']);
     Route::get('/pesanan/{id}', [PesananApiController::class, 'show']);
+    Route::delete('/pesanan/{id}/cancel', [PesananApiController::class,'cancel']);
 });
 
 Route::middleware('auth:api')->post('/checkout/payment', [PaymentController::class, 'checkoutPayment']);

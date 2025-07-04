@@ -53,6 +53,7 @@ class LaporanController extends Controller
         ->join('items', 'customs.item_id', '=', 'items.id')
         ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
         ->join('users', 'pesanans.user_id', '=', 'users.id')
+        ->leftJoin('ekspedisis', 'pesanans.id', '=', 'ekspedisis.pesanan_id')
         ->select(
             'pesanans.id as pesanan_id',
             'pesanans.created_at as tanggal_pesanan',
@@ -61,7 +62,8 @@ class LaporanController extends Controller
             'customs.harga as harga_satuan',
             'detail_pesanans.jumlah',
             'pesanans.total',
-            'detail_pesanans.biaya_jasa'
+            'detail_pesanans.biaya_jasa',
+            'ekspedisis.ongkos_kirim'
         )
         ->where('pesanans.status', 'Selesai')  // Status pesanan Selesai
         ->whereBetween('pesanans.created_at', [$startDate, $endDate])  // Filter berdasarkan rentang tanggal
@@ -132,7 +134,7 @@ class LaporanController extends Controller
             ->get();
 
 
-        $totalPrice = $salesData->sum('total_harga');
+        $totalPrice = $salesData->sum('total');
 
         $topSellingItems = $this->getTopSellingItems($startDate, $endDate);
         // Ambil data rincian detail pesanan
@@ -141,6 +143,7 @@ class LaporanController extends Controller
             ->join('items', 'customs.item_id', '=', 'items.id')
             ->join('pesanans', 'detail_pesanans.pesanan_id', '=', 'pesanans.id')
             ->join('users', 'pesanans.user_id', '=', 'users.id')
+            ->leftJoin('ekspedisis', 'pesanans.id', '=', 'ekspedisis.pesanan_id')
             ->select(
                 'pesanans.id as pesanan_id',
                 'pesanans.created_at as tanggal_pesanan',
@@ -149,7 +152,8 @@ class LaporanController extends Controller
                 'customs.harga as harga_satuan',
                 'detail_pesanans.jumlah',
                 'pesanans.total',
-                'detail_pesanans.biaya_jasa'
+                'detail_pesanans.biaya_jasa',
+                'ekspedisis.ongkos_kirim'
             )
 
             ->where('pesanans.status', 'Selesai')

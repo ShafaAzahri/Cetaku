@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\DetailPesanan;
 
 class ProductController extends Controller
 {
@@ -157,18 +158,32 @@ class ProductController extends Controller
             // Cek apakah pengguna sudah login
             $user = session()->has('user') ? session('user') : null;
             
+            // Ambil ulasan untuk produk ini
+            $reviews = DetailPesanan::with('pesanan.user')
+            ->whereHas('custom', function ($query) use ($id) {
+            $query->where('item_id', $id); // sesuaikan jika nama field berbeda
+            })
+            ->whereNotNull('rating')
+            ->whereNotNull('komentar')
+            ->orderByDesc('reviewed_at')
+            ->take(10)
+            ->get();
+
             return view('user.product-detail', [
                 'item' => $item,
                 'bahans' => $availableBahans,
                 'jenis' => $availableJenis,
                 'ukurans' => $availableUkurans,
                 'biaya_desain' => $biayaDesain,
-                'user' => $user
+                'user' => $user,
+                'reviews' => $reviews,
             ]);
             
         } catch (\Exception $e) {
             Log::error('Error showing product detail: ' . $e->getMessage());
             return redirect()->route('produk-all')->with('error', 'Terjadi kesalahan saat memuat detail produk');
         }
+
+        
     }
 }

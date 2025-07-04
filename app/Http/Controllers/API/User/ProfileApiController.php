@@ -8,7 +8,6 @@ use App\Models\Alamat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 
 class ProfileApiController extends Controller
 {
@@ -208,6 +207,14 @@ class ProfileApiController extends Controller
                 ], 422);
             }
 
+            // Jika label utama, ubah semua alamat utama jadi kantor
+            if ($request->label === 'utama') {
+            \DB::table('alamats')
+            ->where('user_id', auth()->id())
+            ->where('label', 'utama')
+            ->update(['label' => 'kantor']);
+            }
+
             $alamat = new Alamat();
             $alamat->user_id = $request->authenticated_user->id;
             $alamat->label = $request->label;
@@ -269,6 +276,15 @@ class ProfileApiController extends Controller
                     'message' => 'Validasi gagal',
                     'errors' => $validator->errors()
                 ], 422);
+            }
+
+            // Jika label utama, ubah alamat lain yang utama menjadi kantor
+            if ($request->label === 'utama') {
+                \DB::table('alamats')
+                    ->where('user_id', auth()->id())
+                    ->where('label', 'utama')
+                    ->where('id', '!=', $alamat->id)
+                    ->update(['label' => 'kantor']);
             }
 
             $alamat->label = $request->label;

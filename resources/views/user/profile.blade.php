@@ -21,24 +21,22 @@
     </div>
 
     <!-- Konten utama profile -->
-    <div class="container my-4">
-        <div class="card shadow-sm rounded-3 p-4">
-           
-        <!-- Profile Header -->
-        <form action="{{ route('user.profile.update') }}" method="POST" class="mb-4 w-100">
-            @csrf
-            <div class="d-flex align-items-center mb-3 mb-md-0">
-                <img src="/images/profile.png" ... >
-                <div>
-                    <div class="fw-bold">{{ $profile['nama'] ?? '-' }}</div>
-                    <div class="text-muted small">{{ $profile['email'] ?? '-' }}</div>
-                </div>
-            </div>
+<div class="container my-4" style="max-width: 900px;">
+    <div class="card shadow-sm rounded-3 p-4">
 
-            <!-- Input Fields -->
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="fw-medium mb-3">Account Information</div>
+        <!-- Bagian Profil & Form -->
+        <div class="d-flex justify-content-center">
+            <form action="{{ route('user.profile.update') }}" method="POST" class="w-100" style="max-width: 1300px;">
+                @csrf
+                <!-- Header Profil -->
+                <div class="text-center mb-3">
+                    <div class="fw-bold fs-5">{{ $profile['nama'] ?? '-' }}</div>
+                    <div class="text-muted">{{ $profile['email'] ?? '-' }}</div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="mb-4">
+                    <div class="fw-bold mb-3">Account Information</div>
                     <div class="mb-3">
                         <label class="form-label small text-muted mb-1">Display name</label>
                         <input type="text" class="form-control" name="nama" value="{{ $profile['nama'] ?? '' }}" required>
@@ -47,26 +45,31 @@
                         <label class="form-label small text-muted mb-1">Email</label>
                         <input type="email" class="form-control" name="email" value="{{ $profile['email'] ?? '' }}" required>
                     </div>
+
+                    <!-- Tombol Simpan -->
+                <div class="text-center mt-3">
+                    <button type="submit" class="btn btn-primary fw-bold w-40">Simpan</button>
+                </div>
+                </div>
+
+                <!-- Reset Password -->
+                <div class="mb-3">
+                    <h2 class="h6 fw-medium mb-2 text-center">Reset Password</h2>
+                    <div class="text-center">
+                        <button type="button" 
+                                class="btn btn-outline-primary btn-sm fw-bold" 
+                                style="width: 200px;"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#ubahPasswordModal">
+                            Ubah Password
+                        </button>
+                    </div>
                 </div>
 
                 
-            </div>
-        </form>
-
-                <!-- Tombol Buka Modal Ubah Password -->
-            <div class="col-md-6">
-                <h2 class="h6 fw-medium mb-3">Reset Password</h2>
-                <button type="button" class="btn btn-outline-primary fw-bold w-100" data-bs-toggle="modal" data-bs-target="#ubahPasswordModal">
-                Ubah Password
-            </button>
+            </form>
         </div>
 
-        <div class="col-12 text-end mt-3">
-                    <button type="submit" class="btn btn-primary fw-bold px-4">Simpan</button>
-                </div>
-        
-
-                
                 
                         <div class="border rounded-3 p-4 mt-4 bg-white">
                 <div class="fw-medium mb-4">Alamat Anda</div>
@@ -105,10 +108,10 @@
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                                         </div>
                                         <div class="modal-body">
-                                            <div class="mb-3">
+                                            {{-- <div class="mb-3">
                                                 <label class="form-label">Full Name</label>
                                                 <input type="text" name="full_name" class="form-control" value="{{ $profile['nama'] ?? '' }}" required>
-                                            </div>
+                                            </div> --}}
                                             <div class="mb-3">
                                                 <label class="form-label">Nomor HP</label>
                                                 <input type="text" name="nomor_hp" class="form-control" value="{{ $address['nomor_hp'] ?? '' }}" required>
@@ -116,6 +119,10 @@
                                             <div class="mb-3">
                                                 <label class="form-label">Alamat Lengkap</label>
                                                 <textarea name="alamat_lengkap" class="form-control" required>{{ $address['alamat_lengkap'] ?? '' }}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Kelurahan</label>
+                                                <input type="text" name="kelurahan" class="form-control" value="{{ $address['kelurahan'] ?? '' }}" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Kecamatan</label>
