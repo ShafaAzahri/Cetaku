@@ -1,3 +1,4 @@
+item.blade
 <div>
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Daftar Item</h5>
@@ -15,6 +16,7 @@
                     <th>Nama Item</th>
                     <th>Deskripsi</th>
                     <th>Harga Dasar</th>
+                    <th>Berat</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -32,12 +34,14 @@
                     <td>{{ $item['nama_item'] }}</td>
                     <td>{{ $item['deskripsi'] ?? '-' }}</td>
                     <td>Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</td>
+                    <td>{{ $item['berat'] ?? '-' }} gr</td>
                     <td>
                         <button class="btn btn-info btn-action" title="Edit"
                                 data-bs-toggle="modal" data-bs-target="#editItemModal"
                                 data-id="{{ $item['id'] }}"
                                 data-nama="{{ $item['nama_item'] }}"
                                 data-deskripsi="{{ $item['deskripsi'] }}"
+                                data-berat="{{ $item['berat'] }}"
                                 data-harga="{{ $item['harga_dasar'] }}"
                                 data-gambar="{{ $item['gambar'] ?? '' }}">
                             <i class="fas fa-edit"></i>

@@ -1,11 +1,13 @@
 <?php
 namespace App\Http\Controllers\Api\User;
 
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Pesanan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+
 
 class PesananApiController extends Controller
 {
@@ -30,7 +32,6 @@ class PesananApiController extends Controller
             'alamat_pengiriman',
             'bukti_pengiriman',
             'created_at',
-            'resi_pesanan',
             'updated_at'
         ])->where('user_id', $user->id);
         
@@ -50,7 +51,6 @@ class PesananApiController extends Controller
                 'total' => $pesanan->total, // Untuk kompatibilitas
                 'alamat_pengiriman' => $pesanan->alamat_pengiriman,
                 'bukti_pengiriman' => $pesanan->bukti_pengiriman,
-                'resi_pesanan' => $pesanan->resi_pengiriman,
                 'created_at' => $pesanan->created_at,
                 'updated_at' => $pesanan->updated_at,
                 'detail_pesanans' => $pesanan->detailPesanans,
@@ -84,7 +84,6 @@ class PesananApiController extends Controller
             'total',
             'alamat_pengiriman',
             'bukti_pengiriman',
-            'resi_pesanan',
             'created_at',
             'updated_at'
         ])
@@ -114,7 +113,6 @@ class PesananApiController extends Controller
             'bukti_pengiriman' => $pesanan->bukti_pengiriman,
             'created_at' => $pesanan->created_at,
             'updated_at' => $pesanan->updated_at,
-            'resi_pesanan' => $pesanan -> resi_pesanan,
             'detail_pesanans' => $pesanan->detailPesanans,
             'total_items' => $pesanan->detailPesanans->sum('jumlah'), // Total jumlah item
         ];

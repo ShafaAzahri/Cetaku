@@ -60,6 +60,10 @@
                         <textarea class="form-control" id="edit_deskripsi" name="deskripsi" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
+                        <label for="edit_berat" class="form-label">Berat</label>
+                        <input type="number" class="form-control" id="edit_berat" name="berat" step="0.1" min="0">
+                    </div>
+                    <div class="mb-3">
                         <label for="edit_harga_dasar" class="form-label">Harga Dasar</label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>

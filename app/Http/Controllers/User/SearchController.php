@@ -19,7 +19,7 @@ class SearchController extends Controller
             ->where('nama_item', 'like', '%' . $query . '%')
             ->get();
 
-        return view('results', [
+        return view('user.results', [
             'results' => $results,
             'query' => $query
     ]);
