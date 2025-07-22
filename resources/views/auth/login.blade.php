@@ -228,17 +228,17 @@
                         <input type="checkbox" class="form-check-input" id="remember" name="remember">
                         <label class="form-check-label" for="remember">Ingat saya</label>
                     </div>
-                    <a href="#" class="forgot-link">Lupa password?</a>
+                    <a href="{{ route('password.email.form') }}" class="forgot-link">Lupa password?</a>
                 </div>
                 
                 <button type="submit" class="btn btn-login">
                     <span class="button-text">Login</span>
                 </button>
                 
-                <button type="button" class="btn btn-google" disabled>
+                <a href="{{ route('login.google') }}" class="btn btn-google">
                     <img src="{{ asset('images/google.png') }}" alt="Google logo" style="width: 20px; height: 20px;">
-                    Or sign in with Google
-                </button>
+                    Login dengan Google
+                </a>
                 
                 <div class="register-link">
                     Tidak punya akun? <a href="{{ route('register') }}">Daftar sekarang</a>

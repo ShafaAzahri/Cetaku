@@ -30,7 +30,7 @@
                 </li>
             </ul>
             
-           <div class="search-box d-flex">
+            <div class="search-box d-flex">
                 <form class="d-flex w-100" action="{{ route('search') }}" method="GET">
                     <input 
                     class="form-control me-2" 
@@ -43,7 +43,7 @@
                         <i class="fas fa-search"></i>
                     </button>
                 </form>
-            </div>
+            </div>
 
             <ul class="navbar-nav ms-auto align-items-center">
                 @if(session()->has('api_token') && session()->has('user'))

@@ -25,7 +25,11 @@ class User extends Authenticatable
         'role_id',
         'last_login_at',
         'last_login_ip',
-    ];
+        'google_id',
+        'avatar',
+        'reset_code',
+        'reset_code_expires_at', // ✅ Tambahkan ini
+    ];       
 
     /**
      * The attributes that should be hidden for serialization.
@@ -46,6 +50,7 @@ class User extends Authenticatable
         'token_expires_at' => 'datetime',
         'last_login_at' => 'datetime',
         'created_at' => 'datetime',
+        'reset_code_expires_at' => 'datetime',
     ];
 
     /**

@@ -29,17 +29,27 @@ use App\Http\Controllers\SuperAdmin\PengaturanController;
 use App\Http\Controllers\User\PesananWebController;
 use App\Http\Controllers\User\SearchController;
 use App\Http\Controllers\Api\User\KeranjangApiController;
+use App\Http\Controllers\GoogleLoginController;
 
 // Super Admin controllers
 use App\Http\Controllers\User\ProdukListController;
-
-
+use Illuminate\Support\Facades\Mail;
+use App\Http\Controllers\User\ResetPasswordController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+Route::get('/test-email', function () {
+    Mail::raw('Ini adalah email test dari Laravel.', function ($msg) {
+        $msg->to('azshafa95@gmail.com')->subject('Test Email');
+    });
+
+    return 'Email test dikirim!';
+});
+
 
 // Halaman utama
 Route::get('/', [WelcomeController::class, 'index'])->name('welcome');
@@ -64,6 +74,17 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.submit');
     Route::get('/product/{id}', [App\Http\Controllers\User\ProductController::class, 'show'])->name('product.detail');
+    Route::get('/login/google', [GoogleLoginController::class, 'redirectToGoogle'])->name('login.google');
+    Route::get('/login/google/callback', [GoogleLoginController::class, 'handleGoogleCallback']);
+    Route::get('/lupa-password', [ResetPasswordController::class, 'showEmailForm'])->name('password.email.form');
+    Route::post('/lupa-password', [ResetPasswordController::class, 'submitEmail'])->name('password.email.submit');
+
+    Route::get('/verifikasi-otp', [ResetPasswordController::class, 'showOtpForm'])->name('password.otp.form');
+    Route::post('/verifikasi-otp', [ResetPasswordController::class, 'submitOtp'])->name('password.otp.submit');
+
+    Route::get('/reset-password', [ResetPasswordController::class, 'showResetForm'])->name('password.reset.form');
+    Route::post('/reset-password', [ResetPasswordController::class, 'submitReset'])->name('password.reset.submit');
+
 });
 
 // Auth (logout)

@@ -12,7 +12,7 @@
                 <tr>
                     <th>No</th>
                     <th>Size</th>
-                    <th>Faktor Harga</th>
+                    <th>Biaya Tambahan</th>
                     <th>Item Terkait</th>
                     <th>Aksi</th>
                 </tr>
@@ -45,11 +45,11 @@
                                 data-faktor="{{ $ukuran['biaya_tambahan'] }}">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <form action="{{ route('admin.ukurans.destroy', $ukuran['id']) }}" method="POST" class="d-inline delete-form" data-entity-type="ukuran">
+                        <form action="{{ route('admin.ukurans.destroy', $ukuran['id']) }}" method="POST" class="d-inline delete-form">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-action" title="Hapus"
-                                    onclick="return confirm('Apakah Anda yakin ingin menghapus ukuran ini? Semua hubungan dengan item akan dihapus juga.')">
+                                    onclick="return confirm('Apakah Anda yakin ingin menghapus ukuran ini?')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </form>

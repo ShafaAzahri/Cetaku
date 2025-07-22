@@ -3,236 +3,295 @@
 @section('title', 'Manajemen Pesanan')
 
 @section('styles')
-<style>
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-    }
+    <style>
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
 
-    .status-pemesanan {
-        background-color: #e2e8f0;
-        color: #1a202c;
-    }
+        .status-pemesanan {
+            background-color: #e2e8f0;
+            color: #1a202c;
+        }
 
-    .status-dikonfirmasi {
-        background-color: #90cdf4;
-        color: #2c5282;
-    }
+        .status-dikonfirmasi {
+            background-color: #90cdf4;
+            color: #2c5282;
+        }
 
-    .status-sedang-diproses {
-        background-color: #fbd38d;
-        color: #744210;
-    }
+        .status-sedang-diproses {
+            background-color: #fbd38d;
+            color: #744210;
+        }
 
-    .status-menunggu-pengambilan {
-        background-color: #fbd38d;
-        color: #744210;
-    }
+        .status-menunggu-pengambilan {
+            background-color: #fbd38d;
+            color: #744210;
+        }
 
-    .status-sedang-dikirim {
-        background-color: #90cdf4;
-        color: #2c5282;
-    }
+        .status-sedang-dikirim {
+            background-color: #90cdf4;
+            color: #2c5282;
+        }
 
-    .status-selesai {
-        background-color: #9ae6b4;
-        color: #22543d;
-    }
+        .status-selesai {
+            background-color: #9ae6b4;
+            color: #22543d;
+        }
 
-    .status-dibatalkan {
-        background-color: #feb2b2;
-        color: #822727;
-    }
-</style>
+        .status-dibatalkan {
+            background-color: #feb2b2;
+            color: #822727;
+        }
+
+        .btn-cancel-action {
+            background-color: transparent;
+            border: none;
+            color: #e63946;
+            font-size: 16px;
+            padding: 6px;
+            margin-left: 6px;
+            /* agak ke samping */
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .btn-cancel-action:hover {
+            background-color: #ffe5e5;
+            color: #b00020;
+            transform: scale(1.1) translateX(2px);
+        }
+
+        .btn-cancel-static {
+            background: transparent;
+            border: none;
+            color: #e63946;
+            /* Merah statis */
+            font-size: 16px;
+            padding: 6px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .btn-cancel-static i {
+            vertical-align: middle;
+        }
+    </style>
 @endsection
 
 @section('content')
-<!-- Flash Messages -->
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
+    <!-- Flash Messages -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form action="{{ route('admin.pesanan.index') }}" method="GET" class="row g-3">
-            <!-- Filters -->
-            <div class="col-md-3">
-                <label for="search" class="form-label">Cari</label>
-                <input type="text" class="form-control" id="search" name="search" placeholder="ID Pesanan atau Pelanggan..." value="{{ $search ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label for="status" class="form-label">Status</label>
-                <select name="status" id="status" class="form-select">
-                    <option value="Semua Status" {{ ($status ?? '') == 'Semua Status' ? 'selected' : '' }}>Semua Status</option>
-                    @foreach($statusOptions as $statusOption)
-                    <option value="{{ $statusOption }}" {{ ($status ?? '') == $statusOption ? 'selected' : '' }}>{{ $statusOption }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label for="dari_tanggal" class="form-label">Dari Tanggal</label>
-                <input type="date" class="form-control" id="dari_tanggal" name="dari_tanggal" value="{{ $dariTanggal ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label for="sampai_tanggal" class="form-label">Sampai Tanggal</label>
-                <input type="date" class="form-control" id="sampai_tanggal" name="sampai_tanggal" value="{{ $sampaiTanggal ?? '' }}">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-search me-1"></i> Cari
-                </button>
-            </div>
-        </form>
+    <div class="card mb-4">
+        <div class="card-body">
+            <form action="{{ route('admin.pesanan.index') }}" method="GET" class="row g-3">
+            <input type="hidden" name="sort_field" value="{{ request('sort_field', 'created_at') }}">
+            <input type="hidden" name="sort_direction" value="{{ request('sort_direction', 'desc') }}">
+                <!-- Filters -->
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Cari</label>
+                    <input type="text" class="form-control" id="search" name="search"
+                        placeholder="ID Pesanan atau Pelanggan..." value="{{ $search ?? '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="Semua Status" {{ ($status ?? '') == 'Semua Status' ? 'selected' : '' }}>Semua Status
+                        </option>
+                        @foreach($statusOptions as $statusOption)
+                            <option value="{{ $statusOption }}" {{ ($status ?? '') == $statusOption ? 'selected' : '' }}>
+                                {{ $statusOption }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="dari_tanggal" class="form-label">Dari Tanggal</label>
+                    <input type="date" class="form-control" id="dari_tanggal" name="dari_tanggal"
+                        value="{{ $dariTanggal ?? '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="sampai_tanggal" class="form-label">Sampai Tanggal</label>
+                    <input type="date" class="form-control" id="sampai_tanggal" name="sampai_tanggal"
+                        value="{{ $sampaiTanggal ?? '' }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i> Cari
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Tanggal</th>
-                        <th>Pelanggan</th>
-                        <th>Status</th>
-                        <th>Metode</th>
-                        <th>Produk</th>
-                        <th>Total</th>
-                        <th>Resi</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($pesanans['data'] ?? [] as $pesanan)
-                    <tr>
-                        <td>#{{ $pesanan['id'] }}</td>
-                        <td>{{ \Carbon\Carbon::parse($pesanan['tanggal_dipesan'])->format('Y-m-d') }}</td>
-                        <td>{{ $pesanan['user']['nama'] ?? 'Tidak ada data' }}</td>
-                        <td>
-                            <span class="status-badge status-{{ strtolower(str_replace(' ', '-', $pesanan['status'])) }}">
-                                {{ $pesanan['status'] }}
-                            </span>
-                        </td>
-                        <td>{{ $pesanan['metode_pengambilan'] == 'antar' ? 'Dikirim' : 'Ambil di Tempat' }}</td>
-                        <td>
-                            @if(isset($pesanan['detail_pesanans']) && count($pesanan['detail_pesanans']) > 0)
-                            {{ $pesanan['detail_pesanans'][0]['custom']['item']['nama_item'] ?? 'Produk tidak diketahui' }}
-                            @if(count($pesanan['detail_pesanans']) > 1)
-                            <span class="text-muted">(+{{ count($pesanan['detail_pesanans'])-1 }} lainnya)</span>
-                            @endif
-                            @else
-                            Produk tidak diketahui
-                            @endif
-                        </td>
-                        <td>
-    Rp {{ number_format($pesanan['total'] ?? 0, 0, ',', '.') }}
-</td>
-                        <td>
-                            @if(in_array($pesanan['status'], ['Sedang Dikirim', 'Selesai']))
-                            {{ $pesanan['resi_pesanan'] ?? '-' }}
-                            @else
-                            -
-                            @endif
-                        </td>
-                        <td>
-                            <div class="d-flex gap-1">
-                                <a href="{{ route('admin.pesanan.show', $pesanan['id']) }}" class="action-btn info" title="Detail">
-                                    <i class="fas fa-info-circle"></i>
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Tanggal</th>
+                            <th>Pelanggan</th>
+                            <th>Status</th>
+                            <th>Metode</th>
+                            <th>Produk</th>
+                            <th>Total</th>
+                            <th>Resi</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($pesanans['data'] ?? [] as $pesanan)
+                            <tr>
+                                <td>#{{ $pesanan['id'] }}</td>
+                                <td>{{ \Carbon\Carbon::parse($pesanan['tanggal_dipesan'])->format('Y-m-d') }}</td>
+                                <td>{{ $pesanan['user']['nama'] ?? 'Tidak ada data' }}</td>
+                                <td>
+                                    <span
+                                        class="status-badge status-{{ strtolower(str_replace(' ', '-', $pesanan['status'])) }}">
+                                        {{ $pesanan['status'] }}
+                                    </span>
+                                </td>
+                                <td>{{ $pesanan['metode_pengambilan'] == 'antar' ? 'Dikirim' : 'Ambil di Tempat' }}</td>
+                                <td>
+                                    @if(isset($pesanan['detail_pesanans']) && count($pesanan['detail_pesanans']) > 0)
+                                        {{ $pesanan['detail_pesanans'][0]['custom']['item']['nama_item'] ?? 'Produk tidak diketahui' }}
+                                        @if(count($pesanan['detail_pesanans']) > 1)
+                                            <span class="text-muted">(+{{ count($pesanan['detail_pesanans']) - 1 }} lainnya)</span>
+                                        @endif
+                                    @else
+                                        Produk tidak diketahui
+                                    @endif
+                                </td>
+                                <td>
+                                    Rp {{ number_format($pesanan['total'] ?? 0, 0, ',', '.') }}
+                                </td>
+                                <td>
+                                    @if(in_array($pesanan['status'], ['Sedang Dikirim', 'Selesai']))
+                                        {{ $pesanan['resi_pesanan'] ?? '-' }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a href="{{ route('admin.pesanan.show', $pesanan['id']) }}"
+                                            class="action-btn text-primary" title="Detail">
+                                            <i class="fas fa-info-circle"></i>
+                                        </a>
+
+                                        <!-- @if($pesanan['status'] == 'Sedang Dikirim')
+                                            <a href="#" class="action-btn ship" title="Info Pengiriman" data-bs-toggle="modal"
+                                                data-bs-target="#trackingModal{{ $pesanan['id'] }}">
+                                                <i class="fas fa-truck"></i>
+                                            </a>
+                                        @endif -->
+
+                                        @if(!in_array($pesanan['status'], ['Selesai', 'Dibatalkan']))
+                                            <form action="{{ route('admin.pesanan.cancel', $pesanan['id']) }}" method="POST"
+                                                onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">
+                                                @csrf
+                                                <button type="submit" class="btn-cancel-action" title="Batalkan">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-4">Tidak ada data pesanan</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if(isset($pesanans['links']))
+            <div class="d-flex justify-content-end mt-3">
+                <nav>
+                    <ul class="pagination">
+                        @foreach($pesanans['links'] as $link)
+                            @php
+                                // Ambil nomor halaman dari 'url'
+                                preg_match('/page=(\d+)/', $link['url'] ?? '', $matches);
+                                $page = $matches[1] ?? 1;
+
+                                // Bangun ulang query string berdasarkan current filter
+                                $query = request()->except('page');
+                                $query['page'] = $page;
+
+                                $url = url()->current() . '?' . http_build_query($query);
+                            @endphp
+
+                            <li class="page-item {{ $link['active'] ? 'active' : '' }} {{ !$link['url'] ? 'disabled' : '' }}">
+                                <a class="page-link" href="{{ $link['url'] ? $url : '#' }}">
+                                    {!! $link['label'] !!}
                                 </a>
-
-                                @if($pesanan['status'] == 'Sedang Dikirim')
-                                <a href="#" class="action-btn ship" title="Info Pengiriman" data-bs-toggle="modal" data-bs-target="#trackingModal{{ $pesanan['id'] }}">
-                                    <i class="fas fa-truck"></i>
-                                </a>
-                                @endif
-
-                                @if(!in_array($pesanan['status'], ['Selesai', 'Dibatalkan']))
-                                <form action="{{ route('admin.pesanan.cancel', $pesanan['id']) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?')">
-                                    @csrf
-                                    <button type="submit" class="action-btn cancel" title="Batalkan">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </form>
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="8" class="text-center py-4">Tidak ada data pesanan</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Pagination -->
-        @if(isset($pesanans['links']))
-        <div class="d-flex justify-content-end mt-3">
-            <nav>
-                <ul class="pagination">
-                    @foreach($pesanans['links'] as $link)
-                    <li class="page-item {{ $link['active'] ? 'active' : '' }} {{ $link['url'] === null ? 'disabled' : '' }}">
-                        <a class="page-link" href="{{ $link['url'] ?? '#' }}">
-                            {!! $link['label'] !!}
-                        </a>
-                    </li>
-                    @endforeach
-                </ul>
-            </nav>
-        </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                </nav>
+            </div>
         @endif
-    </div>
-</div>
-</div>
 
-<!-- Tracking Modal -->
-@foreach($pesanans['data'] ?? [] as $pesanan)
-@if($pesanan['status'] == 'Sedang Dikirim' && isset($pesanan['ekspedisi']))
-<div class="modal fade" id="trackingModal{{ $pesanan['id'] }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Info Pengiriman #{{ $pesanan['id'] }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Ekspedisi</label>
-                    <p>{{ $pesanan['ekspedisi']['nama_ekspedisi'] ?? 'Tidak ada data' }}</p>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Layanan</label>
-                    <p>{{ $pesanan['ekspedisi']['layanan'] ?? 'Regular' }}</p>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Estimasi</label>
-                    <p>{{ $pesanan['ekspedisi']['estimasi'] ?? '3-5 hari' }}</p>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Ongkir</label>
-                    <p>Rp {{ number_format($pesanan['ekspedisi']['ongkos_kirim'] ?? 0, 0, ',', '.') }}</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
         </div>
     </div>
-</div>
-@endif
-@endforeach
+    </div>
+
+    <!-- Tracking Modal -->
+    @foreach($pesanans['data'] ?? [] as $pesanan)
+        @if($pesanan['status'] == 'Sedang Dikirim' && isset($pesanan['ekspedisi']))
+            <div class="modal fade" id="trackingModal{{ $pesanan['id'] }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Info Pengiriman #{{ $pesanan['id'] }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ekspedisi</label>
+                                <p>{{ $pesanan['ekspedisi']['nama_ekspedisi'] ?? 'Tidak ada data' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Layanan</label>
+                                <p>{{ $pesanan['ekspedisi']['layanan'] ?? 'Regular' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Estimasi</label>
+                                <p>{{ $pesanan['ekspedisi']['estimasi'] ?? '3-5 hari' }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Ongkir</label>
+                                <p>Rp {{ number_format($pesanan['ekspedisi']['ongkos_kirim'] ?? 0, 0, ',', '.') }}</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endforeach
 @endsection

@@ -3,31 +3,49 @@
 namespace App\Exports\Sheets;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Carbon\Carbon;
 
-class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, ShouldAutoSize
+
+class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, ShouldAutoSize, WithHeadings
 {
     protected $detailRincian;
+    protected $adminName;
+    protected $startDate;
+    protected $endDate;
     protected $rowTracking = [];
 
-    public function __construct($detailRincian)
+    public function __construct($detailRincian, $adminName, $startDate, $endDate)
     {
         $this->detailRincian = $detailRincian;
+        $this->adminName = $adminName;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
+    }
+
+    public function headings(): array
+    {
+        return [
+            'No', 'ID Pesanan', 'Tanggal Pesanan', 'Nama Pemesan',
+            'Nama Produk', 'Harga Satuan', 'Jumlah', 'Biaya Desain',
+            'Biaya Ongkir', 'Total Harga'
+        ];
     }
 
     public function collection()
     {
         $data = [];
         $no = 1;
+        $rowNum = 2; // baris pertama data (setelah heading)
         $grandTotal = 0;
-        $rowNum = 2; // karena header di baris pertama
         $grouped = collect($this->detailRincian)->groupBy('pesanan_id');
 
         foreach ($grouped as $pesananId => $items) {
@@ -40,7 +58,7 @@ class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, Shoul
                 $data[] = [
                     $index === 0 ? $no : '',
                     $index === 0 ? $pesananId : '',
-                    $index === 0 ? \Carbon\Carbon::parse($item->tanggal_pesanan)->format('Y-m-d') : '',
+                    $index === 0 ? Carbon::parse($item->tanggal_pesanan)->format('Y-m-d') : '',
                     $index === 0 ? $item->nama_pemesan : '',
                     $item->nama_item,
                     $item->harga_satuan,
@@ -53,12 +71,8 @@ class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, Shoul
                 $rowNum++;
             }
 
-            $this->rowTracking[] = [
-                'row_start' => $startRow,
-                'row_end' => $rowNum - 1,
-            ];
+            $this->rowTracking[] = ['row_start' => $startRow, 'row_end' => $rowNum - 1];
 
-            // Tambah subtotal
             $data[] = ['Sub total', '', '', '', '', '', '', '', '', $subtotal];
             $this->rowTracking[] = ['subtotal' => $rowNum];
             $rowNum++;
@@ -83,30 +97,44 @@ class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, Shoul
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet;
+                
 
-                // Header
-                $headers = [
-                    'No', 'ID Pesanan', 'Tanggal Pesanan', 'Nama Pemesan',
-                    'Nama Produk', 'Harga Satuan', 'Jumlah', 'Biaya Desain',
-                    'Biaya Ongkir', 'Total Harga'
-                ];
-                $sheet->insertNewRowBefore(1, 1);
-                foreach ($headers as $i => $header) {
-                    $cell = chr(65 + $i) . '1'; // A1, B1, ...
-                    $sheet->setCellValue($cell, $header);
+                // ============ Judul Audit ============
+                $sheet->insertNewRowBefore(1, 2);
+                $sheet->mergeCells('A1:J1');
+                $sheet->mergeCells('A2:J2');
+                $sheet->setCellValue('A1', 'LAPORAN AUDIT RINCIAN PENJUALAN WEB CETAKU');
+                $sheet->setCellValue('A2', 'Periode: ' . Carbon::parse($this->startDate)->format('d M Y') . ' - ' . Carbon::parse($this->endDate)->format('d M Y'));
+
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 14],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => ['italic' => true],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                ]);
+
+                // Geser semua tracking 2 baris ke bawah
+                foreach ($this->rowTracking as &$track) {
+                    foreach ($track as $k => $v) {
+                        $track[$k] = $v + 2;
+                    }
                 }
+                unset($track);
 
                 $highestRow = $sheet->getHighestRow();
 
-                // Style header
-                $sheet->getStyle('A1:J1')->applyFromArray([
+                // ============ Styling Header ============
+                $sheet->getStyle('A3:J3')->applyFromArray([
                     'font' => ['bold' => true],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'DDEBF7']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                     'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
                 ]);
 
-                // Styling subtotal & total
+                // ============ Styling Data ============
                 foreach ($this->rowTracking as $track) {
                     if (isset($track['subtotal'])) {
                         $row = $track['subtotal'];
@@ -133,7 +161,6 @@ class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, Shoul
                     if (isset($track['row_start'])) {
                         $start = $track['row_start'];
                         $end = $track['row_end'];
-
                         if ($start !== $end) {
                             foreach (['A', 'B', 'C', 'D', 'I'] as $col) {
                                 $sheet->mergeCells("{$col}{$start}:{$col}{$end}");
@@ -143,19 +170,48 @@ class DetailRincianSheet implements FromCollection, WithTitle, WithEvents, Shoul
                     }
                 }
 
-                // Text align & wrap
-                $sheet->getStyle("A1:J{$highestRow}")->getAlignment()->setWrapText(true);
+                unset($track);
+
+                // Format rupiah & center
+                foreach (['F', 'H', 'I', 'J'] as $col) {
+                    $sheet->getStyle("{$col}4:{$col}{$highestRow}")->getNumberFormat()->setFormatCode('"Rp" #,##0');
+                }
                 foreach (['A', 'B', 'C', 'D', 'H'] as $col) {
-                    $sheet->getStyle("{$col}2:{$col}{$highestRow}")
-                        ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                    $sheet->getStyle("{$col}4:{$col}{$highestRow}")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 }
 
-                // Format Rupiah untuk F, H, I, J
-                foreach (['F', 'H', 'I', 'J'] as $col) {
-                    $sheet->getStyle("{$col}2:{$col}{$highestRow}")
-                        ->getNumberFormat()
-                        ->setFormatCode('"Rp" #,##0');
-                }
+                // ============ Footer Tanda Tangan ============
+                $footerRow = $highestRow + 3;
+
+                // Merge masing-masing baris tanda tangan
+                $sheet->mergeCells("H{$footerRow}:J{$footerRow}"); // Tanggal
+                $sheet->mergeCells("H" . ($footerRow + 1) . ":J" . ($footerRow + 1)); // Jabatan
+                $sheet->mergeCells("H" . ($footerRow + 2) . ":J" . ($footerRow + 2)); // Kosong 1
+                $sheet->mergeCells("H" . ($footerRow + 3) . ":J" . ($footerRow + 3)); // Kosong 2
+                $sheet->mergeCells("H" . ($footerRow + 4) . ":J" . ($footerRow + 4)); // Kosong 3
+                $sheet->mergeCells("H" . ($footerRow + 5) . ":J" . ($footerRow + 5)); // Nama
+
+                // Set isi masing-masing
+                $sheet->setCellValue("H{$footerRow}", 'Semarang, ' . Carbon::now()->locale('id')->isoFormat('D MMMM Y'));
+                $sheet->setCellValue("H" . ($footerRow + 1), 'Superadmin');
+                $sheet->setCellValue("H" . ($footerRow + 2), '');
+                $sheet->setCellValue("H" . ($footerRow + 3), '');
+                $sheet->setCellValue("H" . ($footerRow + 4), '');
+                $sheet->setCellValue("H" . ($footerRow + 5), $this->adminName);
+
+                // Rata tengah
+                $sheet->getStyle("H{$footerRow}:J" . ($footerRow + 5))->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+                $sheet->getPageSetup()->setOrientation(\PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE);
+                $sheet->getPageSetup()->setFitToPage(true);
+                $sheet->getPageSetup()->setFitToWidth(1);
+                $sheet->getPageSetup()->setFitToHeight(0);
+
+                $sheet->getPageMargins()->setTop(0.5);
+                $sheet->getPageMargins()->setRight(0.3);
+                $sheet->getPageMargins()->setLeft(0.3);
+                $sheet->getPageMargins()->setBottom(0.5);
+
             },
         ];
     }

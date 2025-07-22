@@ -1,7 +1,6 @@
 @extends('user.layouts.app')
 @section('custom-css')
 <style>
-    
     .nav-tabs {
         border-bottom: 1px solid #dee2e6;
         margin-bottom: 20px;
@@ -187,6 +186,239 @@
         padding: 30px 0;
         min-height: 70vh;
     }
+    
+    /* Modal Detail Styles - Tokopedia inspired */
+    .modal-lg {
+        max-width: 800px;
+    }
+    .modal-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding: 20px;
+    }
+    .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+    }
+    .modal-body {
+        padding: 0;
+    }
+    .order-status-section {
+        background: linear-gradient(135deg, #4361ee 0%, #3c54d8 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .order-status-info h6 {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+    .order-status-info .status-text {
+        font-size: 16px;
+        font-weight: 600;
+        margin-top: 5px;
+    }
+    .order-date-info {
+        text-align: right;
+        opacity: 0.9;
+    }
+    .order-date-info small {
+        font-size: 12px;
+    }
+    .section-divider {
+        background-color: #f8f9fa;
+        height: 8px;
+        border-top: 1px solid #e9ecef;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .detail-section {
+        padding: 20px;
+    }
+    .detail-section h6 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+    }
+    .detail-section h6 i {
+        margin-right: 8px;
+        color: #4361ee;
+    }
+    .product-detail-item {
+        display: flex;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .product-detail-item:last-child {
+        border-bottom: none;
+    }
+    .product-detail-image {
+        width: 70px;
+        height: 70px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 15px;
+        border: 1px solid #e9ecef;
+    }
+    .product-detail-content {
+        flex: 1;
+    }
+    .product-detail-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 15px;
+    }
+    .product-detail-specs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 8px;
+    }
+    .product-spec {
+        color: #6c757d;
+        font-size: 13px;
+    }
+    .product-detail-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+    }
+    .price-info {
+        font-weight: 600;
+        color: #333;
+    }
+    .quantity-info {
+        color: #6c757d;
+        font-size: 14px;
+    }
+    .shipping-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .shipping-info h6 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 10px;
+    }
+    .shipping-address {
+        color: #6c757d;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    .tracking-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .tracking-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .tracking-number {
+        font-family: monospace;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        background-color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+    .copy-btn {
+        background-color: #4361ee;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .copy-btn:hover {
+        background-color: #3c54d8;
+    }
+    .copy-btn:active {
+        transform: scale(0.98);
+    }
+    .proof-section {
+        text-align: center;
+        margin-top: 15px;
+    }
+    .proof-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .no-proof {
+        color: #6c757d;
+        font-style: italic;
+        padding: 20px;
+        text-align: center;
+    }
+    .payment-summary {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .payment-summary h6 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 15px;
+    }
+    .payment-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .payment-row.total {
+        font-weight: 600;
+        font-size: 16px;
+        color: #4361ee;
+        border-top: 1px solid #dee2e6;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+    .modal-footer {
+        border-top: 2px solid #f0f0f0;
+        padding: 20px;
+        justify-content: center;
+    }
+    .toast-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #4361ee;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        z-index: 9999;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+    }
+    .toast-notification.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
 </style>
 @endsection
 
@@ -294,10 +526,10 @@
                                     @break
                                 @case('Selesai')
                                     <button class="btn action-btn btn-review" onclick="reviewOrder('{{ $detail['id'] }}')">Beri Ulasan</button>
-                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
+                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
                                     @break
                                 @case('Dibatalkan')
-                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
+                                    <a href="{{ route('produk-all') }}" class="btn action-btn btn-pay">Beli Lagi<i class="fas fa-arrow-right ms-2"></i></a>
                                     @break
                             @endswitch
                             <button class="btn action-btn btn-info" data-bs-toggle="modal" data-bs-target="#orderDetailModal" onclick="showOrderDetails('{{ $pesanan['id'] }}')">Detail</button>
@@ -325,8 +557,7 @@
     </div>
 </section>
 
-<!-- Modal Detail Pesanan -->
-<!-- Modal Detail Pesanan -->
+<!-- Modal Detail Pesanan - Tokopedia Style -->
 <div class="modal fade" id="orderDetailModal" tabindex="-1" aria-labelledby="orderDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -335,32 +566,71 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="order-detail-info">
-                    <h6>Barang Pesanan:</h6>
-                    <div id="orderItems"></div>
-                    
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <h6>Total Harga:</h6>
-                            <p id="orderTotalPrice" class="fw-bold text-primary fs-5">Rp 0</p>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Total Item:</h6>
-                            <p id="orderTotalItems">-</p>
+                <!-- Status Section -->
+                <div class="order-status-section">
+                    <div class="order-status-info">
+                        <h6>Status Pesanan</h6>
+                        <div class="status-text" id="orderStatusText">-</div>
+                    </div>
+                    <div class="order-date-info">
+                        <div id="orderDateText">-</div>
+                        <small>Tanggal Pesanan</small>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div class="detail-section">
+                    <h6><i class="fas fa-shopping-bag"></i> Produk Pesanan</h6>
+                    <div id="orderProductItems">
+                        <div class="text-center py-3">
+                            <i class="fas fa-spinner fa-spin"></i> Memuat...
                         </div>
                     </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Shipping Info -->
+                <div class="detail-section">
+                    <h6><i class="fas fa-truck"></i> Informasi Pengiriman</h6>
+                    <div class="shipping-info">
+                        <h6>Alamat Pengiriman</h6>
+                        <div class="shipping-address" id="orderShippingAddress">-</div>
+                    </div>
                     
-                    <hr>
-                    
-                    <h6>Alamat Pengiriman:</h6>
-                    <p id="orderShippingAddress" class="text-muted">-</p>
-                    
-                    <h6>Nomor Resi: &#40 copy kode resi nya &#41</h6>
-                    <p id="orderResiPesanan" class="text-muted">-</p>
-                    
-                    <h6>Bukti Pengiriman:</h6>
-                    <div id="orderShipmentProofContainer">
-                        <img id="orderShipmentProof" src="" alt="Bukti Pengiriman" class="img-fluid" style="max-height: 300px; border-radius: 8px;">
+                    <div class="tracking-section" id="trackingSection" style="display: none;">
+                        <div class="tracking-header">
+                            <h6 style="margin: 0;">Nomor Resi</h6>
+                            <button class="copy-btn" onclick="copyToClipboard()">Salin</button>
+                        </div>
+                        <div class="tracking-number" id="orderTrackingNumber" 
+                            style="user-select: all; cursor: pointer;" 
+                            onclick="selectText(this)" 
+                            title="Klik untuk memilih teks">-</div>
+                    </div>
+
+                    <div class="proof-section" id="proofSection">
+                        <h6>Bukti Pengiriman</h6>
+                        <div id="orderProofContainer">
+                            <div class="no-proof">Belum ada bukti pengiriman</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-divider"></div>
+
+                <!-- Payment Summary -->
+                <div class="detail-section">
+                    <h6><i class="fas fa-receipt"></i> Ringkasan Pembayaran</h6>
+                    <div class="payment-summary">
+                        <div class="payment-row">
+                            <span>Total Item:</span>
+                            <span id="orderTotalItems">-</span>
+                        </div>
+                        <div class="payment-row total">
+                            <span>Total Pembayaran:</span>
+                            <span id="orderTotalPrice">Rp 0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -370,30 +640,24 @@
         </div>
     </div>
 </div>
+
+<!-- Toast Notification -->
+<div id="toastNotification" class="toast-notification">
+    Nomor resi berhasil disalin!
+</div>
 @endsection
 
 @section('custom-js')
 <script>
-// Debug untuk memastikan Bootstrap tersedia
-// Debug untuk memastikan Bootstrap tersedia
-// Debug untuk memastikan Bootstrap tersedia
 console.log('Bootstrap version:', typeof bootstrap !== 'undefined' ? 'Available' : 'Not Available');
 
 function showOrderDetails(orderId) {
     console.log('showOrderDetails called for order:', orderId);
     
-    // Show loading state
-    document.getElementById('orderItems').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
-    document.getElementById('orderTotalPrice').innerText = 'Memuat...';
-    document.getElementById('orderTotalItems').innerText = 'Memuat...';
-    document.getElementById('orderShippingAddress').innerText = 'Memuat...';
-    document.getElementById('orderResiPesanan').innerText = 'Memuat...';
+    // Reset modal content
+    resetModalContent();
     
-    // Hide shipping proof initially
-    const proofImg = document.getElementById('orderShipmentProof');
-    proofImg.style.display = 'none';
-    
-    // Fetch actual data from API
+    // Fetch data from API
     fetch(`/pesanan/show?id=${orderId}`, {
         method: 'GET',
         headers: {
@@ -420,23 +684,56 @@ function showOrderDetails(orderId) {
     })
     .catch(error => {
         console.error('Error fetching order details:', error);
-        
-        // Show error message
-        document.getElementById('orderItems').innerHTML = 
-            '<div class="alert alert-danger">Gagal memuat detail pesanan: ' + error.message + '</div>';
-        document.getElementById('orderTotalPrice').innerText = '-';
-        document.getElementById('orderTotalItems').innerText = '-';
-        document.getElementById('orderShippingAddress').innerText = '-';
-        document.getElementById('orderResiPesanan').innerText = '-';
+        showErrorState(error.message);
     });
 }
 
+function resetModalContent() {
+    document.getElementById('orderDetailModalLabel').innerText = 'Detail Pesanan';
+    document.getElementById('orderStatusText').innerText = '-';
+    document.getElementById('orderDateText').innerText = '-';
+    document.getElementById('orderProductItems').innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Memuat...</div>';
+    document.getElementById('orderShippingAddress').innerText = '-';
+    document.getElementById('orderTrackingNumber').innerText = '-';
+    document.getElementById('orderTotalItems').innerText = '-';
+    document.getElementById('orderTotalPrice').innerText = 'Rp 0';
+    document.getElementById('trackingSection').style.display = 'none';
+    document.getElementById('orderProofContainer').innerHTML = '<div class="no-proof">Belum ada bukti pengiriman</div>';
+}
 
 function updateModalContent(orderData) {
-    // Update modal title with order ID
+    // Update modal title
     document.getElementById('orderDetailModalLabel').innerText = `Detail Pesanan #${orderData.id}`;
     
-    // Update items
+    // Update status
+    document.getElementById('orderStatusText').innerText = orderData.status;
+    
+    // Update date
+    document.getElementById('orderDateText').innerText = formatDate(orderData.created_at);
+    
+    // Update products
+    updateProductItems(orderData);
+    
+    // Update shipping address
+    document.getElementById('orderShippingAddress').innerText = orderData.alamat_pengiriman || 'Alamat pengiriman belum diisi';
+    
+    // Update tracking number
+    const trackingNumber = orderData.resi_pesanan;
+    if (trackingNumber && trackingNumber !== '-') {
+        document.getElementById('orderTrackingNumber').innerText = trackingNumber;
+        document.getElementById('trackingSection').style.display = 'block';
+    } else {
+        document.getElementById('trackingSection').style.display = 'none';
+    }
+    
+    // Update shipping proof
+    updateShippingProof(orderData.bukti_pengiriman);
+    
+    // Update payment summary
+    updatePaymentSummary(orderData);
+}
+
+function updateProductItems(orderData) {
     let itemsHtml = '';
     let totalItems = 0;
     
@@ -457,197 +754,129 @@ function updateModalContent(orderData) {
             const tipeDesain = detail.tipe_desain || '-';
             const biayaJasa = parseFloat(detail.biaya_jasa) || 0;
             
-            // Get product image
             const defaultImage = '/images/polines.png';
             let productImage = defaultImage;
             if (item.gambar) {
                 productImage = `/storage/${item.gambar}`;
             }
             
-            // Tambahkan ke total items
             totalItems += quantity;
             
             itemsHtml += `
-                <div class="mb-3 pb-3 border-bottom">
-                    <div class="d-flex">
-                        <img src="${productImage}" alt="${itemName}" class="me-3" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;" onerror="this.src='${defaultImage}'">
-                        <div class="flex-grow-1">
-                            <h6 class="mb-1">${itemName}</h6>
-                            <small class="text-muted d-block">Ukuran: ${size}</small>
-                            <small class="text-muted d-block">Bahan: ${material}</small>
-                            <small class="text-muted d-block">Kategori: ${category}</small>
-                            <small class="text-muted d-block">Tipe Desain: ${tipeDesain}</small>
-                            ${biayaJasa > 0 ? `<small class="text-muted d-block">Biaya Jasa: Rp ${biayaJasa.toLocaleString('id-ID')}</small>` : ''}
-                            <small class="text-muted d-block">Jumlah: ${quantity}</small>
-                            <div class="mt-2">
-                                <span class="fw-bold text-primary">Rp ${itemPrice.toLocaleString('id-ID')}</span>
-                            </div>
+                <div class="product-detail-item">
+                    <img src="${productImage}" alt="${itemName}" class="product-detail-image" onerror="this.src='${defaultImage}'">
+                    <div class="product-detail-content">
+                        <div class="product-detail-title">${itemName}</div>
+                        <div class="product-detail-specs">
+                            <div class="product-spec">Ukuran: ${size}</div>
+                            <div class="product-spec">Bahan: ${material}</div>
+                            <div class="product-spec">Kategori: ${category}</div>
+                        </div>
+                                                ${tipeDesain !== '-' ? `<div class="product-spec">Tipe Desain: ${tipeDesain}</div>` : ''}
+                        <div class="product-detail-price">
+                            <span class="price-info">Rp ${itemPrice.toLocaleString('id-ID')}</span>
+                            <span class="quantity-info">x${quantity}</span>
                         </div>
                     </div>
                 </div>
             `;
         });
     } else {
-        itemsHtml = '<div class="text-muted">Tidak ada detail item</div>';
-        totalItems = orderData.total_items || 1; // Fallback ke total_items dari API
+        itemsHtml = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-box-open fa-2x mb-2"></i><br>
+                Tidak ada detail produk ditemukan.
+            </div>
+        `;
     }
 
-    document.getElementById('orderItems').innerHTML = itemsHtml;
-    
-    // Update total price - GUNAKAN TOTAL DARI TABEL PESANAN
-    const totalHarga = parseFloat(orderData.total_harga) || parseFloat(orderData.total) || 0;
-    document.getElementById('orderTotalPrice').innerText = `Rp ${totalHarga.toLocaleString('id-ID')}`;
-    
-    // Update total items - GUNAKAN TOTAL ITEMS YANG SUDAH DIHITUNG
-    const finalTotalItems = orderData.total_items || totalItems;
-    document.getElementById('orderTotalItems').innerText = `${finalTotalItems} item`;
-    
-    // Update shipping address
-    const shippingAddress = orderData.alamat_pengiriman || 'Alamat pengiriman belum diisi';
-    document.getElementById('orderShippingAddress').innerText = shippingAddress;
-    
-    // Update resi pesanan
-    const resiPesanan = orderData.resi_pesanan || orderData.resi_pesanan || 'Resi belum tersedia';
-    document.getElementById('orderResiPesanan').innerText = resiPesanan;
-    
-    // Update shipping proof
-    const proofImg = document.getElementById('orderShipmentProof');
-    if (orderData.bukti_pengiriman) {
-        proofImg.src = `/storage/bukti-pengiriman/${orderData.bukti_pengiriman}`;
-        proofImg.style.display = 'block';
-        proofImg.onerror = function() {
-            this.style.display = 'none';
-            this.parentNode.innerHTML += '<p class="text-muted">Bukti pengiriman tidak dapat ditampilkan</p>';
-        };
-    } else {
-        proofImg.style.display = 'none';
-        proofImg.parentNode.innerHTML = '<p class="text-muted">Belum ada bukti pengiriman</p>';
-    }
-    
-    // Add order status and date info
-    const orderInfo = document.querySelector('.order-detail-info');
-    const existingInfo = orderInfo.querySelector('.order-status-info');
-    if (existingInfo) {
-        existingInfo.remove();
-    }
-    
-    const statusInfo = document.createElement('div');
-    statusInfo.className = 'order-status-info mb-3';
-    statusInfo.innerHTML = `
-        <div class="row">
-            <div class="col-md-6">
-                <h6>Status Pesanan:</h6>
-                <span class="badge status-${orderData.status.toLowerCase().replace(/\s+/g, '-')} mb-2">${orderData.status}</span>
-            </div>
-            <div class="col-md-6">
-                <h6>Tanggal Pesanan:</h6>
-                <p class="text-muted">${formatDate(orderData.created_at)}</p>
-            </div>
-        </div>
-        <hr>
-    `;
-    orderInfo.insertBefore(statusInfo, orderInfo.firstChild);
+    document.getElementById('orderProductItems').innerHTML = itemsHtml;
+    document.getElementById('orderTotalItems').innerText = `${totalItems} item`;
 }
 
-function formatDate(dateString) {
-    if (!dateString) return '-';
-    
-    const date = new Date(dateString);
-    const options = { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    };
-    
+function updateShippingProof(buktiUrl) {
+    const container = document.getElementById('orderProofContainer');
+    if (buktiUrl && buktiUrl !== '-') {
+        container.innerHTML = `
+            <img src="/storage/${buktiUrl}" class="proof-image" alt="Bukti Pengiriman" onerror="this.src='/images/polines.png'">
+        `;
+    } else {
+        container.innerHTML = '<div class="no-proof">Belum ada bukti pengiriman</div>';
+    }
+}
+
+function updatePaymentSummary(orderData) {
+    const total = parseFloat(orderData.total_harga) || 0;
+    document.getElementById('orderTotalPrice').innerText = `Rp ${total.toLocaleString('id-ID')}`;
+}
+
+function formatDate(dateStr) {
+    const date = new Date(dateStr);
+    const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
     return date.toLocaleDateString('id-ID', options);
 }
 
-// Alternative function jika bootstrap tidak tersedia
-function showModal() {
-    const modal = document.getElementById('orderDetailModal');
-    modal.style.display = 'block';
-    modal.classList.add('show');
-    document.body.style.overflow = 'hidden';
-    
-    // Add backdrop
-    const backdrop = document.createElement('div');
-    backdrop.className = 'modal-backdrop fade show';
-    backdrop.id = 'modal-backdrop';
-    document.body.appendChild(backdrop);
-}
-
-function hideModal() {
-    const modal = document.getElementById('orderDetailModal');
-    modal.style.display = 'none';
-    modal.classList.remove('show');
-    document.body.style.overflow = 'auto';
-    
-    // Remove backdrop
-    const backdrop = document.getElementById('modal-backdrop');
-    if (backdrop) {
-        backdrop.remove();
-    }
-}
-
-// Tambahkan event listener untuk close button
-document.addEventListener('DOMContentLoaded', function() {
-    const closeButtons = document.querySelectorAll('[data-bs-dismiss="modal"]');
-    closeButtons.forEach(button => {
-        button.addEventListener('click', hideModal);
-    });
-});
-
-function payOrder(orderId) {
-    window.location.href = `/pesanan/${orderId}/payment`;
-}
-
-function trackOrder(orderId) {
-    alert('Fitur tracking akan segera tersedia');
-}
-
-function reviewOrder(detailId) {
-    window.location.href = `/ulasan/${detailId}`;
-}
-
-function reorderOrder(orderId) {
-    if (confirm('Beli lagi produk ini?')) {
-        alert('Produk berhasil ditambahkan ke keranjang');
-    }
-}
-
-function contactAdmin(orderId) {
-    const message = `Halo, saya ingin menanyakan tentang pesanan #${orderId}`;
-    const phone = '628123456789';
-    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-}
-
-function cancelOrder(id) {
-    if (confirm('Yakin ingin membatalkan pesanan ini?')) {
-        fetch(`/pesanan/${id}/cancel`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
+function copyTrackingNumber() {
+    const trackingText = document.getElementById('orderTrackingNumber').innerText;
+    navigator.clipboard.writeText(trackingText)
+        .then(() => {
+            showToast('Nomor resi berhasil disalin!');
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(data.message || 'Pesanan berhasil dibatalkan!');
-                location.reload();
-            } else {
-                alert(data.message || 'Gagal membatalkan pesanan.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan saat membatalkan pesanan.');
+        .catch(() => {
+            showToast('Gagal menyalin nomor resi.');
         });
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toastNotification');
+    toast.innerText = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 2500);
+}
+
+function copyToClipboard() {
+    const text = document.getElementById('orderTrackingNumber').innerText;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Nomor resi berhasil disalin!');
+        }).catch(() => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
     }
 }
 
+function fallbackCopy(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showToast('Nomor resi berhasil disalin!');
+    } catch (err) {
+        showToast('Gagal menyalin. Silakan pilih teks dan tekan Ctrl+C');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+function selectText(element) {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    showToast('Teks telah dipilih, tekan Ctrl+C untuk menyalin');
+}
 </script>
 @endsection

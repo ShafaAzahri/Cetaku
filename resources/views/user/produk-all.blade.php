@@ -88,9 +88,7 @@
                                 <p class="card-text small text-muted">{{ Str::limit($item['deskripsi'], 50) }}</p>
                                 <div class="d-flex justify-content-between align-items-center mt-3">
                                     <span class="fw-bold text-primary">Rp {{ number_format($item['harga_dasar'], 0, ',', '.') }}</span>
-                                    <small class="text-muted">
-                                        {{ isset($item['total_terjual']) && $item['total_terjual'] > 0 ? $item['total_terjual'] . ' terjual' : '0 terjual' }}
-                                    </small>
+                                    
                                     {{-- @if(isset($item['total_sold']))
                                         <small class="text-muted">Terjual: {{ $item['total_sold'] }}</small>
                                     @endif --}}

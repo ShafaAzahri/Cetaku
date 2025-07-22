@@ -71,42 +71,10 @@
     </div>
 </div>
 
-<!-- Total Penjualan -->
-<div class="row">
-    <div class="col-md-3 mb-0">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white">
-                <h5 class="m-0">Total Penjualan</h5>
-                <!-- <div>
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="salesMonthDropdown" data-bs-toggle="dropdown">
-                        {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesMonthDropdown">
-                        @foreach($months as $month)
-                            <li>
-                                <a class="dropdown-item" href="{{ route('admin.dashboard', ['month' => $month->year.'-'.$month->month]) }}">
-                                    {{ \Carbon\Carbon::createFromFormat('Y-m', $month->year.'-'.$month->month)->format('F Y') }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div> -->
-            </div>
-            <div class="card-body">
-                <h1 class="text-primary mb-3">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</h1>
-                <small class="text-muted">
-                    Total pemasukan di bulan
-                    {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
-                </small>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- Statistik dan Grafik -->
 <div class="row">
     <!-- Statistik Penjualan -->
-    <div class="col-md-12 mb-4">
+    <div class="col-md-8 mb-4">
         <div class="card h-100 shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center bg-white">
                 <h5 class="m-0">Statistik Penjualan</h5>
@@ -126,49 +94,98 @@
                 </div>
             </div>
             <div class="card-body">
-                <p class="mb-2">{{ $pesananBulanIni }} Pesanan</p>
-                <div style="height: 300px;">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Total Pesanan</h6>
+                            <h4 class="text-primary mb-0">{{ $pesananBulanIni }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Rata-rata Harian</h6>
+                            <h4 class="text-info mb-0">{{ round($pesananBulanIni / $jumlahHari, 1) }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Tingkat Keberhasilan</h6>
+                            <h4 class="text-success mb-0">{{ $pesananBulanIni > 0 ? round(($pesananSelesaiBulanIni / $pesananBulanIni) * 100, 1) : 0 }}%</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h6 class="text-muted mb-1">Pesanan Hari Ini</h6>
+                            <h4 class="text-warning mb-0">{{ $pesananPerTanggal[date('j')] ?? 0 }}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div style="height: 350px;">
                     <canvas id="salesChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Total Penjualan
-    <div class="col-md-6 mb-4">
+    <!-- Total Penjualan & Status Distribution -->
+    <div class="col-md-4 mb-4">
         <div class="card h-100 shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center bg-white">
+            <div class="card-header bg-white">
                 <h5 class="m-0">Total Penjualan</h5>
-                <div>
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="totalMonthDropdown" data-bs-toggle="dropdown">
-                        {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="totalMonthDropdown">
-                        @foreach($months as $month)
-                            <li>
-                                <a class="dropdown-item" href="{{ route('admin.dashboard', ['month' => $month->year.'-'.$month->month]) }}">
-                                    {{ \Carbon\Carbon::createFromFormat('Y-m', $month->year.'-'.$month->month)->format('F Y') }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
             </div>
-            <div class="card-body text-center">
-                <h3 class="text-primary mb-3">{{ number_format($totalPenjualan, 0, ',', '.') }} IDR</h3>
-                <p class="mb-3">{{ $pesananBulanIni }} Pesanan</p>
-                <div style="height: 200px; max-width: 200px; margin: 0 auto;">
-                    <canvas id="doughnutChart"></canvas>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h2 class="text-primary mb-2">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</h2>
+                    <small class="text-muted">
+                        Total pemasukan di bulan
+                        {{ \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth)->format('F Y') }}
+                    </small>
+                </div>
+                
+                <h6 class="mb-3">Distribusi Status Pesanan</h6>
+                <div style="height: 200px; margin-bottom: 20px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Selesai</small>
+                        <span class="badge bg-success">{{ $pesananSelesaiBulanIni }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Berjalan</small>
+                        <span class="badge bg-warning">{{ $pesananBerjalan }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Dibatalkan</small>
+                        <span class="badge bg-danger">{{ $pesananDibatalkan }}</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div> -->
+    </div>
+</div>
+
+<!-- Trend Analysis -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="m-0">Analisis Trend Penjualan</h5>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Pesanan Terbaru dan Riwayat Pesanan -->
 <div class="row">
     <!-- Pesanan Terbaru -->
-    <div class="col-md-12 mb-0">
+    <div class="col-md-12 mb-4">
         <div class="card shadow-sm">
             <div class="card-header bg-white">
                 <h5 class="card-title mb-0">Pesanan Terbaru</h5>
@@ -217,7 +234,6 @@
         </div>
     </div>
 
-
     <!-- Riwayat Pesanan -->
     <div class="col-md-12 mb-0">
         <div class="card shadow-sm">
@@ -249,7 +265,8 @@
                                         @endif">{{ $pesanan->status }}</span>
                                 </td>
                                 <td class="text-center">
-                                <a href="{{ route('admin.pesanan.show', $pesanan->id) }}" class="btn btn-sm btn-outline-primary">Lihat Riwayat</a></td>
+                                    <a href="{{ route('admin.pesanan.show', $pesanan->id) }}" class="btn btn-sm btn-outline-primary">Lihat Riwayat</a>
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -258,24 +275,32 @@
             </div>
         </div>
     </div>
-
 </div>
 @endsection
 
 @section('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  <!-- Ensure Chart.js is included -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Sales Chart
+        // Configure Chart.js defaults
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.color = '#6c757d';
+        
+        // Sales Chart - Enhanced Line Chart
         const salesCtx = document.getElementById('salesChart');
-        const pesananPerTanggal = @json($pesananPerTanggal); // Data dari PHP per tanggal
-        const daysInMonth = {{ $jumlahHari }}; // Dihitung dari PHP
-
-        // Buat array tanggal: [1, 2, ..., 31]
+        const pesananPerTanggal = @json($pesananPerTanggal);
+        const daysInMonth = {{ $jumlahHari }};
+        
         const labels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-        // Pastikan semua tanggal punya nilai, kalau tidak isi 0
         const data = labels.map(tgl => pesananPerTanggal[tgl] ?? 0);
+        
+        // Calculate moving average
+        const movingAverage = data.map((_, index, array) => {
+            const start = Math.max(0, index - 3);
+            const end = Math.min(array.length, index + 4);
+            const subset = array.slice(start, end);
+            return subset.reduce((sum, val) => sum + val, 0) / subset.length;
+        });
 
         if (salesCtx) {
             const salesChart = new Chart(salesCtx, {
@@ -283,28 +308,65 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Pesanan',
+                        label: 'Pesanan Harian',
                         data: data,
                         borderColor: '#007bff',
-                        tension: 0.1,
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4,
                         fill: true,
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#007bff',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#007bff',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return 'Tanggal ' + context[0].label;
+                                },
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + ' pesanan';
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            min: 0,
-                            max: 10,
                             ticks: {
-                                stepSize: 1
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value + ' pesanan';
+                                }
                             },
-                            // grid: {
-                            //     display: false
-                            // },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
                             title: {
                                 display: true,
                                 text: 'Jumlah Pesanan'
@@ -319,42 +381,134 @@
                                 text: 'Tanggal'
                             }
                         }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
                     }
                 }
             });
         }
 
-        // // Doughnut Chart
-        // const doughnutCtx = document.getElementById('doughnutChart');
-        // if (doughnutCtx) {
-        //     const doughnutChart = new Chart(doughnutCtx, {
-        //         type: 'doughnut',
-        //         data: {
-        //             labels: ['Pemesanan', 'Selesai'],
-        //             datasets: [{
-        //                 data: [{{ $pesananSelesaiBulanIni }}, {{ $pesananBulanIni - $pesananSelesaiBulanIni }}],
-        //                 backgroundColor: [
-        //                     '#007bff', // Pemesanan color
-        //                     '#28a745'  // Selesai color
-        //                 ]
-        //             }]
-        //         },
-        //         options: {
-        //             responsive: true,
-        //             maintainAspectRatio: false,
-        //             plugins: {
-        //                 legend: {
-        //                     position: 'bottom'
-        //                 }
-        //             }
-        //         }
-        //     });
-        // }
+        // Status Distribution Chart
+        const statusCtx = document.getElementById('statusChart');
+        if (statusCtx) {
+            const statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Selesai', 'Berjalan', 'Dibatalkan'],
+                    datasets: [{
+                        data: [{{ $pesananSelesaiBulanIni }}, {{ $pesananBerjalan }}, {{ $pesananDibatalkan }}],
+                        backgroundColor: [
+                            '#28a745',
+                            '#ffc107',
+                            '#dc3545'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#007bff',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0);
+                                    const percentage = total > 0 ? Math.round((context.parsed / total) * 100) : 0;
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // Trend Analysis Chart
+        const trendCtx = document.getElementById('trendChart');
+        if (trendCtx) {
+            // Create weekly data from daily data
+            const weeklyData = [];
+            const weekLabels = [];
+            
+            for (let i = 0; i < daysInMonth; i += 7) {
+                const weekEnd = Math.min(i + 6, daysInMonth - 1);
+                const weekStart = i;
+                let weekSum = 0;
+                
+                for (let j = weekStart; j <= weekEnd; j++) {
+                    weekSum += data[j] || 0;
+                }
+                
+                weeklyData.push(weekSum);
+                weekLabels.push(`Minggu ${Math.floor(i / 7) + 1}`);
+            }
+
+            const trendChart = new Chart(trendCtx, {
+                type: 'bar',
+                data: {
+                    labels: weekLabels,
+                    datasets: [{
+                        label: 'Pesanan per Minggu',
+                        data: weeklyData,
+                        backgroundColor: 'rgba(0, 123, 255, 0.6)',
+                        borderColor: '#007bff',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            borderColor: '#007bff',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Total: ' + context.parsed.y + ' pesanan';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return value + ' pesanan';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
     });
 </script>
 @endsection

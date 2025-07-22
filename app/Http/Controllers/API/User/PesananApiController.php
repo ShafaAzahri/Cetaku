@@ -83,6 +83,7 @@ class PesananApiController extends Controller
             'status',
             'total',
             'alamat_pengiriman',
+            'resi_pesanan', // ⬅️ Tambahkan ini
             'bukti_pengiriman',
             'created_at',
             'updated_at'
@@ -110,6 +111,7 @@ class PesananApiController extends Controller
             'total_harga' => $pesanan->total, // Menggunakan total dari tabel pesanan
             'total' => $pesanan->total, // Untuk kompatibilitas
             'alamat_pengiriman' => $pesanan->alamat_pengiriman,
+            'resi_pesanan' => $pesanan->resi_pesanan, // ⬅️ Tambahkan ini
             'bukti_pengiriman' => $pesanan->bukti_pengiriman,
             'created_at' => $pesanan->created_at,
             'updated_at' => $pesanan->updated_at,

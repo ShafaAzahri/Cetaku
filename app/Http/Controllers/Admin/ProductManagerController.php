@@ -24,6 +24,7 @@ class ProductManagerController extends Controller
         $data = ['activeTab' => $activeTab];
         
         // Selalu ambil data items untuk dropdown di modal
+        $data['item_list'] = $this->fetchData('/items');
         $data['items'] = $this->fetchData('/items');
         
         // Ambil data sesuai tab yang aktif

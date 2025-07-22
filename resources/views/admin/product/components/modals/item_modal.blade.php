@@ -85,3 +85,47 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const editItemModal = document.getElementById("editItemModal");
+    if (editItemModal) {
+        editItemModal.addEventListener("show.bs.modal", function (event) {
+            const button = event.relatedTarget;
+            const id = button.getAttribute("data-id");
+            const nama = button.getAttribute("data-nama");
+            const deskripsi = button.getAttribute("data-deskripsi");
+            const berat = button.getAttribute("data-berat");
+            const harga = button.getAttribute("data-harga");
+            const gambar = button.getAttribute("data-gambar");
+            
+            const form = document.getElementById("editItemForm");
+            
+            // Gunakan route helper Laravel - sesuaikan dengan route di web.php
+            const actionUrl = "{{ route('admin.items.update', ':id') }}".replace(':id', id);
+            form.setAttribute("action", actionUrl);
+            
+            // Debug: log URL yang akan digunakan
+            console.log("Form action URL:", actionUrl);
+            
+            document.getElementById("edit_nama_item").value = nama;
+            document.getElementById("edit_deskripsi").value = deskripsi || "";
+            document.getElementById("edit_berat").value = (berat !== null && berat !== undefined) ? berat : "";
+            document.getElementById("edit_harga_dasar").value = harga;
+            
+            const currentImageDiv = document.getElementById("current_image");
+            if (gambar) {
+                const storageUrl = "{{ asset('storage') }}";
+                currentImageDiv.innerHTML = `
+                    <div class="text-center">
+                        <img src="${storageUrl}/${gambar}" class="img-thumbnail" style="max-height: 150px" alt="${nama}">
+                        <p class="small text-muted mt-1">Gambar saat ini</p>
+                    </div>
+                `;
+            } else {
+                currentImageDiv.innerHTML = '<p class="text-muted">Tidak ada gambar</p>';
+            }
+        });
+    }
+});
+</script>

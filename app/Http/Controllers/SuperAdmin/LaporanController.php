@@ -161,11 +161,21 @@ class LaporanController extends Controller
             ->orderByDesc('pesanans.created_at')
             ->get();
 
+        $adminName = auth()->check() ? auth()->user()->nama : 'Superadmin';
 
         return Excel::download(
-            new SalesExport($salesData, $totalPrice, $topSellingItems, $detailRincian),
+            new SalesExport(
+                $salesData,
+                $totalPrice,
+                $topSellingItems,
+                $detailRincian,
+                $adminName,       // sekarang aman
+                $startDate,
+                $endDate
+            ),
             'laporan_penjualan.xlsx'
         );
+
 
 
     }

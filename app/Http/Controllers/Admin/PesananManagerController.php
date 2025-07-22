@@ -64,13 +64,15 @@ class PesananManagerController extends Controller
             $perPage = $request->get('per_page', 10);
 
             $response = $this->sendApiRequest('get', '/admin/pesanan', [
-            'status' => $status,
-            'search' => $search,
-            'dari_tanggal' => $dariTanggal,
-            'sampai_tanggal' => $sampaiTanggal,
-            'per_page' => $perPage,
-            'page' => $request->get('page', 1)
-        ]);
+                'status' => $status,
+                'search' => $search,
+                'dari_tanggal' => $dariTanggal,
+                'sampai_tanggal' => $sampaiTanggal,
+                'per_page' => $perPage,
+                'page' => $request->get('page', 1),
+                'sort_by' => 'created_at',
+                'sort_order' => 'desc'
+            ]);            
                 Log::debug('Request params', [
             'page' => $request->get('page'),
             'session_token' => session('api_token'),

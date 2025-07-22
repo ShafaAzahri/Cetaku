@@ -241,29 +241,6 @@
                     </div>
                 </div>
             </div>
-
-            <div class="mt-5">
-    <h5>Ulasan Produk</h5>
-    @if(count($reviews) > 0)
-        @foreach($reviews as $review)
-            <div class="mb-3 border-bottom pb-2">
-                <div class="d-flex align-items-center mb-1">
-                    @for($i = 1; $i <= 5; $i++)
-                        @if($i <= $review->rating)
-                            <i class="fas fa-star text-warning"></i>
-                        @else
-                            <i class="far fa-star text-muted"></i>
-                        @endif
-                    @endfor
-                </div>
-                <p class="mb-0">{{ $review->komentar }}</p>
-            </div>
-        @endforeach
-    @else
-        <p class="text-muted">Belum ada ulasan untuk produk ini.</p>
-    @endif
-</div>
-
         </form>
     </div>
 </div>

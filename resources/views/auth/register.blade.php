@@ -216,11 +216,11 @@
                     <span class="button-text">Sign Up</span>
                 </button>
                 
-                <button type="button" class="btn btn-google" disabled>
+                <a href="{{ route('login.google') }}" class="btn btn-google">
                     <img src="{{ asset('images/google.png') }}" alt="Google logo" style="width: 20px; height: 20px;">
                     Or sign up with Google
-                </button>
-                
+                </a>
+       
                 <div class="login-link">
                     Sudah punya akun? <a href="{{ route('login') }}">Masuk sekarang</a>
                 </div>

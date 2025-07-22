@@ -21,6 +21,7 @@ use App\Http\Controllers\API\Admin\BiayaDesainApiController;
 use App\Http\Controllers\Api\Admin\EkspedisiApiController;
 use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
 use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
+use App\Http\Controllers\API\GoogleAuthController;
 
 // use App\Http\Controllers\API\Admin\BiayaDesainApiController;
 // use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
@@ -36,13 +37,22 @@ use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
 Route::post('/login', [AuthApiController::class, 'login']);
 Route::post('/register', [AuthApiController::class, 'register']);
 Route::post('/midtrans/webhook', [PaymentWebhookController::class, 'handle']);
+Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
+Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+Route::post('web-callback', [GoogleAuthController::class, 'handleWebCallback']); // Khusus untuk web
+
+use App\Http\Controllers\API\ForgotPasswordApiController;
+
+Route::post('/forgot-password', [ForgotPasswordApiController::class, 'sendOtp']);
+Route::post('/verify-otp', [ForgotPasswordApiController::class, 'verifyOtp']);
+Route::post('/reset-password', [ForgotPasswordApiController::class, 'resetPassword']);
 
 // Route autentikasi publik (tidak memerlukan autentikasi)
 Route::prefix('auth')->group(function() {
     Route::get('/user', [AuthApiController::class, 'getUserByToken']);
     Route::post('/logout', [AuthApiController::class, 'logout']);
-
 });
+
 
 // Alamat API routes (dengan middleware api.auth)
 Route::middleware('api.user')->group(function() {
