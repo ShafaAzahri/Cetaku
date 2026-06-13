@@ -1,0 +1,130 @@
+version: "2"
+type: frontend
+tech_stack:
+  - language: PHP
+  - framework: Laravel 11
+  - ui_library: Bootstrap 5
+  - other: Blade Templates, Midtrans, Sanctum API Token
+
+routes:
+  - path: /login
+    file: resources/views/auth/login.blade.php
+    auth_required: false
+    description: Halaman login user dengan email dan password
+  - path: /register
+    file: resources/views/auth/register.blade.php
+    auth_required: false
+    description: Halaman registrasi user baru
+  - path: /
+    file: resources/views/welcome.blade.php
+    auth_required: false
+    description: Halaman utama / landing page
+  - path: /profile
+    file: resources/views/user/profile.blade.php
+    auth_required: true
+    description: Halaman profil pengguna
+  - path: /keranjang
+    file: resources/views/user/keranjang.blade.php
+    auth_required: true
+    description: Halaman keranjang belanja
+  - path: /pesanan
+    file: resources/views/user/pesanan.blade.php
+    auth_required: true
+    description: Halaman daftar pesanan user
+  - path: /checkout
+    file: resources/views/user/checkout.blade.php
+    auth_required: true
+    description: Halaman checkout pembelian
+  - path: /produk
+    file: resources/views/user/produk.blade.php
+    auth_required: false
+    description: Halaman daftar produk
+  - path: /admin/dashboard
+    file: resources/views/admin/dashboard.blade.php
+    auth_required: true
+    description: Dashboard admin
+  - path: /superadmin/dashboard
+    file: resources/views/superadmin/dashboard.blade.php
+    auth_required: true
+    description: Dashboard super admin
+  - path: /lupa-password
+    file: resources/views/auth/email.blade.php
+    auth_required: false
+    description: Halaman lupa password / request reset
+
+features:
+  - name: User Registration
+    description: Daftar akun baru menggunakan nama, email, dan password
+    files:
+      - resources/views/auth/register.blade.php
+      - app/Http/Controllers/AuthController.php
+      - app/Http/Controllers/API/AuthApiController.php
+    entry_route: /register
+    user_interactions:
+      - Buka halaman /register
+      - Isi field Nama Panjang
+      - Isi field Email
+      - Isi field Password
+      - Isi field Konfirmasi Password
+      - Klik tombol Sign Up
+      - Lihat pesan error jika validasi gagal
+      - Redirect ke halaman utama jika berhasil
+    api_calls:
+      - method: POST
+        endpoint: /api/register
+    auth_required: false
+
+  - name: User Login
+    description: Login ke aplikasi menggunakan email dan password
+    files:
+      - resources/views/auth/login.blade.php
+      - app/Http/Controllers/AuthController.php
+      - app/Http/Controllers/API/AuthApiController.php
+    entry_route: /login
+    user_interactions:
+      - Buka halaman /login
+      - Isi field Email
+      - Isi field Password
+      - Klik tombol Login
+      - Lihat pesan error jika kredensial salah
+      - Redirect ke dashboard sesuai role jika berhasil
+    api_calls:
+      - method: POST
+        endpoint: /api/login
+    auth_required: false
+
+  - name: User Logout
+    description: Logout dari aplikasi dan hapus session
+    files:
+      - app/Http/Controllers/AuthController.php
+    entry_route: /logout
+    user_interactions:
+      - Klik tombol Logout
+      - Redirect ke halaman welcome
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/logout
+    auth_required: true
+
+  - name: Lupa Password
+    description: Reset password melalui email OTP
+    files:
+      - resources/views/auth/email.blade.php
+      - resources/views/auth/reset-password.blade.php
+      - app/Http/Controllers/User/ResetPasswordController.php
+    entry_route: /lupa-password
+    user_interactions:
+      - Isi field email
+      - Kirim OTP ke email
+      - Masukkan kode OTP
+      - Reset password baru
+    api_calls: []
+    auth_required: false
+
+known_limitations:
+  - issue: Login form menggunakan middleware guest, sehingga jika sudah login akan redirect otomatis
+    location: routes/web.php
+    impact: Test harus memastikan session bersih sebelum test login
+  - issue: AuthController memforward request ke internal API endpoint (/api/login, /api/register)
+    location: app/Http/Controllers/AuthController.php
+    impact: Login dan registrasi bergantung pada API internal yang harus aktif

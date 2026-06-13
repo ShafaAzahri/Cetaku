@@ -1,0 +1,457 @@
+[
+  {
+    "id": "TC001",
+    "title": "Block access to protected pages before signing in",
+    "description": "An unauthenticated visitor trying to open protected user pages is redirected to the login page instead of the requested page.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /profile"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /checkout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the login page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Sign in as a user and reach the user dashboard",
+    "description": "A registered user can log in with valid credentials and is routed to the user dashboard.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Sign in as an admin and reach the admin dashboard",
+    "description": "An admin can log in with valid credentials and is routed to the admin dashboard.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the admin dashboard is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Create a new account and return to the welcome page",
+    "description": "A guest can register with valid details and is returned to the public landing page after the account is created.",
+    "category": "User Registration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the name field with a unique full name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a unique email address"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with a valid password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password confirmation field with the same valid password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the account is created and the welcome page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Return to the welcome page after logging out",
+    "description": "An authenticated user can sign out and is returned to the public landing page.",
+    "category": "User Logout",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the logout control"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the welcome page is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Start password reset request with an email",
+    "description": "This verifies that a visitor can submit an email address to begin the password recovery flow and see confirmation that the reset request was accepted.",
+    "category": "Lupa Password",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /lupa-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a valid email address"
+      },
+      {
+        "type": "action",
+        "description": "Request the OTP"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a confirmation is displayed for the password reset request"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Complete password reset with a valid OTP",
+    "description": "This verifies that a visitor can request an OTP, enter the received code, and finish setting a new password successfully.",
+    "category": "Lupa Password",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /lupa-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a valid email address"
+      },
+      {
+        "type": "action",
+        "description": "Request the OTP"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid OTP code"
+      },
+      {
+        "type": "action",
+        "description": "Set a new password"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the new password"
+      },
+      {
+        "type": "action",
+        "description": "Complete the password reset"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a password reset success confirmation is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Show an error for incorrect login credentials",
+    "description": "A visitor entering the wrong password sees a login error and remains on the login page.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with an incorrect password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a login error is displayed and the login page remains visible"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC009",
+    "title": "Show validation when login fields are empty",
+    "description": "A visitor submitting the login form without required credentials sees validation feedback and cannot sign in.",
+    "category": "User Login",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form without filling any fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation messages are displayed for the missing login fields"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC010",
+    "title": "Show validation when required registration fields are missing",
+    "description": "A guest leaving required registration fields empty sees validation feedback and cannot complete account creation.",
+    "category": "User Registration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form without filling any fields"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation messages are displayed for the missing required fields"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC011",
+    "title": "Reject a password reset request with an invalid email format",
+    "description": "This verifies that the password recovery form blocks clearly invalid email input and shows an email validation error.",
+    "category": "Lupa Password",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /lupa-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with an invalid email format"
+      },
+      {
+        "type": "action",
+        "description": "Request the OTP"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an email validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC012",
+    "title": "Require the email field before requesting an OTP",
+    "description": "This verifies that the password recovery form prevents submission when the email field is empty and shows a required-field validation error.",
+    "category": "Lupa Password",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /lupa-password"
+      },
+      {
+        "type": "action",
+        "description": "Request the OTP"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a required-field validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC013",
+    "title": "Reject password reset submission with mismatched passwords",
+    "description": "This verifies that the password recovery flow prevents completion when the new password and confirmation do not match and shows a password validation error.",
+    "category": "Lupa Password",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /lupa-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a valid email address"
+      },
+      {
+        "type": "action",
+        "description": "Request the OTP"
+      },
+      {
+        "type": "action",
+        "description": "Enter a valid OTP code"
+      },
+      {
+        "type": "action",
+        "description": "Set a new password"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the new password with a different value"
+      },
+      {
+        "type": "action",
+        "description": "Complete the password reset"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a password mismatch validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC014",
+    "title": "Show validation when registration values are invalid",
+    "description": "A guest entering an invalid registration email or mismatched passwords sees validation feedback and stays on the registration form.",
+    "category": "User Registration",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /register"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the name field with a unique full name"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with an invalid email format"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with a valid password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password confirmation field with a different password"
+      },
+      {
+        "type": "action",
+        "description": "Submit the registration form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify validation messages are displayed for the invalid email and password mismatch"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC015",
+    "title": "Reject password reset submission with an invalid OTP",
+    "description": "This verifies that the password recovery flow does not continue when the entered OTP is invalid and shows an OTP validation error.",
+    "category": "Lupa Password",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /lupa-password"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with a valid email address"
+      },
+      {
+        "type": "action",
+        "description": "Request the OTP"
+      },
+      {
+        "type": "action",
+        "description": "Enter an invalid OTP code"
+      },
+      {
+        "type": "action",
+        "description": "Set a new password"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the new password"
+      },
+      {
+        "type": "action",
+        "description": "Complete the password reset"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an OTP validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  }
+]

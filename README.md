@@ -1,61 +1,114 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Cetaku
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi berbasis web yang dibangun menggunakan framework [Laravel](https://laravel.com/) dan Node.js.
 
-## About Laravel
+## Persyaratan Sistem
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Sebelum melakukan instalasi, pastikan sistem/komputer Anda telah memenuhi persyaratan berikut:
+- PHP >= 8.1 (atau sesuai versi Laravel yang Anda gunakan)
+- [Composer](https://getcomposer.org/)
+- [Node.js & NPM](https://nodejs.org/)
+- MySQL / MariaDB (bisa menggunakan XAMPP, Laragon, dll)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Panduan Instalasi (Lokal)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Ikuti langkah-langkah di bawah ini untuk menginstal dan menjalankan project secara lokal:
 
-## Learning Laravel
+### 1. Buka Terminal di Folder Project
+Buka terminal (Command Prompt, PowerShell, atau Git Bash) dan arahkan ke direktori project Anda:
+```bash
+cd c:\laragon\www\cetakufinal
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Install Dependensi Backend (PHP)
+Jalankan perintah Composer untuk menginstal seluruh library PHP yang dibutuhkan Laravel:
+```bash
+composer install
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 3. Install Dependensi Frontend (Node.js)
+Jalankan NPM untuk menginstal library JavaScript (seperti Vite, CSS preprocessors, atau UI framework):
+```bash
+npm install
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. Buat Database dan Import File SQL
+Sebelum mengonfigurasi environment, pastikan Anda sudah membuat dan meng-import database terlebih dahulu:
+1. Buka aplikasi manajemen database Anda (seperti **phpMyAdmin**, **HeidiSQL**, **DBeaver**, atau via **Laragon**).
+2. Buat database kosong baru dengan nama sesuai keinginan Anda (contoh: `db_cetaku`).
+3. Pilih database tersebut, kemudian gunakan fitur **Import**.
+4. Pilih file database berformat `*.sql` yang Anda miliki (biasanya disertakan bersama source code).
+5. Proses import file tersebut hingga sukses (muncul tabel-tabel database).
 
-## Laravel Sponsors
+### 5. Konfigurasi File Environment
+Gandakan file `.env.example` dan ubah namanya menjadi `.env`.
+Jika menggunakan Windows (Command Prompt / PowerShell):
+```bash
+copy .env.example .env
+```
+Atau Anda bisa meng-copy dan me-rename file tersebut secara manual melalui File Explorer.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Buka file `.env` yang baru dibuat di code editor Anda (misal: VS Code), lalu sesuaikan konfigurasi koneksi database Anda:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_cetaku           # Ubah sesuai nama database yang Anda buat pada langkah 4
+DB_USERNAME=root                # Biasanya root jika menggunakan Laragon/XAMPP
+DB_PASSWORD=                    # Biasanya kosong jika menggunakan Laragon/XAMPP
+```
 
-### Premium Partners
+### 6. Generate Application Key
+Jalankan perintah ini untuk men-generate kunci keamanan aplikasi Laravel:
+```bash
+php artisan key:generate
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+### 7. Migrasi Database (Opsional / Lewati)
+> **Catatan Penting:** Karena Anda sudah meng-import file `.sql` secara manual pada Langkah 4, Anda **TIDAK PERLU** menjalankan perintah migrasi di bawah ini. Abaikan langkah ini.
 
-## Contributing
+Namun, jika sewaktu-waktu Anda ingin membuat ulang seluruh struktur database dari nol menggunakan sistem migrasi bawaan Laravel, jalankan:
+```bash
+php artisan migrate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 8. Build Aset (CSS / JS)
+Untuk me-compile file CSS dan JavaScript (Vite), jalankan:
 
-## Code of Conduct
+Untuk tahap **development** (rekomendasi, akan terus berjalan untuk memantau perubahan file):
+```bash
+npm run dev
+```
+Untuk tahap **production** (build final sekali jalan):
+```bash
+npm run build
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 9. Jalankan Local Server
+Jika Anda menggunakan **Laragon**, Anda mungkin sudah bisa langsung mengaksesnya melalui browser di alamat:
+**http://cetakufinal.test**
 
-## Security Vulnerabilities
+Namun, jika Anda ingin menjalankan server bawaan Laravel, buka tab terminal baru (biarkan `npm run dev` di tab lain tetap berjalan), lalu ketik:
+```bash
+php artisan serve
+```
+Aplikasi kini dapat diakses di **http://localhost:8000**.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
-## License
+## E2E Testing menggunakan Playwright (Opsional)
+Project ini dilengkapi dengan konfigurasi [Playwright](https://playwright.dev/) untuk pengujian End-to-End.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Jika Anda ingin menjalankan test:
+1. Install browser yang dibutuhkan Playwright (hanya perlu dijalankan sekali):
+   ```bash
+   npx playwright install
+   ```
+2. Jalankan proses testing:
+   ```bash
+   npx playwright test
+   ```
+3. Untuk melihat laporan (report) hasil testing:
+   ```bash
+   npx playwright show-report
+   ```

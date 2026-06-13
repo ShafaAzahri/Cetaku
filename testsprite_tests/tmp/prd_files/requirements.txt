@@ -1,0 +1,125 @@
+# Login System Requirements
+
+## Product Overview
+
+The application supports two user roles:
+
+1. Admin
+2. User
+
+Users authenticate using email and password.
+
+## Login URL
+
+http://localhost/login
+
+## Test Accounts
+
+### Admin Account
+
+Email:
+admin@example.com
+
+Password:
+admin123
+
+Expected Result:
+- Login successful
+- Redirect to Admin Dashboard
+
+### User Account
+
+Email:
+shafa2@gmail.com
+
+Password:
+shafa123
+
+Expected Result:
+- Login successful
+- Redirect to User Dashboard
+
+## Functional Requirements
+
+### TC-001 Admin Login Success
+
+Given:
+- User enters admin@example.com
+- User enters admin123
+
+When:
+- User clicks Login
+
+Then:
+- Login succeeds
+- User is redirected to Admin Dashboard
+
+### TC-002 User Login Success
+
+Given:
+- User enters shafa2@gmail.com
+- User enters shafa123
+
+When:
+- User clicks Login
+
+Then:
+- Login succeeds
+- User is redirected to User Dashboard
+
+### TC-003 Invalid Password
+
+Given:
+- User enters a valid email
+- User enters an incorrect password
+
+When:
+- User clicks Login
+
+Then:
+- Error message is displayed
+- User remains on Login page
+
+### TC-004 Invalid Email
+
+Given:
+- User enters an email that does not exist
+
+When:
+- User clicks Login
+
+Then:
+- Error message is displayed
+- User remains on Login page
+
+### TC-005 Empty Email
+
+Expected:
+- Validation message displayed
+
+### TC-006 Empty Password
+
+Expected:
+- Validation message displayed
+
+### TC-007 Empty Form
+
+Expected:
+- Validation messages displayed
+
+## Security Requirements
+
+- Password field must be masked.
+- Session is created after successful login.
+- Unauthorized users cannot access protected pages.
+- Role-based access control must be enforced.
+
+## Expected Results
+
+### Admin User
+- Can access Admin Dashboard.
+- Cannot be redirected to User Dashboard.
+
+### Normal User
+- Can access User Dashboard.
+- Cannot access Admin-only pages.

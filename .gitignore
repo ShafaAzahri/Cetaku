@@ -7,8 +7,8 @@
 /storage/pail
 /vendor
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -21,3 +21,20 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Project specific
+ngrok.exe
+testsprite_tests/tmp/config.json
+
+# Playwright
+playwright-report/
+test-results/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
