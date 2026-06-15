@@ -4,7 +4,7 @@
 // FILE: app/Http/Controllers/API/GoogleAuthController.php
 // ==============================================
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Laravel\Socialite\Facades\Socialite;

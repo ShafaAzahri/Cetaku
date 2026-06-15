@@ -244,6 +244,16 @@
                     Tidak punya akun? <a href="{{ route('register') }}">Daftar sekarang</a>
                 </div>
             </form>
+            
+            <!-- Portofolio Demo Credentials -->
+            <div class="alert alert-info mt-4 mb-0" style="font-size: 13px;">
+                <h6 class="alert-heading fw-bold mb-2"><i class="fas fa-info-circle me-1"></i> Demo Credentials</h6>
+                <div class="d-flex flex-column gap-1">
+                    <div><strong>Super Admin:</strong> superadmin@example.com / superadmin123</div>
+                    <div><strong>Admin:</strong> admin@example.com / admin123</div>
+                    <div><strong>User:</strong> test@example.com / password</div>
+                </div>
+            </div>
         </div>
     </div>
     

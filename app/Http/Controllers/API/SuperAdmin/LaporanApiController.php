@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\API\SuperAdmin;
+namespace App\Http\Controllers\Api\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -88,3 +88,4 @@ class LaporanApiController extends Controller
         }
     }
 }
+

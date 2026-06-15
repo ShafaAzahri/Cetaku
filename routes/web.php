@@ -239,3 +239,4 @@ Route::prefix('superadmin')->name('superadmin.')->middleware(['auth.check', 'rol
     Route::get('/pengaturan', [PengaturanController::class, 'index'])->name('pengaturan.index');
     Route::post('/pengaturan/update', [PengaturanController::class, 'update'])->name('pengaturan.update');
 });
+

@@ -178,33 +178,36 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                             </div>
                             <div class="modal-body">
+                                <button type="button" class="btn btn-outline-primary w-100 mb-3" id="btn-get-location" onclick="getLocation()">
+                                    <i class="fas fa-map-marker-alt me-2"></i>Gunakan Lokasi Saat Ini
+                                </button>
                                 <div class="mb-3">
                                     <label class="form-label">Nomor HP</label>
                                     <input type="text" name="nomor_hp" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Alamat Lengkap</label>
-                                    <textarea name="alamat_lengkap" class="form-control" required></textarea>
+                                    <textarea name="alamat_lengkap" id="alamat_lengkap" class="form-control" required></textarea>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Kelurahan</label>
-                                    <input type="text" name="kelurahan" class="form-control" required>
+                                    <input type="text" name="kelurahan" id="kelurahan" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Kecamatan</label>
-                                    <input type="text" name="kecamatan" class="form-control" required>
+                                    <input type="text" name="kecamatan" id="kecamatan" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Kota</label>
-                                    <input type="text" name="kota" class="form-control" required>
+                                    <input type="text" name="kota" id="kota" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Provinsi</label>
-                                    <input type="text" name="provinsi" class="form-control" required>
+                                    <input type="text" name="provinsi" id="provinsi" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Kode Pos</label>
-                                    <input type="text" name="kode_pos" class="form-control" required>
+                                    <input type="text" name="kode_pos" id="kode_pos" class="form-control" required>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">Tipe</label>
@@ -267,6 +270,82 @@
     </div>
     </div>
 
-
-
+    <script>
+        function getLocation() {
+            const btn = document.getElementById('btn-get-location');
+            const originalText = btn.innerHTML;
+            
+            if (navigator.geolocation) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mencari lokasi...';
+                btn.disabled = true;
+                
+                navigator.geolocation.getCurrentPosition(showPosition, showError, {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                });
+            } else {
+                alert("Geolocation tidak didukung oleh browser Anda.");
+            }
+            
+            function showPosition(position) {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Panggil Nominatim API untuk Reverse Geocoding
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`, {
+                    headers: {
+                        'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.address) {
+                        const addr = data.address;
+                        
+                        // Set nilai ke form
+                        document.getElementById('kelurahan').value = addr.village || addr.suburb || addr.neighbourhood || '';
+                        document.getElementById('kecamatan').value = addr.city_district || addr.county || addr.suburb || '';
+                        document.getElementById('kota').value = addr.city || addr.town || addr.municipality || '';
+                        document.getElementById('provinsi').value = addr.state || addr.province || '';
+                        document.getElementById('kode_pos').value = addr.postcode || '';
+                        
+                        // Set alamat lengkap
+                        let road = addr.road ? addr.road + ', ' : '';
+                        document.getElementById('alamat_lengkap').value = road + (addr.village || addr.suburb || '');
+                    } else {
+                        alert("Gagal menemukan detail alamat dari koordinat.");
+                    }
+                    
+                    // Kembalikan tombol
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("Terjadi kesalahan saat menghubungi layanan peta.");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                });
+            }
+            
+            function showError(error) {
+                let msg = "Terjadi kesalahan.";
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        msg = "Permintaan akses lokasi ditolak oleh pengguna.";
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        msg = "Informasi lokasi tidak tersedia.";
+                        break;
+                    case error.TIMEOUT:
+                        msg = "Waktu permintaan lokasi habis.";
+                        break;
+                }
+                alert(msg);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
 @endsection

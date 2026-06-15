@@ -2,31 +2,31 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\AuthApiController;
-use App\Http\Controllers\API\PaymentController;
-use App\Http\Controllers\API\Admin\ItemApiController;
-use App\Http\Controllers\API\Admin\BahanApiController;
-use App\Http\Controllers\API\Admin\JenisApiController;
-use App\Http\Controllers\API\Admin\MesinApiController;
+use App\Http\Controllers\Api\AuthApiController;
+use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\Admin\ItemApiController;
+use App\Http\Controllers\Api\Admin\BahanApiController;
+use App\Http\Controllers\Api\Admin\JenisApiController;
+use App\Http\Controllers\Api\Admin\MesinApiController;
 use App\Http\Controllers\Api\PaymentWebhookController;
-use App\Http\Controllers\API\Admin\UkuranApiController;
+use App\Http\Controllers\Api\Admin\UkuranApiController;
 use App\Http\Controllers\Api\User\PesananApiController;
-use App\Http\Controllers\API\User\ProfileApiController;
-use App\Http\Controllers\API\Admin\KategoriApiController;
-use App\Http\Controllers\API\Admin\OperatorApiController;
-use App\Http\Controllers\API\Admin\PesananAdminController;
-use App\Http\Controllers\API\User\KeranjangApiController;
-use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
-use App\Http\Controllers\API\Admin\BiayaDesainApiController;
+use App\Http\Controllers\Api\User\ProfileApiController;
+use App\Http\Controllers\Api\Admin\KategoriApiController;
+use App\Http\Controllers\Api\Admin\OperatorApiController;
+use App\Http\Controllers\Api\Admin\PesananAdminController;
+use App\Http\Controllers\Api\User\KeranjangApiController;
+use App\Http\Controllers\Api\Admin\ProsesOperatorMesinApi;
+use App\Http\Controllers\Api\Admin\BiayaDesainApiController;
 use App\Http\Controllers\Api\Admin\EkspedisiApiController;
-use App\Http\Controllers\API\SuperAdmin\LaporanApiController;
-use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
-use App\Http\Controllers\API\GoogleAuthController;
+use App\Http\Controllers\Api\SuperAdmin\LaporanApiController;
+use App\Http\Controllers\Api\SuperAdmin\PengaturanApiController;
+use App\Http\Controllers\Api\GoogleAuthController;
 
-// use App\Http\Controllers\API\Admin\BiayaDesainApiController;
-// use App\Http\Controllers\API\Admin\ProsesOperatorMesinApi;
-// use App\Http\Controllers\API\SuperAdmin\PengaturanApiController;
-// use App\Http\Controllers\API\User\PaymentController;
+// use App\Http\Controllers\Api\Admin\BiayaDesainApiController;
+// use App\Http\Controllers\Api\Admin\ProsesOperatorMesinApi;
+// use App\Http\Controllers\Api\SuperAdmin\PengaturanApiController;
+// use App\Http\Controllers\Api\User\PaymentController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -41,7 +41,7 @@ Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoog
 Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 Route::post('web-callback', [GoogleAuthController::class, 'handleWebCallback']); // Khusus untuk web
 
-use App\Http\Controllers\API\ForgotPasswordApiController;
+use App\Http\Controllers\Api\ForgotPasswordApiController;
 
 Route::post('/forgot-password', [ForgotPasswordApiController::class, 'sendOtp']);
 Route::post('/verify-otp', [ForgotPasswordApiController::class, 'verifyOtp']);
@@ -69,12 +69,12 @@ Route::middleware('api.user')->group(function() {
     Route::delete('/alamat/{id}', [ProfileApiController::class, 'deleteAlamat']);
 
     Route::prefix('keranjang')->group(function() {
-        Route::get('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'index']); // GET /api/keranjang
-        Route::post('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'store']); // POST /api/keranjang
-        Route::put('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'update']); // PUT /api/keranjang/{id}
-        Route::delete('/{id}', [App\Http\Controllers\API\User\KeranjangApiController::class, 'destroy']); // DELETE /api/keranjang/{id}
-        Route::delete('/', [App\Http\Controllers\API\User\KeranjangApiController::class, 'clear']); // DELETE /api/keranjang (clear all)
-        Route::get('/count', [App\Http\Controllers\API\User\KeranjangApiController::class, 'count']); // GET /api/keranjang/count
+        Route::get('/', [App\Http\Controllers\Api\User\KeranjangApiController::class, 'index']); // GET /api/keranjang
+        Route::post('/', [App\Http\Controllers\Api\User\KeranjangApiController::class, 'store']); // POST /api/keranjang
+        Route::put('/{id}', [App\Http\Controllers\Api\User\KeranjangApiController::class, 'update']); // PUT /api/keranjang/{id}
+        Route::delete('/{id}', [App\Http\Controllers\Api\User\KeranjangApiController::class, 'destroy']); // DELETE /api/keranjang/{id}
+        Route::delete('/', [App\Http\Controllers\Api\User\KeranjangApiController::class, 'clear']); // DELETE /api/keranjang (clear all)
+        Route::get('/count', [App\Http\Controllers\Api\User\KeranjangApiController::class, 'count']); // GET /api/keranjang/count
         
     });
     Route::get('/pesanan', [PesananApiController::class, 'index']);
@@ -191,20 +191,20 @@ Route::middleware('api.admin')->group(function() {
 // Route untuk API Super Admin
 Route::middleware(['api.superadmin'])->prefix('superadmin')->group(function() {
     // Admin Management Routes
-    Route::apiResource('admins', 'App\Http\Controllers\API\SuperAdmin\AdminManagementApiController');
-    Route::post('admins/{id}/reset-password', 'App\Http\Controllers\API\SuperAdmin\AdminManagementApiController@resetPassword');
+    Route::apiResource('admins', 'App\Http\Controllers\Api\SuperAdmin\AdminManagementApiController');
+    Route::post('admins/{id}/reset-password', 'App\Http\Controllers\Api\SuperAdmin\AdminManagementApiController@resetPassword');
     
     // User Management Routes
-    Route::apiResource('users', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController');
-    Route::post('users/{id}/reset-password', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController@resetPassword');
-    Route::get('users/{id}/order-history', 'App\Http\Controllers\API\SuperAdmin\UserManagementApiController@orderHistory');
+    Route::apiResource('users', 'App\Http\Controllers\Api\SuperAdmin\UserManagementApiController');
+    Route::post('users/{id}/reset-password', 'App\Http\Controllers\Api\SuperAdmin\UserManagementApiController@resetPassword');
+    Route::get('users/{id}/order-history', 'App\Http\Controllers\Api\SuperAdmin\UserManagementApiController@orderHistory');
     
     // Operator Management Routes
-    Route::apiResource('operators', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController');
-    Route::put('operators/{id}/status', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@updateStatus');
-    Route::get('operators/{id}/work-history', 'App\Http\Controllers\API\SuperAdmin\OperatorManagementApiController@workHistory');
+    Route::apiResource('operators', 'App\Http\Controllers\Api\SuperAdmin\OperatorManagementApiController');
+    Route::put('operators/{id}/status', 'App\Http\Controllers\Api\SuperAdmin\OperatorManagementApiController@updateStatus');
+    Route::get('operators/{id}/work-history', 'App\Http\Controllers\Api\SuperAdmin\OperatorManagementApiController@workHistory');
 
-    Route::get('dashboard/stats', 'App\Http\Controllers\API\SuperAdmin\DashboardApiController@getStats');
+    Route::get('dashboard/stats', 'App\Http\Controllers\Api\SuperAdmin\DashboardApiController@getStats');
     Route::get('/superadmin/sales', [LaporanApiController::class, 'getSalesData']);
 
     // pengaturan route

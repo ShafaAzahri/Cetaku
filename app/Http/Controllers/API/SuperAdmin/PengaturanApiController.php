@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\API\SuperAdmin;
+namespace App\Http\Controllers\Api\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TokoInfo;
@@ -19,3 +19,4 @@ class PengaturanApiController extends Controller
         ]);
     }
 }
+

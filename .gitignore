@@ -38,3 +38,5 @@ test-results/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.vercel

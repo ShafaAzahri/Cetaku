@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->validateCsrfTokens(except: ['api/*', 'midtrans/webhook']);
+        // Percayai semua proxy (seperti ngrok) agar URL otomatis menggunakan HTTPS
+        $middleware->trustProxies(at: '*');
+
         // Register middleware aliases
         $middleware->alias([
             'auth.check' => \App\Http\Middleware\AuthCheck::class,
